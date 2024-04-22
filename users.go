@@ -10,6 +10,10 @@ func GetUser(id int) User {
 	return users[id]
 }
 
+func GetPassword(id int) string {
+	return users[id].Password
+}
+
 func AddUser(user User) {
 	users[user.ID] = user
 }
@@ -19,8 +23,8 @@ func RemoveUser(id int) {
 }
 
 var users = map[int]User{
-	0: {ID: 0, Name: "Ancient One", Email: "ancientone@gmail.com"},
-	1: {ID: 1, Name: "Alice", Email: "alice@example.com"},
-	2: {ID: 2, Name: "Bob", Email: "bob@example.com"},
-	3: {ID: 3, Name: "Charlie", Email: "charlie@example.com"},
+	0: {ID: 0, Name: "Ancient One", Email: "ancientone@gmail.com", Password: "pw1"},
+	1: {ID: 1, Name: "Alice", Email: "alice@example.com", Password: "pw2"},
+	2: {ID: 2, Name: "Bob", Email: "bob@example.com", Password: "pw3"},
+	3: {ID: 3, Name: "Charlie", Email: "charlie@example.com", Password: "pw4"},
 }

@@ -3,8 +3,20 @@
     <option name="myName" value="Project Default" />
     <inspection_tool class="CustomRegExpInspection" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="EmptyDirectory" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="GoUnhandledErrorResult" enabled="true" level="WARNING" enabled_by_default="true">
+      <functions>
+        <function importPath="errors" name="Unwrap" />
+        <function importPath="errors" name="Join" />
+        <function importPath="fmt" name="Errorf" />
+        <function importPath="fmt" name="Println" />
+        <function importPath="errors" name="New" />
+        <function importPath="fmt" name="Print" />
+        <function importPath="fmt" name="Printf" />
+        <function importPath="math/rand" name="Read" />
+        <function importPath="fmt" name="Fprint" />
+      </functions>
+    </inspection_tool>
     <inspection_tool class="GrazieInspection" enabled="false" level="GRAMMAR_ERROR" enabled_by_default="false" />
-    <inspection_tool class="InconsistentLineSeparators" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="IncorrectFormatting" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
     <inspection_tool class="LongLine" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="ProblematicWhitespace" enabled="true" level="WARNING" enabled_by_default="true" />
