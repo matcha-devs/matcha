@@ -1,7 +1,8 @@
 # Menthol
-[![Go](https://github.com/CarlosACJ55/menthol/actions/workflows/go.yml/badge.svg)](https://github.com/CarlosACJ55/menthol/actions/workflows/go.yml)
 
 Menthol is the first truly comprehensive, web-based personal finance tracker and budgeting tool.
+
+[![Go](https://github.com/CarlosACJ55/menthol/actions/workflows/go.yml/badge.svg)](https://github.com/CarlosACJ55/menthol/actions/workflows/go.yml)
 
 ## Goal features:
 * Reliable connections and performance
