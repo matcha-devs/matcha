@@ -30,11 +30,12 @@ Please make sure to update tests as appropriate.
 
 * Web service developed in **Go**
 
-## Authors & Co-owners
+## Authors
 
-* [Seoyoung Cho](https://github.com/seoyoungcho213)
-* [Carlos Cotera](https://github.com/carlosacj55)
-
+* [Seoyoung Cho](https://github.com/seoyoungcho213) **co-owner**
+* [Carlos Cotera](https://github.com/carlosacj55) **co-owner**
+* [Ali A Shah](https://github.com/alishah634)
+* [Andrea Goh](https://github.com/andreag0101)
 
 ## License
 [LICENSE.md](LICENSE.md)
