@@ -8,6 +8,9 @@ import (
 	"net/http"
 	"os"
 	"time"
+
+	//use "go get -u github.com/go-sql-driver/mysql"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 func login(w http.ResponseWriter, r *http.Request) {
@@ -17,6 +20,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("ERROR when parsing file", err)
 		return
 	}
+	fmt.Println("hello")
 	err = t.ExecuteTemplate(w, fileName, nil)
 	if err != nil {
 		fmt.Println("ERROR when executing template", err)
@@ -74,6 +78,17 @@ func timeout(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	//fmt.Println(os.Getenv("MYSQL_PASSWORD"))
+	//pswd := os.Getenv("MYSQL_PASSWORD")
+	//db, err := sql.Open("mysql", "root:"+pswd+"@tcp(localhost:3306)/userdb")
+	//
+	//if err != nil {
+	//	fmt.Println("ERROR when opening database connection", err)
+	//	panic(err.Error())
+	//}
+	//defer db.Close()
+	//fmt.Println("Successfully opened database connection")
+
 	http.HandleFunc("/", handleFunction)
 	http.HandleFunc("/timeout", timeout)
 

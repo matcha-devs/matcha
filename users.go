@@ -2,6 +2,8 @@
 
 package main
 
+var id = 4
+
 func GetUsers() map[int]User {
 	return users
 }
@@ -15,6 +17,8 @@ func GetPassword(id int) string {
 }
 
 func AddUser(user User) {
+	user.ID = id
+	id++
 	users[user.ID] = user
 }
 
