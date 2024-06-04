@@ -46,6 +46,9 @@ func loginSubmit(w http.ResponseWriter, r *http.Request) {
 	db := InitDB() // Retrieve the singleton DB instance
 	username := r.FormValue("username")
 	password := r.FormValue("password")
+	
+	fmt.Println("Username:", username)
+	fmt.Println("Password:", password)
 
 	if userValid, err := checkUser(db, username, password); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

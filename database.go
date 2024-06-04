@@ -17,7 +17,7 @@ func InitDB() *sql.DB {
 	once.Do(func() {
 		var err error
 		pswd := os.Getenv("MYSQL_PASSWORD") // Ensure this environment variable is set
-		dsn := "root:" + pswd + "@tcp(localhost:3306)/userdb"
+		dsn := "root:" + pswd + "@tcp(127.0.0.1:3306)/userdb"
 		instance, err = sql.Open("mysql", dsn)
 		if err != nil {
 			log.Fatalf("Error opening database: %v", err)
