@@ -10,6 +10,7 @@ import (
 	"time"
 
 	//use "go get -u github.com/go-sql-driver/mysql"
+	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -43,30 +44,46 @@ func signup(w http.ResponseWriter) {
 	}
 }
 
-func searchUsername(username string) int {
-	userDB := GetUsers()
-	for _, user := range userDB {
-		if user.Name == username {
-			return user.ID
-		}
-	}
-	return -1
-}
+// searchUsername checks if the username exists in the database and returns the user ID
+// func searchUsername(db *sql.DB, username string) (int, error) {
+// 	var id int
+// 	err := db.QueryRow("SELECT id FROM users WHERE username = ?", username).Scan(&id)
+// 	if err != nil {
+// 		if err == sql.ErrNoRows {
+// 			return -1, nil // User not found
+// 		}
+// 		return -1, err // An error occurred
+// 	}
+// 	return id, nil
+// }
 
 func loginSubmit(w http.ResponseWriter, r *http.Request) {
+	db := InitDB() // Retrieve the singleton DB instance
 	username := r.FormValue("username")
 	password := r.FormValue("password")
 
-	if id := searchUsername(username); id == -1 {
-		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprint(w, "User not found!")
-	} else if GetPassword(id) == password {
+	fmt.Println("Username:", username)
+	fmt.Println("Password:", password)
+
+	if userValid, err := checkUser(db, username, password); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, "Server error")
+	} else if userValid {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, "Logged in successfully!")
 	} else {
-		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprint(w, "Wrong Password")
+		w.WriteHeader(http.StatusUnauthorized)
+		fmt.Fprint(w, "Authentication failed")
 	}
+}
+
+func checkUser(db *sql.DB, username, password string) (bool, error) {
+	var dbPassword string
+	err := db.QueryRow("SELECT password FROM users WHERE username = ?", username).Scan(&dbPassword)
+	if err != nil {
+		return false, err
+	}
+	return dbPassword == password, nil
 }
 
 func signupSubmit() {
@@ -113,19 +130,10 @@ func timeout(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	//fmt.Println(os.Getenv("MYSQL_PASSWORD"))
-	//pswd := os.Getenv("MYSQL_PASSWORD")
-	//db, err := sql.Open("mysql", "root:"+pswd+"@tcp(localhost:3306)/userdb")
-	//
-	//if err != nil {
-	//	fmt.Println("ERROR when opening database connection", err)
-	//	panic(err.Error())
-	//}
-	//defer db.Close()
-	//fmt.Println("Successfully opened database connection")
 
 	http.HandleFunc("/", handleFunction)
 	http.HandleFunc("/timeout", timeout)
+	http.HandleFunc("/login-submit", loginSubmit)
 
 	server := http.Server{
 		Addr:         ":8080",
@@ -133,6 +141,7 @@ func main() {
 		ReadTimeout:  1000000,
 		WriteTimeout: 1000000,
 	}
+
 	if err := server.ListenAndServe(); err != nil {
 		os.Exit(1)
 	}

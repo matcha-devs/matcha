@@ -2,6 +2,10 @@
 
 package main
 
+import (
+	"database/sql"
+)
+
 var id = 4
 
 func GetUsers() map[int]User {
@@ -12,8 +16,14 @@ func GetUser(id int) User {
 	return users[id]
 }
 
-func GetPassword(id int) string {
-	return users[id].Password
+// GetPassword retrieves the password for a given user ID
+func GetPassword(db *sql.DB, id int) (string, error) {
+	var password string
+	err := db.QueryRow("SELECT password FROM users WHERE id = ?", id).Scan(&password)
+	if err != nil {
+		return "", err
+	}
+	return password, nil
 }
 
 func AddUser(user User) {

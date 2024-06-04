@@ -1,4 +1,4 @@
-module github.com/CarlosACJ55/menthol
+module github.com/CarlosACJ55/matcha
 
 go 1.22.2
 

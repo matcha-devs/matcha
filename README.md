@@ -1,10 +1,13 @@
-# Menthol
+# Matcha
 
-Menthol is the first truly comprehensive, web-based personal finance tracker and budgeting tool.
+Matcja is the first truly comprehensive, web-based personal finance tracker and budgeting tool.
 
-[![Go](https://github.com/CarlosACJ55/menthol/actions/workflows/go.yml/badge.svg)](https://github.com/CarlosACJ55/menthol/actions/workflows/go.yml)
+[![Go](https://github.com/CarlosACJ55/matcha/actions/workflows/go.yml/badge.svg)](
+https://github.com/CarlosACJ55/matcha/actions/workflows/go.yml
+)
 
 ## Goal features:
+
 * Reliable connections and performance
 * Net worth trajectory
 * Optimal paycheck allocator
@@ -38,4 +41,5 @@ Please make sure to update tests as appropriate.
 * [Andrea Goh](https://github.com/andreag0101)
 
 ## License
+
 [LICENSE.md](LICENSE.md)
