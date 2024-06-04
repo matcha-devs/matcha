@@ -58,10 +58,12 @@ func signup(w http.ResponseWriter) {
 // }
 
 func loginSubmit(w http.ResponseWriter, r *http.Request) {
-	db := InitDB() // Retrieve the singleton DB instance
+	db := InitDB() // Retrieve the singleton DB instance\
+ 	printDB(db)
+
 	username := r.FormValue("username")
 	password := r.FormValue("password")
-	
+
 	fmt.Println("Username:", username)
 	fmt.Println("Password:", password)
 
@@ -80,10 +82,22 @@ func loginSubmit(w http.ResponseWriter, r *http.Request) {
 func checkUser(db *sql.DB, username, password string) (bool, error) {
 	var dbPassword string
 	err := db.QueryRow("SELECT password FROM users WHERE username = ?", username).Scan(&dbPassword)
+	fmt.Println("DB Password:", dbPassword)
+	fmt.Println("err:", err)
+
 	if err != nil {
 		return false, err
 	}
 	return dbPassword == password, nil
+}
+
+func signupSubmit(w http.ResponseWriter, r *http.Request) {
+	// db := InitDB() // Retrieve the singleton DB instance
+	// Ask the user for their username, email, and password
+	// Call the function addUser(db, username, email, password) this should add that instance of the user to the database
+	// For debuggin purposes, Print out the user's information and Print out the database's information, to confirm that the user was added
+	fmt.Println("Signup Submit")
+	return
 }
 
 func handleFunction(w http.ResponseWriter, r *http.Request) {
@@ -96,6 +110,8 @@ func handleFunction(w http.ResponseWriter, r *http.Request) {
 		loginSubmit(w, r)
 	case "/signup":
 		signup(w)
+	case "/signup-submit":
+		signupSubmit(w, r)
 	default:
 		if _, err := fmt.Fprint(w, "nothing to see here"); err != nil {
 			panic(err)
@@ -125,7 +141,7 @@ func timeout(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	
+
 	http.HandleFunc("/", handleFunction)
 	http.HandleFunc("/timeout", timeout)
 	http.HandleFunc("/login-submit", loginSubmit)
@@ -133,8 +149,8 @@ func main() {
 	server := http.Server{
 		Addr:         ":8080",
 		Handler:      nil,
-		ReadTimeout:  1000000,
-		WriteTimeout: 1000000,
+		ReadTimeout:  1000000, // in ns
+		WriteTimeout: 1000000, // in ns
 	}
 
 	if err := server.ListenAndServe(); err != nil {
