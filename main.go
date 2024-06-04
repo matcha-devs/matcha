@@ -57,7 +57,7 @@ func loginSubmit(w http.ResponseWriter, r *http.Request) {
 func handleFunction(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
 	case "/":
-		if _, err := fmt.Fprint(w, "<h1>Welcome to Menthol!</h1>"); err != nil {
+		if _, err := fmt.Fprint(w, "<h1>Welcome to Matcha!</h1>"); err != nil {
 			panic(err)
 		}
 	case "/login":
@@ -93,10 +93,10 @@ func main() {
 	http.HandleFunc("/timeout", timeout)
 
 	server := http.Server{
-		Addr:         "",
+		Addr:         ":8080",
 		Handler:      nil,
-		ReadTimeout:  1000,
-		WriteTimeout: 1000,
+		ReadTimeout:  1000000, // ns
+		WriteTimeout: 1000000, // ns
 	}
 
 	if err := server.ListenAndServe(); err != nil {
