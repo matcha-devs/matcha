@@ -9,25 +9,15 @@ import (
 	"os"
 	"time"
 
-	//use "go get -u github.com/go-sql-driver/mysql"
 	_ "github.com/go-sql-driver/mysql"
 )
 
 func loginSubmit(w http.ResponseWriter, r *http.Request) {
-
 	username := r.FormValue("username")
 	password := r.FormValue("password")
-
 	fmt.Println("Username:", username)
 	fmt.Println("Password:", password)
-
-	if userValid, err := CheckUser(username, password); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Println(w, "Server error")
-	} else if userValid {
-		w.WriteHeader(http.StatusOK)
-		fmt.Println(w, "Logged in successfully!")
-	} else {
+	if err := AuthenticateLogin(username, password); err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		fmt.Fprint(w, "Authentication failed")
 	}
@@ -35,7 +25,8 @@ func loginSubmit(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "Logged in successfully!")
 }
 
-func signupSubmit( _ http.ResponseWriter, _ *http.Request) {
+func signupSubmit(_ http.ResponseWriter, _ *http.Request) { // change to w and r when used
+	// db := InitDB() // Retrieve the singleton DB instance
 	// Ask the user for their username, email, and password
 	// Call the function addUser(db, username, email, password) this should add that instance of the user to the db
 	// For debugging purposes, Print out the user's information and Print out the database's information, to confirm
@@ -83,11 +74,6 @@ func timeout(w http.ResponseWriter, _ *http.Request) {
 }
 
 func main() {
-
-	http.HandleFunc("/", handleFunction)
-	http.HandleFunc("/timeout", timeout)
-	http.HandleFunc("/login-submit", loginSubmit)
-
 	InitDB()
 	http.HandleFunc("/", handleFunction)
 	http.HandleFunc("/timeout", timeout)

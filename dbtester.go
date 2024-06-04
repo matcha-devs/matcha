@@ -1,7 +1,7 @@
 package main
 
-
-func Tester(){
-	printDB()
-	addUser("carlos","cotera_junior@gmail.com", "MEXICAN" )
+func Tester() error {
+	printUsersTable()
+	err := AddUser("carlos", "cotera_junior@gmail.com", "MEXICAN")
+	return err
 }
