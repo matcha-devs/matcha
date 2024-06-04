@@ -69,17 +69,21 @@ func loginSubmit(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func signupSubmit() {
+}
+
 func handleFunction(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
 	case "/":
 		landing(w)
-
 	case "/login":
 		login(w)
 	case "/login-submit":
 		loginSubmit(w, r)
 	case "/signup":
 		signup(w)
+	case "/signup-submit":
+		signupSubmit(w, r)
 	default:
 		if _, err := fmt.Fprint(w, "nothing to see here"); err != nil {
 			panic(err)
