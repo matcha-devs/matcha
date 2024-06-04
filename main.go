@@ -58,7 +58,9 @@ func signup(w http.ResponseWriter) {
 // }
 
 func loginSubmit(w http.ResponseWriter, r *http.Request) {
-	db := InitDB() // Retrieve the singleton DB instance
+	db := InitDB() // Retrieve the singleton DB instance\
+ 	printDB(db)
+
 	username := r.FormValue("username")
 	password := r.FormValue("password")
 	
@@ -80,6 +82,9 @@ func loginSubmit(w http.ResponseWriter, r *http.Request) {
 func checkUser(db *sql.DB, username, password string) (bool, error) {
 	var dbPassword string
 	err := db.QueryRow("SELECT password FROM users WHERE username = ?", username).Scan(&dbPassword)
+	fmt.Println("DB Password:", dbPassword)
+	fmt.Println("err:", err)
+
 	if err != nil {
 		return false, err
 	}
@@ -134,8 +139,8 @@ func main() {
 	server := http.Server{
 		Addr:         ":8080",
 		Handler:      nil,
-		ReadTimeout:  1000000,
-		WriteTimeout: 1000000,
+		ReadTimeout:  1000000, // in ns
+		WriteTimeout: 1000000, // in ns
 	}
 
 	if err := server.ListenAndServe(); err != nil {
