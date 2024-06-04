@@ -13,8 +13,23 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-func login(w http.ResponseWriter, r *http.Request) {
+func login(w http.ResponseWriter) {
 	var fileName = "login.html"
+	t, err := template.ParseFiles(fileName)
+	if err != nil {
+		fmt.Println("ERROR when parsing file", err)
+		return
+	}
+
+	err = t.ExecuteTemplate(w, fileName, nil)
+	if err != nil {
+		fmt.Println("ERROR when executing template", err)
+		return
+	}
+}
+
+func signup(w http.ResponseWriter) {
+	var fileName = "signup.html"
 	t, err := template.ParseFiles(fileName)
 	if err != nil {
 		fmt.Println("ERROR when parsing file", err)
@@ -57,17 +72,33 @@ func loginSubmit(w http.ResponseWriter, r *http.Request) {
 func handleFunction(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
 	case "/":
-		if _, err := fmt.Fprint(w, "<h1>Welcome to Menthol!</h1>"); err != nil {
-			panic(err)
-		}
+		landing(w)
+
 	case "/login":
-		login(w, r)
+		login(w)
 	case "/login-submit":
 		loginSubmit(w, r)
+	case "/signup":
+		signup(w)
 	default:
 		if _, err := fmt.Fprint(w, "nothing to see here"); err != nil {
 			panic(err)
 		}
+	}
+}
+
+func landing(w http.ResponseWriter) {
+	var fileName = "landing.html"
+	t, err := template.ParseFiles(fileName)
+	if err != nil {
+		fmt.Println("ERROR when parsing file", err)
+		return
+	}
+
+	err = t.ExecuteTemplate(w, fileName, nil)
+	if err != nil {
+		fmt.Println("ERROR when executing template", err)
+		return
 	}
 }
 
@@ -93,12 +124,11 @@ func main() {
 	http.HandleFunc("/timeout", timeout)
 
 	server := http.Server{
-		Addr:         "",
+		Addr:         ":8080",
 		Handler:      nil,
-		ReadTimeout:  1000,
-		WriteTimeout: 1000,
+		ReadTimeout:  1000000,
+		WriteTimeout: 1000000,
 	}
-
 	if err := server.ListenAndServe(); err != nil {
 		os.Exit(1)
 	}
