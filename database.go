@@ -7,33 +7,43 @@ import (
 	"os"
 	"sync"
 
-	// The following imports to use the First database instance:
+	// The following imports to use the First database db:
 	"bufio"
 	f "fmt"
 	"strings"
 )
 
-var once sync.Once
-var instance *sql.DB
+//If you don't have 'userdb' on MySQL, set it to 'true'
+var isFirstdb bool = false
 
-// InitDB returns a singleton database instance
-func InitDB() *sql.DB {
+var once sync.Once
+var db *sql.DB
+
+// InitDB returns a singleton database db
+func InitDB() {
 	once.Do(func() {
 		var err error
 		pswd := os.Getenv("MYSQL_PASSWORD") // Ensure this environment variable is set
 		dsn := "root:" + pswd + "@tcp(127.0.0.1:3306)/userdb"
-		instance, err = sql.Open("mysql", dsn)
+		db, err = sql.Open("mysql", dsn)
 		if err != nil {
 			log.Fatalf("Error opening database: %v", err)
 		}
-		if err = instance.Ping(); err != nil {
+		if err = db.Ping(); err != nil {
 			log.Fatalf("Error connecting to database: %v", err)
 		}
+
+		//If you don't have 'userdb' on MySQL, set it to 'true'
+		if isFirstdb {
+			err := executeSQLFile("init.sql")
+			if err != nil {
+				log.Fatalf("Error executing SQL file: %v", err)
+			}
+		}
 	})
-	return instance
 }
 
-func printDB(db *sql.DB) {
+func printDB() {
 	rows, err := db.Query("SELECT * FROM users")
 	if err != nil {
 		f.Println("ERROR querying database", err)
@@ -51,12 +61,25 @@ func printDB(db *sql.DB) {
 	}
 }
 
-func addUser(db *sql.DB, username string, email string, password string) error {
+func addUser(username string, email string, password string) error {
 	_, err := db.Exec("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", username, email, password)
 	return err
 }
 
-func executeSQLFile(db *sql.DB, filepath string) error {
+func checkUser(username, password string) (bool, error) {
+	var dbPassword string
+	err := db.QueryRow("SELECT password FROM users WHERE username = ?", username).Scan(&dbPassword)
+	f.Println("DB Password:", dbPassword)
+	f.Println("err:", err)
+
+	if err != nil {
+		return false, err
+	}
+	return dbPassword == password, nil
+}
+
+
+func executeSQLFile(filepath string) error {
 	file, err := os.Open(filepath)
 	if err != nil {
 		return err
@@ -85,6 +108,5 @@ func executeSQLFile(db *sql.DB, filepath string) error {
 	if err := scanner.Err(); err != nil {
 		return err
 	}
-
 	return nil
 }

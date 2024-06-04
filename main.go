@@ -5,13 +5,11 @@ package main
 import (
 	f "fmt"
 	"html/template"
-	"log"
 	"net/http"
 	"os"
 	"time"
 
 	//use "go get -u github.com/go-sql-driver/mysql"
-	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -59,8 +57,6 @@ func signup(w http.ResponseWriter) {
 // }
 
 func loginSubmit(w http.ResponseWriter, r *http.Request) {
-	db := InitDB() // Retrieve the singleton DB instance\
-	printDB(db)
 
 	username := r.FormValue("username")
 	password := r.FormValue("password")
@@ -68,7 +64,7 @@ func loginSubmit(w http.ResponseWriter, r *http.Request) {
 	f.Println("Username:", username)
 	f.Println("Password:", password)
 
-	if userValid, err := checkUser(db, username, password); err != nil {
+	if userValid, err := checkUser(username, password); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		f.Println(w, "Server error")
 	} else if userValid {
@@ -80,19 +76,7 @@ func loginSubmit(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func checkUser(db *sql.DB, username, password string) (bool, error) {
-	var dbPassword string
-	err := db.QueryRow("SELECT password FROM users WHERE username = ?", username).Scan(&dbPassword)
-	f.Println("DB Password:", dbPassword)
-	f.Println("err:", err)
-
-	if err != nil {
-		return false, err
-	}
-	return dbPassword == password, nil
-}
-
-func signupSubmit(w http.ResponseWriter, r *http.Request) {
+func signupSubmit( _ http.ResponseWriter, _ *http.Request) {
 	// Ask the user for their username, email, and password
 	// Call the function addUser(db, username, email, password) this should add that instance of the user to the database
 	// For debuggin purposes, Print out the user's information and Print out the database's information, to confirm that the user was added
@@ -141,21 +125,10 @@ func timeout(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	//If you don't have 'userdb' on MySQL, set it to 'true'
-	isFirstInstance := false
-	if isFirstInstance {
-		err := executeSQLFile(instance, "init.sql")
-		if err != nil {
-			log.Fatalf("Error executing SQL file: %v", err)
-		}
-	}
 
-	db := InitDB()
-	printDB(db)
-
-	//http.HandleFunc("/", handleFunction)
-	//http.HandleFunc("/timeout", timeout)
-	//http.HandleFunc("/login-submit", loginSubmit)
+	http.HandleFunc("/", handleFunction)
+	http.HandleFunc("/timeout", timeout)
+	http.HandleFunc("/login-submit", loginSubmit)
 
 	server := http.Server{
 		Addr:         ":8080",
