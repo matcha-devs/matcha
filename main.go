@@ -63,7 +63,7 @@ func loginSubmit(w http.ResponseWriter, r *http.Request) {
 
 	username := r.FormValue("username")
 	password := r.FormValue("password")
-	
+
 	fmt.Println("Username:", username)
 	fmt.Println("Password:", password)
 
@@ -91,17 +91,21 @@ func checkUser(db *sql.DB, username, password string) (bool, error) {
 	return dbPassword == password, nil
 }
 
+func signupSubmit() {
+}
+
 func handleFunction(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
 	case "/":
 		landing(w)
-
 	case "/login":
 		login(w)
 	case "/login-submit":
 		loginSubmit(w, r)
 	case "/signup":
 		signup(w)
+	case "/signup-submit":
+		signupSubmit(w, r)
 	default:
 		if _, err := fmt.Fprint(w, "nothing to see here"); err != nil {
 			panic(err)
@@ -131,7 +135,7 @@ func timeout(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	
+
 	http.HandleFunc("/", handleFunction)
 	http.HandleFunc("/timeout", timeout)
 	http.HandleFunc("/login-submit", loginSubmit)
