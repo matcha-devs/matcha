@@ -32,11 +32,10 @@ func signupSubmit(_ http.ResponseWriter, _ *http.Request) { // change to w and r
 	// For debugging purposes, Print out the user's information and Print out the database's information, to confirm
 	// that the user was added.
 	fmt.Println("Signup Submit")
-	return
 }
 
 func loadPage(w http.ResponseWriter, fileName string) {
-	t, err := template.ParseFiles(fileName + ".html")
+	t, err := template.ParseFiles(fileName)
 	if err != nil {
 		fmt.Println("ERROR when parsing file", err)
 		return
@@ -48,19 +47,22 @@ func loadPage(w http.ResponseWriter, fileName string) {
 }
 
 func handleFunction(w http.ResponseWriter, r *http.Request) {
+	fmt.Printf((r.URL.Path)+"\n")
+
 	switch r.URL.Path {
 	case "/":
-		loadPage(w, "landing")
+		loadPage(w, "landing.html")
 	case "/login":
-		loadPage(w, "login")
+		loadPage(w, "login.html")
 	case "/signup":
-		loadPage(w, "signup")
+		loadPage(w, "signup.html")
 	case "/login-submit":
 		loginSubmit(w, r)
 	case "/signup-submit":
 		signupSubmit(w, r)
 	default:
-		if _, err := fmt.Println(w, "nothing to see here"); err != nil {
+		fmt.Println("PRINTING DEFAULT CASE")
+		if _, err := fmt.Fprint(w, "nothing to see here"); err != nil {
 			panic(err)
 		}
 	}
