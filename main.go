@@ -13,7 +13,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-func login(w http.ResponseWriter, r *http.Request) {
+func login(w http.ResponseWriter) {
 	var fileName = "login.html"
 	t, err := template.ParseFiles(fileName)
 	if err != nil {
