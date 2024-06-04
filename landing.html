@@ -23,7 +23,7 @@
 
     /* Set a style for all buttons */
     button {
-        background-color: #04AA6D;
+        background-color: #d4f3b7;
         color: white;
         padding: 14px 20px;
         margin: 8px 0;
@@ -38,13 +38,13 @@
     }
 
     /* Extra styles for the cancel button */
-    .cancelbtn {
+    .signupbtn {
         padding: 14px 20px;
-        background-color: #f44336;
+        background-color: #bfdaa4;
     }
 
     /* Float cancel and signup buttons and add an equal width */
-    .cancelbtn, .loginbtn {
+    .signupbtn, .loginbtn {
         float: left;
         width: 50%;
     }
@@ -62,7 +62,7 @@
 
     /* Change styles for cancel button and signup button on extra small screens */
     @media screen and (max-width: 300px) {
-        .cancelbtn, .loginbtn {
+        .signupbtn, .loginbtn {
             width: 100%;
         }
     }
@@ -70,13 +70,8 @@
 
 <form action="/login-submit">
     <div class="container">
-        <h1>Login</h1>
-        <label><b>Username</b>
-            <input type="text" placeholder="Enter Username" name="username" required></label>
-        <label><b>Password</b>
-            <input type="password" placeholder="Enter Password" name="password" required>
-            <input type="checkbox" checked="checked" name="remember" style="margin-bottom:15px"> Remember me<br></label>
-        <button type="button" class="cancelbtn">Cancel</button>
+        <h1>Welcome to MATCHA</h1>
+        <button type="button" class="signupbtn">Signup</button>
         <button type="submit" class="loginbtn">Login</button>
     </div>
 </form>
