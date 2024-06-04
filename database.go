@@ -9,51 +9,59 @@ import (
 
 	// The following imports to use the First database instance:
 	"bufio"
-	f "fmt"
+	"fmt"
 	"strings"
 )
 
 var once sync.Once
-var instance *sql.DB
+var db *sql.DB
 
 // InitDB returns a singleton database instance
-func InitDB() *sql.DB {
+func InitDB() {
 	once.Do(func() {
 		var err error
 		pswd := os.Getenv("MYSQL_PASSWORD") // Ensure this environment variable is set
 		dsn := "root:" + pswd + "@tcp(127.0.0.1:3306)/userdb"
-		instance, err = sql.Open("mysql", dsn)
+		db, err = sql.Open("mysql", dsn)
 		if err != nil {
 			log.Fatalf("Error opening database: %v", err)
 		}
-		if err = instance.Ping(); err != nil {
+		if err = db.Ping(); err != nil {
 			log.Fatalf("Error connecting to database: %v", err)
 		}
+
+		err = executeSQLFile(db, "init.sql")
+		if err != nil {
+			log.Fatalf("Error executing SQL file: %v", err)
+		}
 	})
-	return instance
 }
 
 func printDB(db *sql.DB) {
 	rows, err := db.Query("SELECT * FROM users")
 	if err != nil {
-		f.Println("ERROR querying database", err)
+		fmt.Println("ERROR querying database", err)
 	}
 	defer rows.Close()
 
-	f.Println("id | username | email | password")
-	f.Println("---------------------------------")
+	fmt.Println("id | username | email | password")
+	fmt.Println("---------------------------------")
 	for rows.Next() {
 		var user User
 		if err := rows.Scan(&user.id, &user.username, &user.email, &user.pw); err != nil {
-			f.Println("Error scanning row: %v", err)
+			fmt.Println("Error scanning row: %v", err)
 		}
-		f.Println(user.id, user.username, user.email, user.pw)
+		fmt.Println(user.id, user.username, user.email, user.pw)
 	}
 }
 
-func addUser(db *sql.DB, username string, email string, password string) error {
+func AddUser(username string, email string, password string) error {
 	_, err := db.Exec("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", username, email, password)
 	return err
+}
+
+func CheckUser(username string, password string) error {
+	return nil
 }
 
 func executeSQLFile(db *sql.DB, filepath string) error {
@@ -80,7 +88,7 @@ func executeSQLFile(db *sql.DB, filepath string) error {
 			query.Reset() // Reset query buffer for the next statement
 		}
 	}
-	f.Println("SQL file executed successfully")
+	fmt.Println("SQL file executed successfully")
 
 	if err := scanner.Err(); err != nil {
 		return err
