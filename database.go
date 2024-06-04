@@ -42,8 +42,6 @@ func InitDB() *sql.DB {
 	return instance
 }
 
-
-
 func printDB(db *sql.DB) {
 	rows, err := db.Query("SELECT * FROM users")
 	if err != nil {
@@ -53,16 +51,22 @@ func printDB(db *sql.DB) {
 
 	for rows.Next() {
 		var id int
-		var name string
+		var username string
 		var email string
 		var password string
-		err = rows.Scan(&id, &name, &email, &password)
+		err = rows.Scan(&id, &username, &email, &password)
 		if err != nil {
 			log.Fatalf("Error scanning row: %v", err)
 		}
-		log.Printf("User: %d, %s, %s, %s\n", id, name, email, password)
+		log.Printf("User: %d, %s, %s, %s\n", id, username, email, password)
 	}
 }
+
+func addUser(db *sql.DB, username string, email string, password string) error {
+	_, err := db.Exec("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", username, email, password)
+	return err
+}
+
 
 func executeSQLFile(db *sql.DB, filepath string) error {
     file, err := os.Open(filepath)

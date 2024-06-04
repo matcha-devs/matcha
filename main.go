@@ -91,7 +91,13 @@ func checkUser(db *sql.DB, username, password string) (bool, error) {
 	return dbPassword == password, nil
 }
 
-func signupSubmit() {
+func signupSubmit(w http.ResponseWriter, r *http.Request) {
+	// db := InitDB() // Retrieve the singleton DB instance
+	// Ask the user for their username, email, and password
+	// Call the function addUser(db, username, email, password) this should add that instance of the user to the database
+	// For debuggin purposes, Print out the user's information and Print out the database's information, to confirm that the user was added
+	fmt.Println("Signup Submit")
+	return
 }
 
 func handleFunction(w http.ResponseWriter, r *http.Request) {
