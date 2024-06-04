@@ -60,7 +60,7 @@ func handleFunction(w http.ResponseWriter, r *http.Request) {
 	case "/signup-submit":
 		signupSubmit(w, r)
 	default:
-		if _, err := fmt.Fprint(w, "nothing to see here"); err != nil {
+		if _, err := fmt.Println(w, "nothing to see here"); err != nil {
 			panic(err)
 		}
 	}
@@ -70,6 +70,7 @@ func timeout(w http.ResponseWriter, _ *http.Request) {
 	fmt.Println("Timeout Attempt")
 	time.Sleep(2 * time.Second)
 	fmt.Fprint(w, "Did *not* timeout")
+	fmt.Println(w, "Did *not* timeout")
 }
 
 func main() {
