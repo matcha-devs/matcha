@@ -73,7 +73,6 @@ func handleFunction(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
 	case "/":
 		landing(w)
-
 	case "/login":
 		login(w)
 	case "/login-submit":
