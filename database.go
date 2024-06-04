@@ -2,15 +2,15 @@ package main
 
 import (
 	"database/sql"
+	_ "github.com/go-sql-driver/mysql"
 	"log"
 	"os"
 	"sync"
-	_ "github.com/go-sql-driver/mysql"
-	
+
 	// The following imports to use the First database instance:
-	"strings"
-	"fmt"
 	"bufio"
+	f "fmt"
+	"strings"
 )
 
 var once sync.Once
@@ -29,15 +29,6 @@ func InitDB() *sql.DB {
 		if err = instance.Ping(); err != nil {
 			log.Fatalf("Error connecting to database: %v", err)
 		}
-		
-		isFirstInstance := false 
-		// Execute SQL script from file if this is the first time the database is created(or you are running this code):
-		if(isFirstInstance){
-			err = executeSQLFile(instance, "init.sql")
-			if err != nil {
-			 log.Fatalf("Error executing SQL file: %v", err)
-			}
-		}
 	})
 	return instance
 }
@@ -45,20 +36,18 @@ func InitDB() *sql.DB {
 func printDB(db *sql.DB) {
 	rows, err := db.Query("SELECT * FROM users")
 	if err != nil {
-		log.Fatalf("Error querying database: %v", err)
+		f.Println("ERROR querying database", err)
 	}
 	defer rows.Close()
 
+	f.Println("id | username | email | password")
+	f.Println("---------------------------------")
 	for rows.Next() {
-		var id int
-		var username string
-		var email string
-		var password string
-		err = rows.Scan(&id, &username, &email, &password)
-		if err != nil {
-			log.Fatalf("Error scanning row: %v", err)
+		var user User
+		if err := rows.Scan(&user.id, &user.username, &user.email, &user.pw); err != nil {
+			f.Println("Error scanning row: %v", err)
 		}
-		log.Printf("User: %d, %s, %s, %s\n", id, username, email, password)
+		f.Println(user.id, user.username, user.email, user.pw)
 	}
 }
 
@@ -67,36 +56,35 @@ func addUser(db *sql.DB, username string, email string, password string) error {
 	return err
 }
 
-
 func executeSQLFile(db *sql.DB, filepath string) error {
-    file, err := os.Open(filepath)
-    if err != nil {
-        return err
-    }
-    defer file.Close()
+	file, err := os.Open(filepath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
 
-    scanner := bufio.NewScanner(file)
-    var query strings.Builder
+	scanner := bufio.NewScanner(file)
+	var query strings.Builder
 
-    for scanner.Scan() {
-        line := scanner.Text()
-        if strings.HasPrefix(line, "--") { // Skip comments
-            continue
-        }
-        query.WriteString(line)
-        if strings.HasSuffix(line, ";") { // End of SQL statement
-            _, err := db.Exec(query.String())
-            if err != nil {
-                return err
-            }
-            query.Reset() // Reset query buffer for the next statement
-        }
-    }
-	fmt.Println("SQL file executed successfully")	
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "--") { // Skip comments
+			continue
+		}
+		query.WriteString(line)
+		if strings.HasSuffix(line, ";") { // End of SQL statement
+			_, err := db.Exec(query.String())
+			if err != nil {
+				return err
+			}
+			query.Reset() // Reset query buffer for the next statement
+		}
+	}
+	f.Println("SQL file executed successfully")
 
-    if err := scanner.Err(); err != nil {
-        return err
-    }
+	if err := scanner.Err(); err != nil {
+		return err
+	}
 
-    return nil
+	return nil
 }
