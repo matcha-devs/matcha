@@ -30,45 +30,42 @@ func login(w http.ResponseWriter) {
 }
 
 // searchUsername checks if the username exists in the database and returns the user ID
-func searchUsername(db *sql.DB, username string) (int, error) {
-	var id int
-	err := db.QueryRow("SELECT id FROM users WHERE username = ?", username).Scan(&id)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return -1, nil // User not found
-		}
-		return -1, err // An error occurred
-	}
-	return id, nil
-}
+// func searchUsername(db *sql.DB, username string) (int, error) {
+// 	var id int
+// 	err := db.QueryRow("SELECT id FROM users WHERE username = ?", username).Scan(&id)
+// 	if err != nil {
+// 		if err == sql.ErrNoRows {
+// 			return -1, nil // User not found
+// 		}
+// 		return -1, err // An error occurred
+// 	}
+// 	return id, nil
+// }
 
 func loginSubmit(w http.ResponseWriter, r *http.Request) {
-	db := GetDB() // Retrieve the singleton DB instance
+	db := InitDB() // Retrieve the singleton DB instance
 	username := r.FormValue("username")
 	password := r.FormValue("password")
 
-	id, err := searchUsername(db, username)
-	if err != nil {
-		http.Error(w, "Server error", http.StatusInternalServerError)
-		return
-	}
-	if id == -1 {
-		http.Error(w, "User not found!", http.StatusNotFound)
-		return
-	}
-
-	storedPassword, err := GetPassword(db, id)
-	if err != nil {
-		http.Error(w, "Server error", http.StatusInternalServerError)
-		return
-	}
-
-	if storedPassword == password {
-		fmt.Fprint(w, "Logged in successfully!")
+	if userValid, err := checkUser(db, username, password); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, "Server error")
+	} else if userValid {
 		w.WriteHeader(http.StatusOK)
+		fmt.Fprint(w, "Logged in successfully!")
 	} else {
-		http.Error(w, "Wrong password", http.StatusUnauthorized)
+		w.WriteHeader(http.StatusUnauthorized)
+		fmt.Fprint(w, "Authentication failed")
 	}
+}
+
+func checkUser(db *sql.DB, username, password string) (bool, error) {
+	var dbPassword string
+	err := db.QueryRow("SELECT password FROM users WHERE username = ?", username).Scan(&dbPassword)
+	if err != nil {
+		return false, err
+	}
+	return dbPassword == password, nil
 }
 
 func handleFunction(w http.ResponseWriter, r *http.Request) {
@@ -98,6 +95,7 @@ func main() {
 	
 	http.HandleFunc("/", handleFunction)
 	http.HandleFunc("/timeout", timeout)
+	http.HandleFunc("/login-submit", loginSubmit)
 
 	server := http.Server{
 		Addr:         "",
