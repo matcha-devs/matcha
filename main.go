@@ -3,7 +3,7 @@
 package main
 
 import (
-	f "fmt"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -19,13 +19,13 @@ func login(w http.ResponseWriter) {
 	var fileName = "login.html"
 	t, err := template.ParseFiles(fileName)
 	if err != nil {
-		f.Println("ERROR when parsing file", err)
+		fmt.Println("ERROR when parsing file", err)
 		return
 	}
 
 	err = t.ExecuteTemplate(w, fileName, nil)
 	if err != nil {
-		f.Println("ERROR when executing template", err)
+		fmt.Println("ERROR when executing template", err)
 		return
 	}
 }
@@ -34,13 +34,13 @@ func signup(w http.ResponseWriter) {
 	var fileName = "signup.html"
 	t, err := template.ParseFiles(fileName)
 	if err != nil {
-		f.Println("ERROR when parsing file", err)
+		fmt.Println("ERROR when parsing file", err)
 		return
 	}
-	f.Println("hello")
+	fmt.Println("hello")
 	err = t.ExecuteTemplate(w, fileName, nil)
 	if err != nil {
-		f.Println("ERROR when executing template", err)
+		fmt.Println("ERROR when executing template", err)
 		return
 	}
 }
@@ -65,26 +65,26 @@ func loginSubmit(w http.ResponseWriter, r *http.Request) {
 	username := r.FormValue("username")
 	password := r.FormValue("password")
 
-	f.Println("Username:", username)
-	f.Println("Password:", password)
+	fmt.Println("Username:", username)
+	fmt.Println("Password:", password)
 
 	if userValid, err := checkUser(db, username, password); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		f.Println(w, "Server error")
+		fmt.Println(w, "Server error")
 	} else if userValid {
 		w.WriteHeader(http.StatusOK)
-		f.Println(w, "Logged in successfully!")
+		fmt.Println(w, "Logged in successfully!")
 	} else {
 		w.WriteHeader(http.StatusUnauthorized)
-		f.Println(w, "Authentication failed")
+		fmt.Println(w, "Authentication failed")
 	}
 }
 
 func checkUser(db *sql.DB, username, password string) (bool, error) {
 	var dbPassword string
 	err := db.QueryRow("SELECT password FROM users WHERE username = ?", username).Scan(&dbPassword)
-	f.Println("DB Password:", dbPassword)
-	f.Println("err:", err)
+	fmt.Println("DB Password:", dbPassword)
+	fmt.Println("err:", err)
 
 	if err != nil {
 		return false, err
@@ -96,7 +96,7 @@ func signupSubmit(w http.ResponseWriter, r *http.Request) {
 	// Ask the user for their username, email, and password
 	// Call the function addUser(db, username, email, password) this should add that instance of the user to the database
 	// For debuggin purposes, Print out the user's information and Print out the database's information, to confirm that the user was added
-	f.Println("Signup Submit")
+	fmt.Println("Signup Submit")
 	return
 }
 
@@ -113,7 +113,7 @@ func handleFunction(w http.ResponseWriter, r *http.Request) {
 	case "/signup-submit":
 		signupSubmit(w, r)
 	default:
-		if _, err := f.Println(w, "nothing to see here"); err != nil {
+		if _, err := fmt.Println(w, "nothing to see here"); err != nil {
 			panic(err)
 		}
 	}
@@ -123,21 +123,21 @@ func landing(w http.ResponseWriter) {
 	var fileName = "landing.html"
 	t, err := template.ParseFiles(fileName)
 	if err != nil {
-		f.Println("ERROR when parsing file", err)
+		fmt.Println("ERROR when parsing file", err)
 		return
 	}
 
 	err = t.ExecuteTemplate(w, fileName, nil)
 	if err != nil {
-		f.Println("ERROR when executing template", err)
+		fmt.Println("ERROR when executing template", err)
 		return
 	}
 }
 
 func timeout(w http.ResponseWriter, r *http.Request) {
-	f.Println("Timeout Attempt")
+	fmt.Println("Timeout Attempt")
 	time.Sleep(2 * time.Second)
-	f.Println(w, "Did *not* timeout")
+	fmt.Println(w, "Did *not* timeout")
 }
 
 func main() {

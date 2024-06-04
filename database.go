@@ -9,7 +9,7 @@ import (
 
 	// The following imports to use the First database instance:
 	"bufio"
-	f "fmt"
+	"fmt"
 	"strings"
 )
 
@@ -36,18 +36,18 @@ func InitDB() *sql.DB {
 func printDB(db *sql.DB) {
 	rows, err := db.Query("SELECT * FROM users")
 	if err != nil {
-		f.Println("ERROR querying database", err)
+		fmt.Println("ERROR querying database", err)
 	}
 	defer rows.Close()
 
-	f.Println("id | username | email | password")
-	f.Println("---------------------------------")
+	fmt.Println("id | username | email | password")
+	fmt.Println("---------------------------------")
 	for rows.Next() {
 		var user User
 		if err := rows.Scan(&user.id, &user.username, &user.email, &user.pw); err != nil {
-			f.Println("Error scanning row: %v", err)
+			fmt.Println("Error scanning row: %v", err)
 		}
-		f.Println(user.id, user.username, user.email, user.pw)
+		fmt.Println(user.id, user.username, user.email, user.pw)
 	}
 }
 
@@ -80,7 +80,7 @@ func executeSQLFile(db *sql.DB, filepath string) error {
 			query.Reset() // Reset query buffer for the next statement
 		}
 	}
-	f.Println("SQL file executed successfully")
+	fmt.Println("SQL file executed successfully")
 
 	if err := scanner.Err(); err != nil {
 		return err
