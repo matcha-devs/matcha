@@ -79,10 +79,10 @@ func printUsersTable() {
 	fmt.Println("---------------------------------")
 	for rows.Next() {
 		var user User
-		if err := rows.Scan(&user.id, &user.username, &user.email, &user.pw); err != nil {
+		if err := rows.Scan(&user.id, &user.username, &user.email, &user.password); err != nil {
 			fmt.Println("Error scanning row: %v", err)
 		}
-		fmt.Println(user.id, user.username, user.email, user.pw)
+		fmt.Println(user.id, user.username, user.email, user.password)
 	}
 	fmt.Println("==================================")
 
