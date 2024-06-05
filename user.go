@@ -5,6 +5,6 @@ package main
 type User struct {
 	id       int
 	username string
-	pw       string
 	email    string
+	password string
 }

@@ -48,7 +48,6 @@ func loadPage(w http.ResponseWriter, fileName string) {
 
 func handleFunction(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf((r.URL.Path)+"\n")
-
 	switch r.URL.Path {
 	case "/":
 		loadPage(w, "landing.html")
@@ -61,7 +60,6 @@ func handleFunction(w http.ResponseWriter, r *http.Request) {
 	case "/signup-submit":
 		signupSubmit(w, r)
 	default:
-		fmt.Println("PRINTING DEFAULT CASE")
 		if _, err := fmt.Fprint(w, "nothing to see here"); err != nil {
 			panic(err)
 		}
@@ -80,6 +78,7 @@ func main() {
 	http.HandleFunc("/", handleFunction)
 	http.HandleFunc("/timeout", timeout)
 	http.HandleFunc("/login-submit", loginSubmit)
+	
 	server := http.Server{
 		Addr:         ":8080",
 		Handler:      nil,
