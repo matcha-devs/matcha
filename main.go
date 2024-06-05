@@ -25,13 +25,25 @@ func loginSubmit(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "Logged in successfully!")
 }
 
-func signupSubmit(_ http.ResponseWriter, _ *http.Request) { // change to w and r when used
+func signupSubmit(w http.ResponseWriter, r *http.Request) {
 	// db := InitDB() // Retrieve the singleton DB instance
 	// Ask the user for their username, email, and password
 	// Call the function addUser(db, username, email, password) this should add that instance of the user to the db
 	// For debugging purposes, Print out the user's information and Print out the database's information, to confirm
 	// that the user was added.
+	if r.Method != "POST" {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+	email := r.FormValue("email")
+	username := r.FormValue("username")
+	password := r.FormValue("psw")
+	repassword := r.FormValue("psw-repeat")
+	//fmt.Println(email, username, password, repassword)
 	fmt.Println("Signup Submit")
+	if password == repassword {
+		AddUser(username, email, password)
+	}
 }
 
 func loadPage(w http.ResponseWriter, fileName string) {
@@ -75,12 +87,13 @@ func timeout(w http.ResponseWriter, _ *http.Request) {
 
 func main() {
 	InitDB()
-	Tester()
+	printUsersTable()
+	//Tester()
 
 	http.HandleFunc("/", handleFunction)
 	http.HandleFunc("/timeout", timeout)
 	http.HandleFunc("/login-submit", loginSubmit)
-
+	http.HandleFunc("/signup-submit", signupSubmit)
 	server := http.Server{
 		Addr:         ":8080",
 		Handler:      nil,
