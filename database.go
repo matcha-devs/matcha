@@ -12,13 +12,11 @@ import (
 	"fmt"
 )
 
-// If you don't have 'userdb' on MySQL, set it to 'true'
-
 var once sync.Once
 var db *sql.DB
 
-// InitDB returns a singleton database instance
 // InitDB initializes the database connection
+// InitDB returns a singleton database instance
 func InitDB() {
 	once.Do(func() {
 		var err error
@@ -36,25 +34,25 @@ func InitDB() {
 			log.Fatalf("Error connecting to MySQL: %v", err)
 		}
 
-		// Create the userdb if it does not exist
-		_, err = db.Exec("CREATE DATABASE IF NOT EXISTS userdb")
+		// Create the matchadb if it does not exist
+		_, err = db.Exec("CREATE DATABASE IF NOT EXISTS matchadb")
 		if err != nil {
-			log.Fatalf("Error creating database 'userdb': %v", err)
+			log.Fatalf("Error creating database 'matchadb': %v", err)
 		}
 
 		// Close the initial connection and reconnect using the specific database
 		db.Close()
-		userDbDsn := "root:" + password + "@tcp(127.0.0.1:3306)/userdb"
-		db, err = sql.Open("mysql", userDbDsn)
+		matchaDbDsn := "root:" + password + "@tcp(127.0.0.1:3306)/matchadb"
+		db, err = sql.Open("mysql", matchaDbDsn)
 		if err != nil {
-			log.Fatalf("Error opening userdb database: %v", err)
+			log.Fatalf("Error opening matchadb database: %v", err)
 		}
 
 		if err = db.Ping(); err != nil {
-			log.Fatalf("Error connecting to userdb: %v", err)
+			log.Fatalf("Error connecting to matchadb: %v", err)
 		}
 
-		// Execute SQL file to configure the userdb
+		// Execute SQL file to configure the matchadb
 		err = executeSQLFile("init.sql")
 		if err != nil {
 			log.Fatalf("Error executing SQL file 'init.sql': %v", err)

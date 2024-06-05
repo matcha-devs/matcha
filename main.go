@@ -87,7 +87,6 @@ func timeout(w http.ResponseWriter, _ *http.Request) {
 
 func main() {
 	InitDB()
-	printUsersTable()
 	//Tester()
 
 	http.HandleFunc("/", handleFunction)
