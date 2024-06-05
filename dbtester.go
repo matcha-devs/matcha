@@ -1,7 +1,8 @@
 package main
 
-func Tester() error {
+func Tester() {
 	printUsersTable()
-	err := AddUser("notacarlos", "cotera_junior@gmail.com", "MEXICAN")
-	return err
+	printOpenidTable()
+	AddUser("clo", "cotera_hh@gmail.com", "MEXICAN")
+	printUsersTable()
 }

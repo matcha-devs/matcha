@@ -47,7 +47,7 @@ func loadPage(w http.ResponseWriter, fileName string) {
 }
 
 func handleFunction(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf((r.URL.Path)+"\n")
+	fmt.Printf((r.URL.Path) + "\n")
 	switch r.URL.Path {
 	case "/":
 		loadPage(w, "landing.html")
@@ -75,10 +75,12 @@ func timeout(w http.ResponseWriter, _ *http.Request) {
 
 func main() {
 	InitDB()
+	Tester()
+
 	http.HandleFunc("/", handleFunction)
 	http.HandleFunc("/timeout", timeout)
 	http.HandleFunc("/login-submit", loginSubmit)
-	
+
 	server := http.Server{
 		Addr:         ":8080",
 		Handler:      nil,
