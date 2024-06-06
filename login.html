@@ -34,7 +34,7 @@
     }
 
     button:hover {
-        opacity:1;
+        opacity: 1;
     }
 
     /* Extra styles for the cancel button */
@@ -72,14 +72,14 @@
     <div class="container">
         <h1>Login</h1>
         <label><b>Username</b>
-            <input type="text" placeholder="Enter Username" name="username" required></label>
+            <input name="username" placeholder="Enter Username" required type="text"></label>
         <label><b>Password</b>
-            <input type="password" placeholder="Enter Password" name="password" required>
-            <input type="checkbox" checked="checked" name="remember" style="margin-bottom:15px"> Remember me<br></label>
+            <input name="password" placeholder="Enter Password" required type="password">
+            <input checked="checked" name="remember" style="margin-bottom:15px" type="checkbox"> Remember me<br></label>
         <a href="http://localhost:8080/landing">
-            <button type="button" class="cancelbtn">Cancel</button>
+            <button class="cancelbtn" type="button">Cancel</button>
         </a>
-        <button type="submit" class="loginbtn">Login</button>
+        <button class="loginbtn" type="submit">Login</button>
     </div>
 </form>
 </html>

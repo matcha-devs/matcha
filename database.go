@@ -3,13 +3,13 @@ package main
 import (
 	"bufio"
 	"database/sql"
+	"errors"
+	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"log"
 	"os"
 	"strings"
 	"sync"
-
-	"fmt"
 )
 
 var once sync.Once
@@ -34,25 +34,26 @@ func InitDB() {
 			log.Fatalf("Error connecting to MySQL: %v", err)
 		}
 
-		// Create the matchadb if it does not exist
-		_, err = db.Exec("CREATE DATABASE IF NOT EXISTS matchadb")
+		// Create the matcha_db if it does not exist
+		_, err = db.Exec("CREATE DATABASE IF NOT EXISTS matcha_db")
 		if err != nil {
-			log.Fatalf("Error creating database 'matchadb': %v", err)
+			log.Fatalf("Error creating database 'matcha_db': %v", err)
 		}
 
 		// Close the initial connection and reconnect using the specific database
-		db.Close()
-		matchaDbDsn := "root:" + password + "@tcp(127.0.0.1:3306)/matchadb"
+		if err := db.Close(); err != nil {
+			return
+		}
+		matchaDbDsn := "root:" + password + "@tcp(127.0.0.1:3306)/matcha_db"
 		db, err = sql.Open("mysql", matchaDbDsn)
 		if err != nil {
-			log.Fatalf("Error opening matchadb database: %v", err)
+			log.Fatalf("Error opening matcha_db database: %v", err)
 		}
 
 		if err = db.Ping(); err != nil {
-			log.Fatalf("Error connecting to matchadb: %v", err)
+			log.Fatalf("Error connecting to matcha_db: %v", err)
 		}
-
-		// Execute SQL file to configure the matchadb
+		// Execute SQL file to configure the matcha_db
 		err = executeSQLFile("init.sql")
 		if err != nil {
 			log.Fatalf("Error executing SQL file 'init.sql': %v", err)
@@ -78,7 +79,7 @@ func printUsersTable() {
 	for rows.Next() {
 		var user User
 		if err := rows.Scan(&user.id, &user.username, &user.email, &user.password); err != nil {
-			fmt.Println("Error scanning row: %v", err)
+			fmt.Printf("Error scanning row: %v\n", err)
 		}
 		fmt.Println(user.id, user.username, user.email, user.password)
 	}
@@ -104,7 +105,7 @@ func printOpenidTable() {
 	for rows.Next() {
 		var id int
 		if err := rows.Scan(&id); err != nil {
-			fmt.Println("Error scanning row: %v", err)
+			fmt.Printf("Error scanning row: %v\n", err)
 		}
 		fmt.Println(id)
 	}
@@ -120,7 +121,7 @@ func AuthenticateLogin(username, password string) error {
 	if err != nil {
 		return err
 	} else if dbPassword != password {
-		return fmt.Errorf("Invalid password")
+		return fmt.Errorf("invalid password")
 	}
 	return nil
 }
@@ -164,15 +165,11 @@ func executeSQLFile(filepath string) error {
 }
 
 func CheckOpenid() int {
-	var id int = 0
-	//create openid table if it doesn't exist
-	_, err := db.Query("CREATE TABLE IF NOT EXISTS openid ( id INT PRIMARY KEY );")
+	var id = 0
+
+	err := db.QueryRow("SELECT id FROM openid LIMIT 1").Scan(&id)
 	if err != nil {
-		log.Fatalf("Error creating openID table: %v", err)
-	}
-	err = db.QueryRow("SELECT id FROM openid LIMIT 1").Scan(&id)
-	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			fmt.Println("There is no open ID")
 			return 0
 		}

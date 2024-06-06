@@ -1,6 +1,6 @@
 # Matcha
 
-Matcja is the first truly comprehensive, web-based personal finance tracker and budgeting tool.
+Matcha is the first truly comprehensive, web-based personal finance tracker and budgeting tool.
 
 [![Go](https://github.com/CarlosACJ55/matcha/actions/workflows/go.yml/badge.svg)](
 https://github.com/CarlosACJ55/matcha/actions/workflows/go.yml

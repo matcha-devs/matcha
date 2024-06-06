@@ -38,10 +38,10 @@ func signupSubmit(w http.ResponseWriter, r *http.Request) {
 	email := r.FormValue("email")
 	username := r.FormValue("username")
 	password := r.FormValue("psw")
-	repassword := r.FormValue("psw-repeat")
-	//fmt.Println(email, username, password, repassword)
+	repeat := r.FormValue("psw-repeat")
+	//fmt.Println(email, username, password, repeat)
 	fmt.Println("Signup Submit")
-	if password == repassword {
+	if password == repeat {
 		AddUser(username, email, password)
 	}
 }
