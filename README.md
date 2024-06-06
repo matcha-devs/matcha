@@ -2,7 +2,9 @@
 
 Matcha is the first truly comprehensive, web-based personal finance tracker and budgeting tool.
 
-[![Go](https://github.com/CarlosACJ55/matcha/actions/workflows/go.yml/badge.svg)](https://github.com/CarlosACJ55/matcha/actions/workflows/go.yml)
+[![Go](https://github.com/CarlosACJ55/matcha/actions/workflows/go.yml/badge.svg)](
+https://github.com/CarlosACJ55/matcha/actions/workflows/go.yml
+)
 
 ## Goal features:
 
@@ -33,10 +35,10 @@ Please make sure to update tests as appropriate.
 
 ## Authors
 
-* [Seoyoung Cho](https://github.com/seoyoungcho213) **co-owner** (Frontend)
-* [Carlos Cotera](https://github.com/carlosacj55) **co-owner** (Frontend)
-* [Ali A Shah](https://github.com/alishah634)(Frontend)
-* [Andrea Goh](https://github.com/andreag0101)(Frontend)
+* [Seoyoung Cho](https://github.com/seoyoungcho213) **co-owner** (backend)
+* [Carlos Cotera](https://github.com/carlosacj55) **co-owner** (frontend)
+* [Ali A Shah](https://github.com/alishah634) (backend)
+* [Andrea Goh](https://github.com/andreag0101) (frontend)
 
 ## License
 
