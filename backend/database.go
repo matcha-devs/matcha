@@ -1,4 +1,6 @@
-package main
+// Copyright (c) 2024 Seoyoung Cho and Carlos Andres Cotera Jurado.
+
+package backend
 
 import (
 	"bufio"
@@ -60,7 +62,7 @@ func InitDB() {
 	})
 }
 
-func printUsersTable() {
+func PrintUsersTable() {
 	rows, err := db.Query("SELECT * FROM users")
 	if err != nil {
 		fmt.Println("ERROR querying database", err)

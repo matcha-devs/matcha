@@ -4,6 +4,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/CarlosACJ55/matcha/backend"
 	"html/template"
 	"net/http"
 	"os"
@@ -17,7 +18,7 @@ func loginSubmit(w http.ResponseWriter, r *http.Request) {
 	password := r.FormValue("password")
 	fmt.Println("Username:", username)
 	fmt.Println("Password:", password)
-	if err := AuthenticateLogin(username, password); err != nil {
+	if err := backend.AuthenticateLogin(username, password); err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		fmt.Fprint(w, "Authentication failed")
 	}
@@ -42,8 +43,8 @@ func signupSubmit(w http.ResponseWriter, r *http.Request) {
 	//fmt.Println(email, username, password, repeat)
 	fmt.Println("Signup Submit")
 	if password == repeat {
-		AddUser(username, email, password)
-		printUsersTable()
+		backend.AddUser(username, email, password)
+		backend.PrintUsersTable()
 	} else {
 		loadPage(w, "signupfail.html")
 	}
@@ -91,7 +92,7 @@ func timeout(w http.ResponseWriter, _ *http.Request) {
 }
 
 func main() {
-	InitDB()
+	backend.InitDB()
 	//Tester()
 
 	http.HandleFunc("/", handleFunction)
