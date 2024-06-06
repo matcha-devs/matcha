@@ -19,18 +19,17 @@ var db *sql.DB
 // InitDB returns a singleton database instance
 func InitDB() {
 	once.Do(func() {
-		var err error
 		password := os.Getenv("MYSQL_PASSWORD") // Get the database password from environment variables
 		rootDsn := "root:" + password + "@tcp(127.0.0.1:3306)/"
 
 		// Connect to MySQL without specifying a database
-		db, err = sql.Open("mysql", rootDsn)
+		db, err := sql.Open("mysql", rootDsn)
 		if err != nil {
 			log.Fatalf("Error opening database: %v", err)
 		}
 
 		// Ensure connection to MySQL is available
-		if err = db.Ping(); err != nil {
+		if err := db.Ping(); err != nil {
 			log.Fatalf("Error connecting to MySQL: %v", err)
 		}
 
@@ -54,7 +53,7 @@ func InitDB() {
 			log.Fatalf("Error connecting to matcha_db: %v", err)
 		}
 		// Execute SQL file to configure the matcha_db
-		err = executeSQLFile("init.sql")
+		err = executeSQLFile("backend/sql/init.sql")
 		if err != nil {
 			log.Fatalf("Error executing SQL file 'init.sql': %v", err)
 		}
@@ -164,35 +163,30 @@ func executeSQLFile(filepath string) error {
 	return nil
 }
 
-func CheckOpenid() int {
-	var id = 0
-
+func AddUser(username string, email string, password string) error {
+	//checkOpenid
+	var id int
 	err := db.QueryRow("SELECT id FROM openid LIMIT 1").Scan(&id)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			fmt.Println("There is no open ID")
-			return 0
-		}
+	if errors.Is(err, sql.ErrNoRows) {
+		fmt.Println("There is no open ID")
+	} else if err != nil {
 		log.Fatalf("Error retrieving first row of openID table: %v", err)
 	}
-	return id
-}
 
-func AddUser(username string, email string, password string) {
-	//if there is missing ID, set that first
-	id := CheckOpenid()
-	if id != 0 {
-		_, err := db.Exec("INSERT INTO users (id, username, email, password) VALUES (?, ?, ?, ?)", id, username, email, password)
-		if err != nil {
-			log.Fatalf("Error adding user (case 1): %v", err)
-		}
+	query := "INSERT INTO users (username, email, password"
+	if id != 0 { // if there is an open ID, assign it to the new user
+		query += fmt.Sprintf(", id) VALUES (%s, %s, %s, %d)", username, email, password, id)
 	} else {
-		_, err := db.Exec("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", username, email, password)
-		if err != nil {
-			log.Fatalf("Error adding user (case 2): %v", err)
-		}
+		query += fmt.Sprintf(") VALUES (%s, %s, %s)", username, email, password)
 	}
+
+	_, err = db.Exec(query)
+	if err != nil {
+		log.Fatalf("Error adding user : %v\n", err)
+	}
+
 	fmt.Println("User Added Successfully")
+	return err
 }
 
 func FindID(varName string, variable string) int {
@@ -214,14 +208,13 @@ func FindID(varName string, variable string) int {
 }
 
 func DeleteUser(username string) {
-	//add id to openID table
+	// add id to openID table
 	id := FindID("username", username)
 	_, err := db.Exec("INSERT INTO openid (id) VALUES(?);", id)
 	if err != nil {
 		log.Fatalf("Error inserting openID to the table: %v", err)
 	}
 
-	//delete user
 	_, err = db.Exec("DELETE FROM users WHERE username = ?", username)
 	if err != nil {
 		log.Fatalf("Error deleting the user: %v", err)
