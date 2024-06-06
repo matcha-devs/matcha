@@ -17,3 +17,23 @@ VALUES ('Ancient One', 'ancientone@gmail.com', 'pw1'),
        ('Alice', 'alice@example.com', 'pw2'),
        ('Bob', 'bob@example.com', 'pw3'),
        ('Charlie', 'charlie@example.com', 'pw4');
+
+CREATE TABLE IF NOT EXISTS accounts
+(
+    id   INT PRIMARY KEY,
+    bank VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS transactions
+(
+    id       INT PRIMARY KEY,
+    category VARCHAR(255) NOT NULL,
+    amount   INT          NOT NULL,
+    bank     VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS assets
+(
+    id   INT PRIMARY KEY,
+    type VARCHAR(255) NOT NULL
+);
