@@ -43,9 +43,11 @@ func signupSubmit(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Signup Submit")
 	if password == repeat {
 		AddUser(username, email, password)
+		printUsersTable()
+	} else {
+		loadPage(w, "signupfail.html")
 	}
 }
-
 func loadPage(w http.ResponseWriter, fileName string) {
 	t, err := template.ParseFiles(fileName)
 	if err != nil {
@@ -71,6 +73,8 @@ func handleFunction(w http.ResponseWriter, r *http.Request) {
 		loginSubmit(w, r)
 	case "/signup-submit":
 		signupSubmit(w, r)
+	case "/signup-fail":
+		signupSubmit(w, r)
 	default:
 		if _, err := fmt.Fprint(w, "nothing to see here"); err != nil {
 			panic(err)
@@ -93,6 +97,7 @@ func main() {
 	http.HandleFunc("/timeout", timeout)
 	http.HandleFunc("/login-submit", loginSubmit)
 	http.HandleFunc("/signup-submit", signupSubmit)
+
 	server := http.Server{
 		Addr:         ":8080",
 		Handler:      nil,
