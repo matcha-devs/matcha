@@ -19,10 +19,13 @@ func loginSubmit(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Password:", password)
 	if err := AuthenticateLogin(username, password); err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
-		fmt.Fprint(w, "Authentication failed")
+		loadPage(w, "loginfail.html")
+		//fmt.Fprint(w, "Authentication failed")
+	} else {
+		//fmt.Fprint(w, "Logged in successfully!")
+		loadPage(w, "dashboard.html")
+		w.WriteHeader(http.StatusOK)
 	}
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprint(w, "Logged in successfully!")
 }
 
 func signupSubmit(w http.ResponseWriter, r *http.Request) {
@@ -44,6 +47,7 @@ func signupSubmit(w http.ResponseWriter, r *http.Request) {
 	if password == repeat {
 		AddUser(username, email, password)
 		printUsersTable()
+		loadPage(w, "login.html")
 	} else {
 		loadPage(w, "signupfail.html")
 	}
@@ -69,12 +73,12 @@ func handleFunction(w http.ResponseWriter, r *http.Request) {
 		loadPage(w, "login.html")
 	case "/signup":
 		loadPage(w, "signup.html")
-	case "/login-submit":
-		loginSubmit(w, r)
-	case "/signup-submit":
-		signupSubmit(w, r)
-	case "/signup-fail":
-		signupSubmit(w, r)
+	case "/dashboard":
+		loadPage(w, "dashboard.html")
+	case "/settings":
+		loadPage(w, "settings.html")
+	case "/delete-user":
+		DeleteUser(r.FormValue("username"))
 	default:
 		if _, err := fmt.Fprint(w, "nothing to see here"); err != nil {
 			panic(err)
@@ -101,8 +105,8 @@ func main() {
 	server := http.Server{
 		Addr:         ":8080",
 		Handler:      nil,
-		ReadTimeout:  1000000, // in ns
-		WriteTimeout: 1000000, // in ns
+		ReadTimeout:  10000000, // in ns
+		WriteTimeout: 10000000, // in ns
 	}
 	if err := server.ListenAndServe(); err != nil {
 		os.Exit(1)

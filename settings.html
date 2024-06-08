@@ -28,13 +28,20 @@
     .active {
         background-color: #bfdaa4;
     }
+
+    .deluserbtn {
+        padding: 14px 20px;
+        background-color: #f44336;
+    }
 </style>
 <body>
 
 <div class="icon-bar">
-    <a class="active" href="http://localhost:8080/dashboard"><i class="fa fa-home"></i></a>
-    <a href="http://localhost:8080/settings"><i class="fa fa-gear"></i></a>
+    <a href="http://localhost:8080/dashboard"><i class="fa fa-home"></i></a>
+    <a class="active" href="http://localhost:8080/settings"><i class="fa fa-gear"></i></a>
 </div>
-
+<form action="/delete-user">
+    <button type="button" class="deluserbtn">Delete User</button>
+</form>
 </body>
 </html>
