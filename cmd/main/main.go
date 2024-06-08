@@ -54,14 +54,14 @@ func handleFunction(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
 	case "/":
 		loadPage(w, "landing.html")
-	case "/login-submit":
-		loginSubmit(w, r)
 	case "/login":
 		loadPage(w, "login.html")
-	case "/signup-submit":
-		signupSubmit(w, r)
 	case "/signup":
 		loadPage(w, "signup.html")
+	case "/login-submit":
+		loginSubmit(w, r)
+	case "/signup-submit":
+		signupSubmit(w, r)
 	case "/dashboard":
 		loadPage(w, "dashboard.html")
 	case "/settings":

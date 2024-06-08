@@ -1,3 +1,5 @@
+// Copyright (c) 2024 Seoyoung Cho and Carlos Andres Cotera Jurado.
+
 package database
 
 import (
@@ -9,87 +11,55 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
 )
 
+var once sync.Once
 var db *sql.DB
 
-func executeSQLFile(filepath string) error {
-	file, err := os.Open(filepath)
-	if err != nil {
-		return err
-	}
-	defer func(file *os.File) {
-		err := file.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}(file)
-
-	scanner := bufio.NewScanner(file)
-	var query strings.Builder
-
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.HasPrefix(line, "--") { // Skip comments
-			continue
-		}
-		query.WriteString(line)
-		if strings.HasSuffix(line, ";") { // End of SQL statement
-			fmt.Println(query.String())
-			_, err := db.Exec(query.String())
-			if err != nil {
-				return err
-			}
-			query.Reset() // Reset query buffer for the next statement
-		}
-	}
-	fmt.Println("SQL file executed successfully")
-
-	if err := scanner.Err(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
+// InitDB initializes the database connection
+// InitDB returns a singleton database instance
 func InitDB() {
-	password := os.Getenv("MYSQL_PASSWORD")
+	once.Do(func() {
+		password := os.Getenv("MYSQL_PASSWORD") // Get the database password from environment variables
+		rootDsn := "root:" + password + "@tcp(127.0.0.1:3306)/"
 
-	// Connect to MySQL without specifying a database
-	db, err := sql.Open("mysql", "root:"+password+"@tcp(127.0.0.1:3306)/")
-	if err != nil {
-		log.Fatalf("Error opening database: %v", err)
-	}
+		// Connect to MySQL without specifying a database
+		db, err := sql.Open("mysql", rootDsn)
+		if err != nil {
+			log.Fatalf("Error opening database: %v", err)
+		}
 
-	// Ensure connection to MySQL is available
-	if err := db.Ping(); err != nil {
-		log.Fatalf("Error connecting to MySQL: %v", err)
-	}
+		// Ensure connection to MySQL is available
+		if err := db.Ping(); err != nil {
+			log.Fatalf("Error connecting to MySQL: %v", err)
+		}
 
-	// Create the matcha_db if it does not exist
-	_, err = db.Exec("CREATE DATABASE IF NOT EXISTS matcha_db")
-	if err != nil {
-		log.Fatalf("Error creating database 'matcha_db': %v", err)
-	}
+		// Create the matcha_db if it does not exist
+		_, err = db.Exec("CREATE DATABASE IF NOT EXISTS matcha_db")
+		if err != nil {
+			log.Fatalf("Error creating database 'matcha_db': %v", err)
+		}
 
-	// Close the initial connection and reconnect using the specific database
-	if err := db.Close(); err != nil {
-		return
-	}
-	matchaDbDsn := "root:" + password + "@tcp(127.0.0.1:3306)/matcha_db"
-	db, err = sql.Open("mysql", matchaDbDsn)
-	if err != nil {
-		log.Fatalf("Error opening matcha_db database: %v", err)
-	}
+		// Close the initial connection and reconnect using the specific database
+		if err := db.Close(); err != nil {
+			return
+		}
+		matchaDbDsn := "root:" + password + "@tcp(127.0.0.1:3306)/matcha_db"
+		db, err = sql.Open("mysql", matchaDbDsn)
+		if err != nil {
+			log.Fatalf("Error opening matcha_db database: %v", err)
+		}
 
-	if err = db.Ping(); err != nil {
-		log.Fatalf("Error connecting to matcha_db: %v", err)
-	}
-	// Execute SQL file to configure the matcha_db
-	err = executeSQLFile("internal/database/init.sql")
-	if err != nil {
-		log.Fatal("Error executing SQL file 'init.sql': ", err)
-	}
+		if err = db.Ping(); err != nil {
+			log.Fatalf("Error connecting to matcha_db: %v", err)
+		}
+		// Execute SQL file to configure the matcha_db
+		err = executeSQLFile("internal/database/init.sql")
+		if err != nil {
+			log.Fatalf("Error executing SQL file 'init.sql': %v", err)
+		}
+	})
 }
 
 func PrintUsersTable() {
@@ -157,6 +127,44 @@ func AuthenticateLogin(username, password string) error {
 	return nil
 }
 
+func executeSQLFile(filepath string) error {
+	file, err := os.Open(filepath)
+	if err != nil {
+		return err
+	}
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(file)
+
+	scanner := bufio.NewScanner(file)
+	var query strings.Builder
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "--") { // Skip comments
+			continue
+		}
+		query.WriteString(line)
+		if strings.HasSuffix(line, ";") { // End of SQL statement
+			_, err := db.Exec(query.String())
+			if err != nil {
+				return err
+			}
+			query.Reset() // Reset query buffer for the next statement
+		}
+	}
+	fmt.Println("SQL file executed successfully")
+
+	if err := scanner.Err(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func AddUser(username string, email string, password string) error {
 	//checkOpenid
 	var id int
@@ -166,16 +174,20 @@ func AddUser(username string, email string, password string) error {
 	} else if err != nil {
 		log.Fatalf("Error retrieving first row of openID table: %v", err)
 	}
+
 	query := "INSERT INTO users (username, email, password"
 	if id != 0 { // if there is an open ID, assign it to the new user
 		query += fmt.Sprintf(", id) VALUES (%s, %s, %s, %d)", username, email, password, id)
 	} else {
 		query += fmt.Sprintf(") VALUES (%s, %s, %s)", username, email, password)
 	}
+
 	_, err = db.Exec(query)
-	if err == nil {
-		fmt.Println("User Added Successfully")
+	if err != nil {
+		log.Fatalf("Error adding user : %v\n", err)
 	}
+
+	fmt.Println("User Added Successfully")
 	return err
 }
 
