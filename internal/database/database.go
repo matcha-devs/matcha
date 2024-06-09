@@ -3,115 +3,141 @@
 package database
 
 import (
-	"bufio"
 	"database/sql"
 	"errors"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
 	"log"
 	"os"
-	"strings"
-	"sync"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
-var once sync.Once
 var db *sql.DB
 
-// InitDB initializes the database connection
-// InitDB returns a singleton database instance
+// TODO (@Alishah634) null pointer exception here, please fix before re-enabling.
+//func executeSQLFile(filepath string) error {
+//	file, err := os.Open(filepath)
+//	if err != nil {
+//		return err
+//	}
+//	defer func(file *os.File) {
+//		err := file.Close()
+//		if err != nil {
+//			log.Fatal(err)
+//		}
+//	}(file)
+//	scanner := bufio.NewScanner(file)
+//	var query strings.Builder
+//	for scanner.Scan() {
+//		line := scanner.Text()
+//		if strings.HasPrefix(line, "--") { // Skip comments
+//			continue
+//		}
+//		query.WriteString(line)
+//		if strings.HasSuffix(line, ";") { // End of SQL statement
+//			_, err := db.Exec(query.String())
+//			if err != nil {
+//				return err
+//			}
+//			query.Reset() // Reset query buffer for the next statement
+//		}
+//	}
+//	fmt.Println("SQL file executed successfully")
+//	if err := scanner.Err(); err != nil {
+//		return err
+//	}
+//	return nil
+//}
+
 func InitDB() {
-	once.Do(func() {
-		password := os.Getenv("MYSQL_PASSWORD") // Get the database password from environment variables
-		rootDsn := "root:" + password + "@tcp(127.0.0.1:3306)/"
+	password := os.Getenv("MYSQL_PASSWORD")
+	rootDsn := "root:" + password + "@tcp(localhost:3306)/"
 
-		// Connect to MySQL without specifying a database
-		db, err := sql.Open("mysql", rootDsn)
-		if err != nil {
-			log.Fatalf("Error opening database: %v", err)
-		}
-
-		// Ensure connection to MySQL is available
-		if err := db.Ping(); err != nil {
-			log.Fatalf("Error connecting to MySQL: %v", err)
-		}
-
-		// Create the matcha_db if it does not exist
-		_, err = db.Exec("CREATE DATABASE IF NOT EXISTS matcha_db")
-		if err != nil {
-			log.Fatalf("Error creating database 'matcha_db': %v", err)
-		}
-
-		// Close the initial connection and reconnect using the specific database
-		if err := db.Close(); err != nil {
-			return
-		}
-		matchaDbDsn := "root:" + password + "@tcp(127.0.0.1:3306)/matcha_db"
-		db, err = sql.Open("mysql", matchaDbDsn)
-		if err != nil {
-			log.Fatalf("Error opening matcha_db database: %v", err)
-		}
-
-		if err = db.Ping(); err != nil {
-			log.Fatalf("Error connecting to matcha_db: %v", err)
-		}
-		// Execute SQL file to configure the matcha_db
-		err = executeSQLFile("internal/database/init.sql")
-		if err != nil {
-			log.Fatalf("Error executing SQL file 'init.sql': %v", err)
-		}
-	})
-}
-
-func PrintUsersTable() {
-	rows, err := db.Query("SELECT * FROM users")
+	// Connect to MySQL without specifying a database
+	db, err := sql.Open("mysql", rootDsn)
 	if err != nil {
-		fmt.Println("ERROR querying database", err)
+		log.Fatal("Error opening database - ", err)
 	}
-	defer func(rows *sql.Rows) {
-		err := rows.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}(rows)
-
-	fmt.Println("==================================")
-	fmt.Println("id | username | email | password")
-	fmt.Println("---------------------------------")
-	for rows.Next() {
-		var user User
-		if err := rows.Scan(&user.id, &user.username, &user.email, &user.password); err != nil {
-			fmt.Printf("Error scanning row: %v\n", err)
-		}
-		fmt.Println(user.id, user.username, user.email, user.password)
+	if err := db.Ping(); err != nil {
+		log.Fatal("Error connecting to MySQL - ", err)
 	}
-	fmt.Println("==================================")
 
-}
-
-func printOpenidTable() {
-	rows, err := db.Query("SELECT * FROM openid")
+	// Create the matcha_db if it does not exist
+	_, err = db.Exec("CREATE DATABASE IF NOT EXISTS matcha_db;")
 	if err != nil {
-		fmt.Println("ERROR querying database", err)
+		log.Fatal("Error opening matcha_db - ", err)
 	}
-	defer func(rows *sql.Rows) {
-		err := rows.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}(rows)
+	if err := db.Close(); err != nil {
+		return
+	}
+	db, err = sql.Open("mysql", rootDsn+"matcha_db")
+	if err != nil {
+		log.Fatal("Error opening matcha_db - ", err)
+	}
+	if err = db.Ping(); err != nil {
+		log.Fatal("Error connecting to matcha_db - ", err)
+	}
 
-	fmt.Println("========")
-	fmt.Println("Open id")
-	fmt.Println("-------")
-	for rows.Next() {
-		var id int
-		if err := rows.Scan(&id); err != nil {
-			fmt.Printf("Error scanning row: %v\n", err)
-		}
-		fmt.Println(id)
+	text, err := os.ReadFile("internal/database/init.sql")
+	if err != nil {
+		log.Fatal("Error reading init.sql file - ", err)
 	}
-	fmt.Println("========")
+	s := string(text)
+	_, err = db.Exec(s)
+	if err != nil {
+		log.Fatal("Error executing 'init.sql' - ", err)
+	}
 }
+
+//func PrintUsersTable() {
+//	rows, err := db.Query("SELECT * FROM users")
+//	if err != nil {
+//		fmt.Println("ERROR querying database", err)
+//	}
+//	defer func(rows *sql.Rows) {
+//		err := rows.Close()
+//		if err != nil {
+//			log.Fatal(err)
+//		}
+//	}(rows)
+//
+//	fmt.Println("==================================")
+//	fmt.Println("id | username | email | password")
+//	fmt.Println("---------------------------------")
+//	for rows.Next() {
+//		var user User
+//		if err := rows.Scan(&user.id, &user.username, &user.email, &user.password); err != nil {
+//			fmt.Printf("Error scanning row: %v\n", err)
+//		}
+//		fmt.Println(user.id, user.username, user.email, user.password)
+//	}
+//	fmt.Println("==================================")
+//}
+
+//func printOpenidTable() {
+//	rows, err := db.Query("SELECT * FROM openid")
+//	if err != nil {
+//		fmt.Println("ERROR querying database", err)
+//	}
+//	defer func(rows *sql.Rows) {
+//		err := rows.Close()
+//		if err != nil {
+//			log.Fatal(err)
+//		}
+//	}(rows)
+//
+//	fmt.Println("========")
+//	fmt.Println("Open id")
+//	fmt.Println("-------")
+//	for rows.Next() {
+//		var id int˜˜
+//		if err := rows.Scan(&id); err != nil {
+//			fmt.Printf("Error scanning row: %v\n", err)
+//		}
+//		fmt.Println(id)
+//	}
+//	fmt.Println("========")
+//}
 
 func AuthenticateLogin(username, password string) error {
 	var dbPassword string
@@ -124,44 +150,6 @@ func AuthenticateLogin(username, password string) error {
 	} else if dbPassword != password {
 		return fmt.Errorf("invalid password")
 	}
-	return nil
-}
-
-func executeSQLFile(filepath string) error {
-	file, err := os.Open(filepath)
-	if err != nil {
-		return err
-	}
-	defer func(file *os.File) {
-		err := file.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}(file)
-
-	scanner := bufio.NewScanner(file)
-	var query strings.Builder
-
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.HasPrefix(line, "--") { // Skip comments
-			continue
-		}
-		query.WriteString(line)
-		if strings.HasSuffix(line, ";") { // End of SQL statement
-			_, err := db.Exec(query.String())
-			if err != nil {
-				return err
-			}
-			query.Reset() // Reset query buffer for the next statement
-		}
-	}
-	fmt.Println("SQL file executed successfully")
-
-	if err := scanner.Err(); err != nil {
-		return err
-	}
-
 	return nil
 }
 

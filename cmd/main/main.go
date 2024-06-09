@@ -4,10 +4,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/CarlosACJ55/matcha/internal/database"
 	"html/template"
 	"net/http"
 	"os"
+
+	"github.com/CarlosACJ55/matcha/internal/database"
 
 	_ "github.com/go-sql-driver/mysql"
 )
