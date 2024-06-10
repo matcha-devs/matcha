@@ -44,7 +44,6 @@ func loadPage(w http.ResponseWriter, r *http.Request, title string) {
 }
 
 func signupSubmit(w http.ResponseWriter, r *http.Request) {
-	time.Sleep(3 * time.Second)
 	if r.Method != "POST" {
 		http.Redirect(w, r, "/", http.StatusBadRequest)
 		return
