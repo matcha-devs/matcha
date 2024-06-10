@@ -7,7 +7,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/CarlosACJ55/matcha/internal/database"
 
@@ -22,6 +24,7 @@ var (
 	t = template.Must(
 		template.ParseGlob(strings.Join([]string{"internal", "templates", "*.html"}, string(os.PathSeparator))),
 	)
+	maxRouteTime = 1 * time.Second
 )
 
 func signupSubmit(w http.ResponseWriter, r *http.Request) {
@@ -74,9 +77,11 @@ func route(w http.ResponseWriter, r *http.Request) {
 	case "/login_submit":
 		loginSubmit(w, r)
 	case "/delete_user":
-		database.DeleteUser(r.FormValue("username"))
-	case "/timeout":
-		http.Redirect(w, r, "/timeout", http.StatusGatewayTimeout)
+		id, err := strconv.Atoi(r.FormValue("id"))
+		if err != nil {
+			panic(err)
+		}
+		database.DeleteUser(id)
 	case "/":
 		loadPage(w, r, "landing")
 	default:
@@ -89,11 +94,24 @@ func route(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func routeWithTimeout(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	select {
+	case <-ctx.Done():
+		log.Println("Routing was supposed to take", maxRouteTime, "seconds, but was canceled.")
+	default:
+		start := time.Now()
+		route(w, r)
+		log.Println("Routing done after", time.Since(start))
+	}
+}
+
 func main() {
 	database.Init()
-	http.HandleFunc("/", route)
 	server := http.Server{
-		Addr: ":8080",
+		Addr:         ":8080",
+		WriteTimeout: 5 * time.Second,
+		Handler:      http.TimeoutHandler(http.HandlerFunc(routeWithTimeout), maxRouteTime, "Timeout!\n"),
 	}
 	if err := server.ListenAndServe(); err != nil {
 		os.Exit(1)
