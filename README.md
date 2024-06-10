@@ -25,6 +25,8 @@ After cloning this repository, add ```MYSQL_PASSWORD='your sql password'```
 for environment variable in the configuration. Then, run ```go mod tidy```
 to import dependencies. For the directory choose main file path ( ```'file path'\matcha\cmd\main```). 
 
+To test modules, run ```go test ./...``` in the terminal.
+
 ## Contributing
 
 Pull requests are welcome. For major changes, please open an issue first
