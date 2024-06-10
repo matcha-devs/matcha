@@ -19,22 +19,38 @@ import (
 
 var (
 	validEntryPoints = map[string]struct{}{
-		"dashboard": {}, "login": {}, "signup-submit": {}, "login-fail": {}, "signup": {}, "login-submit": {},
-		"signup-fail": {},
+		"signup": {}, "signup-submit": {}, "signup-fail": {},
+		"login": {}, "login-submit": {}, "login-fail": {},
+		"dashboard": {},
 	}
 	t = template.Must(
 		template.ParseGlob(strings.Join([]string{"internal", "templates", "*.html"}, string(os.PathSeparator))),
 	)
-	maxRouteTime = 1 * time.Second
+	maxRouteTime = time.Second
 )
 
+func loadPage(w http.ResponseWriter, r *http.Request, title string) {
+	username := r.FormValue("username")
+	user := database.User{
+		ID:       database.GetUserID("username", username),
+		Username: username,
+		Email:    "test",
+		Password: "test",
+	}
+	err := t.ExecuteTemplate(w, title+".html", user)
+	if err != nil {
+		log.Println("Error executing template - ", err)
+	}
+}
+
 func signupSubmit(w http.ResponseWriter, r *http.Request) {
+	time.Sleep(3 * time.Second)
 	if r.Method != "POST" {
 		http.Redirect(w, r, "/", http.StatusBadRequest)
 		return
 	}
 	password := r.FormValue("psw")
-	if password != r.FormValue("psw_repeat") {
+	if password != r.FormValue("psw-repeat") {
 		fmt.Println("Passwords didnt match.")
 		http.Redirect(w, r, "signup-fail", http.StatusBadRequest)
 		return
@@ -56,20 +72,6 @@ func loginSubmit(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "login-fail", http.StatusUnauthorized) //TODO(@andreag0101): fix failure redirects
 	} else {
 		http.Redirect(w, r, "dashboard?username="+username, http.StatusFound)
-	}
-}
-
-func loadPage(w http.ResponseWriter, r *http.Request, title string) {
-	username := r.FormValue("username")
-	user := database.User{
-		ID:       database.GetUserID("username", username),
-		Username: username,
-		Email:    "test",
-		Password: "test",
-	}
-	err := t.ExecuteTemplate(w, title+".html", user)
-	if err != nil {
-		log.Println("Error executing template - ", err)
 	}
 }
 
@@ -101,7 +103,7 @@ func routeWithTimeout(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	select {
 	case <-ctx.Done():
-		log.Println("Routing was supposed to take", maxRouteTime, "seconds, but was canceled.")
+		log.Println("Routing took longer than", maxRouteTime)
 	default:
 		start := time.Now()
 		route(w, r)
