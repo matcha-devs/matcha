@@ -1,7 +1,7 @@
 package database
 
 import (
-	"github.com/CarlosACJ55/matcha/internal/database"
+	"github.com/matcha-devs/matcha/internal/database"
 )
 
 func _() {

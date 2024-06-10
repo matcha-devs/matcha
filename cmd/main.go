@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/CarlosACJ55/matcha/internal/database"
+	"github.com/matcha-devs/matcha/internal/database"
 
 	_ "github.com/go-sql-driver/mysql"
 )
