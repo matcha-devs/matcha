@@ -99,6 +99,7 @@ func route(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// TODO(@FaaizMemonPurdue): This is an example of how go routines should be used, but we still need server timeouts
 func routeWithTimeout(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	select {
