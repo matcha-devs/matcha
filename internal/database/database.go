@@ -4,7 +4,6 @@ package database
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -14,47 +13,12 @@ import (
 
 var db *sql.DB
 
-// TODO (@Alishah634) null pointer exception here, please fix before re-enabling.
-//func executeSQLFile(filepath string) error {
-//	file, err := os.Open(filepath)
-//	if err != nil {
-//		return err
-//	}
-//	defer func(file *os.File) {
-//		err := file.Close()
-//		if err != nil {
-//			log.Fatal(err)
-//		}
-//	}(file)
-//	scanner := bufio.NewScanner(file)
-//	var query strings.Builder
-//	for scanner.Scan() {
-//		line := scanner.Text()
-//		if strings.HasPrefix(line, "--") { // Skip comments
-//			continue
-//		}
-//		query.WriteString(line)
-//		if strings.HasSuffix(line, ";") { // End of SQL statement
-//			_, err := db.Exec(query.String())
-//			if err != nil {
-//				return err
-//			}
-//			query.Reset() // Reset query buffer for the next statement
-//		}
-//	}
-//	fmt.Println("SQL file executed successfully")
-//	if err := scanner.Err(); err != nil {
-//		return err
-//	}
-//	return nil
-//}
-
 func InitDB() {
 	password := os.Getenv("MYSQL_PASSWORD")
 	rootDsn := "root:" + password + "@tcp(localhost:3306)/"
-
+	var err error
 	// Connect to MySQL without specifying a database
-	db, err := sql.Open("mysql", rootDsn)
+	db, err = sql.Open("mysql", rootDsn)
 	if err != nil {
 		log.Fatal("Error opening database - ", err)
 	}
@@ -70,6 +34,46 @@ func InitDB() {
 	if err := db.Close(); err != nil {
 		return
 	}
+
+	// Connect to matcha_db to run 'init.sql' script
+	db, err = sql.Open("mysql", rootDsn+"matcha_db?multiStatements=true")
+	if err != nil {
+		log.Fatal("Error opening matcha_db - ", err)
+	}
+	if err = db.Ping(); err != nil {
+		log.Fatal("Error connecting to matcha_db - ", err)
+	}
+	text, err := os.ReadFile("internal/database/init.sql")
+	if err != nil {
+		log.Fatal("Error reading init.sql file - ", err)
+	}
+	_, err = db.Exec(string(text))
+	if err != nil {
+		log.Fatal("Error executing 'init.sql' - ", err)
+	}
+
+	// If there is no user, then make test users.
+	var userCount int
+	err = db.QueryRow("SELECT COUNT(*) AS user_count FROM users").Scan(&userCount)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if userCount == 0 {
+		fmt.Println("There is no user. Running 'testusers.sql' to create new users.")
+		text, err := os.ReadFile("internal/database/testusers.sql")
+		if err != nil {
+			log.Fatal("Error reading testusers.sql file - ", err)
+		}
+		_, err = db.Exec(string(text))
+		if err != nil {
+			log.Fatal("Error executing 'testusers.sql' - ", err)
+		}
+	}
+
+	// Re-open the database for the security purpose
+	if err := db.Close(); err != nil {
+		return
+	}
 	db, err = sql.Open("mysql", rootDsn+"matcha_db")
 	if err != nil {
 		log.Fatal("Error opening matcha_db - ", err)
@@ -77,67 +81,7 @@ func InitDB() {
 	if err = db.Ping(); err != nil {
 		log.Fatal("Error connecting to matcha_db - ", err)
 	}
-
-	text, err := os.ReadFile("internal/database/init.sql")
-	if err != nil {
-		log.Fatal("Error reading init.sql file - ", err)
-	}
-	s := string(text)
-	_, err = db.Exec(s)
-	if err != nil {
-		log.Fatal("Error executing 'init.sql' - ", err)
-	}
 }
-
-//func PrintUsersTable() {
-//	rows, err := db.Query("SELECT * FROM users")
-//	if err != nil {
-//		fmt.Println("ERROR querying database", err)
-//	}
-//	defer func(rows *sql.Rows) {
-//		err := rows.Close()
-//		if err != nil {
-//			log.Fatal(err)
-//		}
-//	}(rows)
-//
-//	fmt.Println("==================================")
-//	fmt.Println("id | username | email | password")
-//	fmt.Println("---------------------------------")
-//	for rows.Next() {
-//		var user User
-//		if err := rows.Scan(&user.id, &user.username, &user.email, &user.password); err != nil {
-//			fmt.Printf("Error scanning row: %v\n", err)
-//		}
-//		fmt.Println(user.id, user.username, user.email, user.password)
-//	}
-//	fmt.Println("==================================")
-//}
-
-//func printOpenidTable() {
-//	rows, err := db.Query("SELECT * FROM openid")
-//	if err != nil {
-//		fmt.Println("ERROR querying database", err)
-//	}
-//	defer func(rows *sql.Rows) {
-//		err := rows.Close()
-//		if err != nil {
-//			log.Fatal(err)
-//		}
-//	}(rows)
-//
-//	fmt.Println("========")
-//	fmt.Println("Open id")
-//	fmt.Println("-------")
-//	for rows.Next() {
-//		var id int˜˜
-//		if err := rows.Scan(&id); err != nil {
-//			fmt.Printf("Error scanning row: %v\n", err)
-//		}
-//		fmt.Println(id)
-//	}
-//	fmt.Println("========")
-//}
 
 func AuthenticateLogin(username, password string) error {
 	var dbPassword string
@@ -154,20 +98,24 @@ func AuthenticateLogin(username, password string) error {
 }
 
 func AddUser(username string, email string, password string) error {
-	//checkOpenid
+	// check number of Openid
 	var id int
-	err := db.QueryRow("SELECT id FROM openid LIMIT 1").Scan(&id)
-	if errors.Is(err, sql.ErrNoRows) {
-		fmt.Println("There is no open ID")
-	} else if err != nil {
-		log.Fatalf("Error retrieving first row of openID table: %v", err)
+	err := db.QueryRow("SELECT COUNT(*) AS id_count FROM openid").Scan(&id)
+	if err != nil {
+		log.Fatalf("Error querying openID: %v", err)
+	}
+	if id != 0 { // if there is open ID, assign it to id.
+		err = db.QueryRow("SELECT id FROM openid LIMIT 1").Scan(&id)
+		if err != nil {
+			log.Fatalf("Error retrieving first row of openID table: %v", err)
+		}
 	}
 
 	query := "INSERT INTO users (username, email, password"
-	if id != 0 { // if there is an open ID, assign it to the new user
-		query += fmt.Sprintf(", id) VALUES (%s, %s, %s, %d)", username, email, password, id)
+	if id == 0 { // if there is no open ID, don't assign id to the new user.
+		query += fmt.Sprintf(") VALUES (\"%s\", \"%s\", \"%s\");", username, email, password)
 	} else {
-		query += fmt.Sprintf(") VALUES (%s, %s, %s)", username, email, password)
+		query += fmt.Sprintf(", id) VALUES (\"%s\", \"%s\", \"%s\", %d);", username, email, password, id)
 	}
 
 	_, err = db.Exec(query)

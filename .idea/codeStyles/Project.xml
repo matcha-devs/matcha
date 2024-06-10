@@ -1,5 +1,6 @@
 <component name="ProjectCodeStyleConfiguration">
   <code_scheme name="Project" version="173">
+    <option name="LINE_SEPARATOR" value="&#10;" />
     <GoCodeStyleSettings>
       <option name="REMOVE_REDUNDANT_IMPORT_ALIASES" value="true" />
       <option name="MOVE_ALL_IMPORTS_IN_ONE_DECLARATION" value="true" />
