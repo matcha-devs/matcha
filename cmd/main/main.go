@@ -3,24 +3,26 @@
 package main
 
 import (
-	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/CarlosACJ55/matcha/internal/database"
 
 	_ "github.com/go-sql-driver/mysql"
 )
 
-func loginSubmit(w http.ResponseWriter, r *http.Request) {
-	err := database.AuthenticateLogin(r.FormValue("username"), r.FormValue("password"))
-	if err != nil {
-		http.Redirect(w, r, "/login_fail.html", http.StatusUnauthorized)
-		return
+var (
+	validEntryPoints = map[string]struct{}{
+		"login": {}, "signup": {}, "dashboard": {}, "login_fail": {},
+		"signup_fail": {},
 	}
-	http.Redirect(w, r, "/dashboard.html", http.StatusOK)
-}
+	t = template.Must(
+		template.ParseGlob(strings.Join([]string{"internal", "templates", "*.html"}, string(os.PathSeparator))),
+	)
+)
 
 func signupSubmit(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
@@ -28,66 +30,70 @@ func signupSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	password := r.FormValue("psw")
-	if password != r.FormValue("psw-repeat") {
-		http.Redirect(w, r, "signup_fail.html", http.StatusBadRequest)
+	if password != r.FormValue("psw_repeat") {
+		http.Redirect(w, r, "signup_fail", http.StatusBadRequest)
 		return
 	}
-	err := database.AddUser(r.FormValue("username"), r.FormValue("email"), password)
+	username := r.FormValue("username")
+	err := database.AddUser(username, r.FormValue("email"), password)
 	if err != nil {
-		http.Redirect(w, r, "login_fail.html", http.StatusUnauthorized)
+		http.Redirect(w, r, "login_fail", http.StatusUnauthorized)
+	} else {
+		http.Redirect(w, r, "/dashboard?username="+username, http.StatusFound)
 	}
 }
 
-func loadPage(w http.ResponseWriter, fileName string) {
-	t, err := template.ParseFiles(fileName)
+func loginSubmit(w http.ResponseWriter, r *http.Request) {
+	username := r.FormValue("username")
+	err := database.AuthenticateLogin(username, r.FormValue("password"))
 	if err != nil {
-		fmt.Println("ERROR when parsing file", err)
-		return
-	}
-	err = t.ExecuteTemplate(w, fileName, nil)
-	if err != nil {
-		fmt.Println("ERROR when executing template", err)
+		http.Redirect(w, r, "/login_fail", http.StatusUnauthorized)
+	} else {
+		http.Redirect(w, r, "/dashboard?username="+username, http.StatusFound)
 	}
 }
 
-func handleFunction(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf((r.URL.Path) + "\n")
+func loadPage(w http.ResponseWriter, r *http.Request, title string) {
+	username := r.FormValue("username")
+	user := database.User{
+		ID:       database.GetUserID("username", username),
+		Username: username,
+		Email:    "test",
+		Password: "test",
+	}
+	err := t.ExecuteTemplate(w, title+".html", user)
+	if err != nil {
+		log.Println("Error executing template - ", err)
+	}
+}
+
+func route(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
-	case "/":
-		loadPage(w, "landing.html")
-	case "/login":
-		loadPage(w, "login.html")
-	case "/signup":
-		loadPage(w, "signup.html")
-	case "/login-submit":
-		loginSubmit(w, r)
-	case "/signup-submit":
+	case "/signup_submit":
 		signupSubmit(w, r)
-	case "/dashboard":
-		loadPage(w, "dashboard.html")
-	case "/settings":
-		loadPage(w, "settings.html")
-	case "/delete-user":
+	case "/login_submit":
+		loginSubmit(w, r)
+	case "/delete_user":
 		database.DeleteUser(r.FormValue("username"))
 	case "/timeout":
-		if _, err := fmt.Fprint(w, "connection timed out"); err != nil {
-			panic(err)
-		}
+		http.Redirect(w, r, "/timeout", http.StatusGatewayTimeout)
+	case "/":
+		loadPage(w, r, "landing")
 	default:
-		if _, err := fmt.Fprint(w, "nothing to see here"); err != nil {
-			panic(err)
+		title := strings.TrimLeft(r.URL.Path, "/")
+		if _, exists := validEntryPoints[title]; exists {
+			loadPage(w, r, title)
+		} else {
+			http.NotFound(w, r)
 		}
 	}
 }
 
 func main() {
-	database.InitDB()
-	http.HandleFunc("/", handleFunction)
+	database.Init()
+	http.HandleFunc("/", route)
 	server := http.Server{
-		Addr:         ":8080",
-		Handler:      nil,
-		ReadTimeout:  10000000, // in ns
-		WriteTimeout: 10000000, // in ns
+		Addr: ":8080",
 	}
 	if err := server.ListenAndServe(); err != nil {
 		os.Exit(1)

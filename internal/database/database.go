@@ -4,6 +4,7 @@ package database
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -13,7 +14,7 @@ import (
 
 var db *sql.DB
 
-func InitDB() {
+func Init() {
 	password := os.Getenv("MYSQL_PASSWORD")
 	rootDsn := "root:" + password + "@tcp(localhost:3306)/"
 	var err error
@@ -27,7 +28,7 @@ func InitDB() {
 	}
 
 	// Create the matcha_db if it does not exist
-	_, err = db.Exec("CREATE DATABASE IF NOT EXISTS matcha_db;")
+	_, err = db.Exec("CREATE DATABASE IF NOT EXISTS matcha_db")
 	if err != nil {
 		log.Fatal("Error opening matcha_db - ", err)
 	}
@@ -59,14 +60,14 @@ func InitDB() {
 		log.Fatal(err)
 	}
 	if userCount == 0 {
-		fmt.Println("There is no user. Running 'testusers.sql' to create new users.")
-		text, err := os.ReadFile("internal/database/testusers.sql")
+		fmt.Println("There is no user. Running 'gen_users.sql' to create new users.")
+		text, err := os.ReadFile("internal/database/gen_users.sql")
 		if err != nil {
-			log.Fatal("Error reading testusers.sql file - ", err)
+			log.Fatal("Error reading gen_users.sql file - ", err)
 		}
 		_, err = db.Exec(string(text))
 		if err != nil {
-			log.Fatal("Error executing 'testusers.sql' - ", err)
+			log.Fatal("Error executing 'gen_users.sql' - ", err)
 		}
 	}
 
@@ -86,9 +87,6 @@ func InitDB() {
 func AuthenticateLogin(username, password string) error {
 	var dbPassword string
 	err := db.QueryRow("SELECT password FROM users WHERE username = ?", username).Scan(&dbPassword)
-	fmt.Println("DB Password:", dbPassword)
-	fmt.Println("err:", err)
-
 	if err != nil {
 		return err
 	} else if dbPassword != password {
@@ -113,9 +111,9 @@ func AddUser(username string, email string, password string) error {
 
 	query := "INSERT INTO users (username, email, password"
 	if id == 0 { // if there is no open ID, don't assign id to the new user.
-		query += fmt.Sprintf(") VALUES (\"%s\", \"%s\", \"%s\");", username, email, password)
+		query += fmt.Sprintf(") VALUES (\"%s\", \"%s\", \"%s\")", username, email, password)
 	} else {
-		query += fmt.Sprintf(", id) VALUES (\"%s\", \"%s\", \"%s\", %d);", username, email, password, id)
+		query += fmt.Sprintf(", id) VALUES (\"%s\", \"%s\", \"%s\", %d)", username, email, password, id)
 	}
 
 	_, err = db.Exec(query)
@@ -127,28 +125,19 @@ func AddUser(username string, email string, password string) error {
 	return err
 }
 
-func FindID(varName string, variable string) int {
+func GetUserID(varName string, variable string) int {
 	var id int
-	if varName == "username" {
-		row := db.QueryRow("SELECT id FROM users WHERE username = ?;", variable)
-		err := row.Scan(&id)
-		if err != nil {
-			log.Fatalf("Error finding id using username: %v", err)
-		}
-	} else if varName == "email" {
-		row := db.QueryRow("SELECT id FROM users WHERE email = ?;", variable)
-		err := row.Scan(&id)
-		if err != nil {
-			log.Fatalf("Error finding id using email: %v", err)
-		}
+	err := db.QueryRow(fmt.Sprintf("SELECT id FROM users WHERE %s = ?", varName), variable).Scan(&id)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		log.Println("Error finding id using "+varName+" - ", err)
 	}
 	return id
 }
 
 func DeleteUser(username string) {
 	// add id to openID table
-	id := FindID("username", username)
-	_, err := db.Exec("INSERT INTO openid (id) VALUES(?);", id)
+	id := GetUserID("username", username)
+	_, err := db.Exec("INSERT INTO openid (id) VALUES(?)", id)
 	if err != nil {
 		log.Fatalf("Error inserting openID to the table: %v", err)
 	}
