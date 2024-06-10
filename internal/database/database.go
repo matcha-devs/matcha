@@ -87,40 +87,35 @@ func Init() {
 func AuthenticateLogin(username, password string) error {
 	var dbPassword string
 	err := db.QueryRow("SELECT password FROM users WHERE username = ?", username).Scan(&dbPassword)
-	if err != nil {
-		return err
-	} else if dbPassword != password {
-		return fmt.Errorf("invalid password")
+	if dbPassword != password {
+		log.Println("Invalid password")
 	}
-	return nil
+	return err
+}
+
+func getOpenID() int {
+	var id int
+	err := db.QueryRow("SELECT id FROM openid LIMIT 1").Scan(&id)
+	if id == 0 && !errors.Is(err, sql.ErrNoRows) {
+		log.Fatalf("Error retrieving first row of openID table: %v", err)
+	}
+	return id
 }
 
 func AddUser(username string, email string, password string) error {
-	// check number of Openid
-	var id int
-	err := db.QueryRow("SELECT COUNT(*) AS id_count FROM openid").Scan(&id)
-	if err != nil {
-		log.Fatalf("Error querying openID: %v", err)
-	}
-	if id != 0 { // if there is open ID, assign it to id.
-		err = db.QueryRow("SELECT id FROM openid LIMIT 1").Scan(&id)
-		if err != nil {
-			log.Fatalf("Error retrieving first row of openID table: %v", err)
-		}
-	}
-
-	query := "INSERT INTO users (username, email, password"
-	if id == 0 { // if there is no open ID, don't assign id to the new user.
+	var (
+		query = "INSERT INTO users (username, email, password"
+		id    = getOpenID()
+	)
+	if id == 0 { // if there is no open ID, assign a new id to the user.
 		query += fmt.Sprintf(") VALUES (\"%s\", \"%s\", \"%s\")", username, email, password)
-	} else {
+	} else { // Otherwise, reuse the open ID
 		query += fmt.Sprintf(", id) VALUES (\"%s\", \"%s\", \"%s\", %d)", username, email, password, id)
 	}
-
-	_, err = db.Exec(query)
+	_, err := db.Exec(query)
 	if err != nil {
-		log.Fatalf("Error adding user : %v\n", err)
+		log.Fatal("Error adding user - ", err)
 	}
-
 	fmt.Println("User Added Successfully")
 	return err
 }
@@ -129,21 +124,18 @@ func GetUserID(varName string, variable string) int {
 	var id int
 	err := db.QueryRow(fmt.Sprintf("SELECT id FROM users WHERE %s = ?", varName), variable).Scan(&id)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		log.Println("Error finding id using "+varName+" - ", err)
+		log.Println("Error finding id using ", varName, " - ", err)
 	}
 	return id
 }
 
-func DeleteUser(username string) {
-	// add id to openID table
-	id := GetUserID("username", username)
+func DeleteUser(id int) {
 	_, err := db.Exec("INSERT INTO openid (id) VALUES(?)", id)
 	if err != nil {
-		log.Fatalf("Error inserting openID to the table: %v", err)
+		log.Println("Error inserting openID ", id, " to the table - ", err)
 	}
-
-	_, err = db.Exec("DELETE FROM users WHERE username = ?", username)
+	_, err = db.Exec("DELETE FROM users WHERE id = ?", id)
 	if err != nil {
-		log.Fatalf("Error deleting the user: %v", err)
+		log.Println("Error deleting the user id ", id, " - ", err)
 	}
 }
