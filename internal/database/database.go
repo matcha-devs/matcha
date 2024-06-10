@@ -44,7 +44,7 @@ func Init() {
 	if err = db.Ping(); err != nil {
 		log.Fatal("Error connecting to matcha_db - ", err)
 	}
-	text, err := os.ReadFile("internal/database/init.sql")
+	text, err := os.ReadFile("internal/query/init.sql")
 	if err != nil {
 		log.Fatal("Error reading init.sql file - ", err)
 	}
@@ -61,7 +61,7 @@ func Init() {
 	}
 	if userCount == 0 {
 		fmt.Println("There is no user. Running 'gen_users.sql' to create new users.")
-		text, err := os.ReadFile("internal/database/gen_users.sql")
+		text, err := os.ReadFile("internal/query/gen_users.sql")
 		if err != nil {
 			log.Fatal("Error reading gen_users.sql file - ", err)
 		}

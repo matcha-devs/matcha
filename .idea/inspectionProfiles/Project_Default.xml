@@ -4,7 +4,6 @@
     <inspection_tool class="CustomRegExpInspection" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="EmptyDirectory" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="GrazieInspection" enabled="false" level="GRAMMAR_ERROR" enabled_by_default="false" />
-    <inspection_tool class="InconsistentLineSeparators" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="IncorrectFormatting" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
     <inspection_tool class="LongLine" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="ProblematicWhitespace" enabled="true" level="WARNING" enabled_by_default="true" />
@@ -37,6 +36,8 @@
       </option>
     </inspection_tool>
     <inspection_tool class="SSBasedInspection" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="SqlNoDataSourceInspection" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="SqlResolveInspection" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="TodoComment" enabled="true" level="WARNING" enabled_by_default="true" />
   </profile>
 </component>
