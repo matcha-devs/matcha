@@ -21,6 +21,10 @@ https://github.com/CarlosACJ55/matcha/actions/workflows/go.yml)
 
 Access our service and create your account at https://www.[domain].com
 
+After cloning this repository, add ```MYSQL_PASSWORD='your sql password'```
+for environment variable in the configuration. Then, run ```go mod tidy```
+to import dependencies. For the directory choose main file path ( ```'file path'\matcha\cmd\main```). 
+
 ## Contributing
 
 Pull requests are welcome. For major changes, please open an issue first
