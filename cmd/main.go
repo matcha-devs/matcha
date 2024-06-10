@@ -3,6 +3,7 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -18,8 +19,8 @@ import (
 
 var (
 	validEntryPoints = map[string]struct{}{
-		"login": {}, "signup": {}, "dashboard": {}, "login_fail": {},
-		"signup_fail": {},
+		"dashboard": {}, "login": {}, "signup-submit": {}, "login-fail": {}, "signup": {}, "login-submit": {},
+		"signup-fail": {},
 	}
 	t = template.Must(
 		template.ParseGlob(strings.Join([]string{"internal", "templates", "*.html"}, string(os.PathSeparator))),
@@ -34,13 +35,14 @@ func signupSubmit(w http.ResponseWriter, r *http.Request) {
 	}
 	password := r.FormValue("psw")
 	if password != r.FormValue("psw_repeat") {
-		http.Redirect(w, r, "signup_fail", http.StatusBadRequest)
+		fmt.Println("Passwords didnt match.")
+		http.Redirect(w, r, "signup-fail", http.StatusBadRequest)
 		return
 	}
 	username := r.FormValue("username")
 	err := database.AddUser(username, r.FormValue("email"), password)
 	if err != nil {
-		http.Redirect(w, r, "login_fail", http.StatusUnauthorized)
+		http.Redirect(w, r, "signup-fail", http.StatusUnauthorized)
 	} else {
 		http.Redirect(w, r, "/dashboard?username="+username, http.StatusFound)
 	}
@@ -50,9 +52,10 @@ func loginSubmit(w http.ResponseWriter, r *http.Request) {
 	username := r.FormValue("username")
 	err := database.AuthenticateLogin(username, r.FormValue("password"))
 	if err != nil {
-		http.Redirect(w, r, "/login_fail", http.StatusUnauthorized)
+		log.Println("Login failed:", err)
+		http.Redirect(w, r, "login-fail", http.StatusUnauthorized) //TODO(@andreag0101): fix failure redirects
 	} else {
-		http.Redirect(w, r, "/dashboard?username="+username, http.StatusFound)
+		http.Redirect(w, r, "dashboard?username="+username, http.StatusFound)
 	}
 }
 
@@ -71,21 +74,21 @@ func loadPage(w http.ResponseWriter, r *http.Request, title string) {
 }
 
 func route(w http.ResponseWriter, r *http.Request) {
-	switch r.URL.Path {
-	case "/signup_submit":
+	title := strings.TrimLeft(r.URL.Path, "/")
+	switch title {
+	case "signup-submit":
 		signupSubmit(w, r)
-	case "/login_submit":
+	case "login-submit":
 		loginSubmit(w, r)
-	case "/delete_user":
+	case "delete-user":
 		id, err := strconv.Atoi(r.FormValue("id"))
 		if err != nil {
 			panic(err)
 		}
 		database.DeleteUser(id)
-	case "/":
+	case "":
 		loadPage(w, r, "landing")
 	default:
-		title := strings.TrimLeft(r.URL.Path, "/")
 		if _, exists := validEntryPoints[title]; exists {
 			loadPage(w, r, title)
 		} else {

@@ -88,7 +88,7 @@ func AuthenticateLogin(username, password string) error {
 	var dbPassword string
 	err := db.QueryRow("SELECT password FROM users WHERE username = ?", username).Scan(&dbPassword)
 	if dbPassword != password {
-		log.Println("Invalid password")
+		err = errors.New("invalid password")
 	}
 	return err
 }
