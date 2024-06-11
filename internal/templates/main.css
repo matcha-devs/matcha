@@ -1,3 +1,5 @@
+/* Copyright (c) 2024 Andrea Goh. */
+
 body {
     font-family: Arial, Helvetica, sans-serif;
     color: #505c45
@@ -55,11 +57,33 @@ hr {
     border: 1px solid #bfdaa4;
     margin-bottom: 25px;
 }
+.icon-bar {
+    width: 100%;
+    background-color: #667;
+    overflow: auto;
+}
+
+.icon-bar a {
+    float: left;
+    width: 50%;
+    text-align: center;
+    padding: 12px 0;
+    transition: all 0.3s ease;
+    color: white;
+    font-size: 36px;
+}
+
+.icon-bar a:hover {
+    background-color: #384031;
+}
+
+.active {
+    background-color: #bfdaa4;
+}
 
 /* Change styles for cancel button and signup button on extra small screens */
 @media screen and (max-width: 300px) {
     .btn1, .btn2 {
         width: 100%;
     }
-
 }

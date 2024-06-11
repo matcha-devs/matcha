@@ -1,49 +1,21 @@
+<!-- Copyright (c) 2024 Andrea Goh. -->
+
 <!DOCTYPE html>
 <html lang="en">
 <meta content="width=device-width, initial-scale=1" name="viewport">
-<!--TODO(@andreag0101): move all css into a single, synchronized .css file for all pages to share-->
-<style>
-    body {
-        margin: 0;
-    }
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="main.css">
+    <title>Settings</title>
+</head>
 
-    .icon-bar {
-        width: 100%;
-        background-color: #667;
-        overflow: auto;
-    }
-
-    .icon-bar a {
-        float: left;
-        width: 50%;
-        text-align: center;
-        padding: 12px 0;
-        transition: all 0.3s ease;
-        color: white;
-        font-size: 36px;
-    }
-
-    .icon-bar a:hover {
-        background-color: #384031;
-    }
-
-    .active {
-        background-color: #bfdaa4;
-    }
-
-    .deluserbtn {
-        padding: 14px 20px;
-        background-color: #f44336;
-    }
-</style>
 <body>
-
 <div class="icon-bar">
     <a href="http://localhost:8080/dashboard"><i class="fa fa-home"></i></a>
     <a class="active" href="http://localhost:8080/settings"><i class="fa fa-gear"></i></a>
 </div>
 <form action="/delete-user">
-    <button class="deluserbtn" type="button">Delete User</button>
+    <button class="btn1" type="button">Delete User</button>
 </form>
 </body>
 </html>
