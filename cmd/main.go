@@ -45,21 +45,24 @@ func loadPage(w http.ResponseWriter, r *http.Request, title string) {
 
 func signupSubmit(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
-		http.Redirect(w, r, "/", http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		loadPage(w, r, "/")
 		return
 	}
 	password := r.FormValue("psw")
 	if password != r.FormValue("psw-repeat") {
 		fmt.Println("Passwords didnt match.")
-		http.Redirect(w, r, "signup-fail", http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		loadPage(w, r, "signup-fail")
 		return
 	}
 	username := r.FormValue("username")
 	err := database.AddUser(username, r.FormValue("email"), password)
 	if err != nil {
-		http.Redirect(w, r, "signup-fail", http.StatusUnauthorized)
+		w.WriteHeader(http.StatusUnauthorized)
+		loadPage(w, r, "signup-fail")
 	} else {
-		http.Redirect(w, r, "/dashboard?username="+username, http.StatusFound)
+		http.Redirect(w, r, "dashboard?username="+username, http.StatusFound)
 	}
 }
 
@@ -68,7 +71,8 @@ func loginSubmit(w http.ResponseWriter, r *http.Request) {
 	err := database.AuthenticateLogin(username, r.FormValue("password"))
 	if err != nil {
 		log.Println("Login failed:", err)
-		http.Redirect(w, r, "login-fail", http.StatusUnauthorized) //TODO(@andreag0101): fix failure redirects
+		w.WriteHeader(http.StatusUnauthorized)
+		loadPage(w, r, "login-fail")
 	} else {
 		http.Redirect(w, r, "dashboard?username="+username, http.StatusFound)
 	}
