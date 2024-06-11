@@ -93,6 +93,8 @@ func route(w http.ResponseWriter, r *http.Request) {
 		database.DeleteUser(id)
 	case "":
 		loadPage(w, r, "landing")
+	case "main.css":
+		http.ServeFile(w, r, "internal/templates/main.css")
 	default:
 		if _, exists := validEntryPoints[title]; exists {
 			loadPage(w, r, title)
