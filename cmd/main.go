@@ -17,6 +17,7 @@ import (
 )
 
 var (
+	app              = NewApplication(database.Init())
 	validEntryPoints = map[string]struct{}{
 		"signup": {}, "signup-submit": {}, "signup-fail": {},
 		"login": {}, "login-submit": {}, "login-fail": {},
@@ -31,7 +32,7 @@ var (
 func loadPage(w http.ResponseWriter, r *http.Request, title string) {
 	username := r.FormValue("username")
 	user := database.User{
-		ID:       database.GetUserID("username", username),
+		ID:       app.db.GetUserID("username", username),
 		Username: username,
 		Email:    "test",
 		Password: "test",
@@ -56,13 +57,11 @@ func signupSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	username := r.FormValue("username")
-	err := database.AddUser(username, r.FormValue("email"), password)
-	fmt.Print()
+	err := app.db.AddUser(username, r.FormValue("email"), password)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		loadPage(w, r, "signup-fail")
 	} else {
-		//http.Redirect(w, r, "dashboard?username="+username, http.StatusFound)
 		loadPage(w, r, "dashboard")
 	}
 }
@@ -74,13 +73,12 @@ func loginSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	username := r.FormValue("username")
-	err := database.AuthenticateLogin(username, r.FormValue("password"))
+	err := app.db.AuthenticateLogin(username, r.FormValue("password"))
 	if err != nil {
 		log.Println("Login failed:", err)
 		w.WriteHeader(http.StatusUnauthorized)
 		loadPage(w, r, "login-fail")
 	} else {
-		//http.Redirect(w, r, "dashboard?username="+username, http.StatusFound)
 		loadPage(w, r, "dashboard")
 	}
 }
@@ -92,14 +90,17 @@ func deleteUser(w http.ResponseWriter, r *http.Request) {
 	}
 	username := r.FormValue("username")
 	password := r.FormValue("password")
-	err := database.AuthenticateLogin(username, password)
+	err := app.db.AuthenticateLogin(username, password)
 	if err != nil {
 		log.Println("Delete User failed:", err)
 		w.WriteHeader(http.StatusUnauthorized)
 		loadPage(w, r, "settings")
 	} else {
-		id := database.GetUserID("username", username)
-		database.DeleteUser(id)
+		id := app.db.GetUserID("username", username)
+		err := app.db.DeleteUser(id)
+		if err != nil {
+			log.Println("Delete User failed:", err)
+		}
 	}
 }
 
@@ -140,7 +141,6 @@ func routeWithTimeout(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	database.Init()
 	server := http.Server{
 		Addr:         ":8080",
 		WriteTimeout: 5 * time.Second,
