@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -21,7 +20,7 @@ var (
 	validEntryPoints = map[string]struct{}{
 		"signup": {}, "signup-submit": {}, "signup-fail": {},
 		"login": {}, "login-submit": {}, "login-fail": {},
-		"dashboard": {},
+		"dashboard": {}, "settings": {}, "delete-user": {},
 	}
 	t = template.Must(
 		template.ParseGlob(strings.Join([]string{"internal", "templates", "*.html"}, string(os.PathSeparator))),
@@ -58,15 +57,22 @@ func signupSubmit(w http.ResponseWriter, r *http.Request) {
 	}
 	username := r.FormValue("username")
 	err := database.AddUser(username, r.FormValue("email"), password)
+	fmt.Print()
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		loadPage(w, r, "signup-fail")
 	} else {
-		http.Redirect(w, r, "dashboard?username="+username, http.StatusFound)
+		//http.Redirect(w, r, "dashboard?username="+username, http.StatusFound)
+		loadPage(w, r, "dashboard")
 	}
 }
 
 func loginSubmit(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		w.WriteHeader(http.StatusBadRequest)
+		loadPage(w, r, "/")
+		return
+	}
 	username := r.FormValue("username")
 	err := database.AuthenticateLogin(username, r.FormValue("password"))
 	if err != nil {
@@ -74,23 +80,39 @@ func loginSubmit(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 		loadPage(w, r, "login-fail")
 	} else {
-		http.Redirect(w, r, "dashboard?username="+username, http.StatusFound)
+		//http.Redirect(w, r, "dashboard?username="+username, http.StatusFound)
+		loadPage(w, r, "dashboard")
+	}
+}
+func deleteUser(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		w.WriteHeader(http.StatusBadRequest)
+		loadPage(w, r, "/")
+		return
+	}
+	username := r.FormValue("username")
+	password := r.FormValue("password")
+	err := database.AuthenticateLogin(username, password)
+	if err != nil {
+		log.Println("Delete User failed:", err)
+		w.WriteHeader(http.StatusUnauthorized)
+		loadPage(w, r, "settings")
+	} else {
+		id := database.GetUserID("username", username)
+		database.DeleteUser(id)
 	}
 }
 
 func route(w http.ResponseWriter, r *http.Request) {
 	title := strings.TrimLeft(r.URL.Path, "/")
+	fmt.Println(title)
 	switch title {
 	case "signup-submit":
 		signupSubmit(w, r)
 	case "login-submit":
 		loginSubmit(w, r)
 	case "delete-user":
-		id, err := strconv.Atoi(r.FormValue("id"))
-		if err != nil {
-			panic(err)
-		}
-		database.DeleteUser(id)
+		deleteUser(w, r)
 	case "":
 		loadPage(w, r, "landing")
 	case "main.css":

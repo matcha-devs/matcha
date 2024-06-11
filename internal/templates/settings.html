@@ -14,8 +14,18 @@
     <a href="http://localhost:8080/dashboard"><i class="fa fa-home"></i></a>
     <a class="active" href="http://localhost:8080/settings"><i class="fa fa-gear"></i></a>
 </div>
-<form action="/delete-user">
-    <button class="btn1" type="button">Delete User</button>
+
+<form method="POST" action="/delete-user">
+    <div class="container">
+        <h1>Delete User</h1>
+        <hr>
+        <label><b>Username</b>
+            <input name="username" placeholder="Enter Username" required type="text"></label>
+        <label><b>Password</b>
+            <input name="password" placeholder="Enter Password" required type="password"></label>
+        <button class="btn1" type="submit">Delete User</button>
+    </div>
 </form>
+
 </body>
 </html>
