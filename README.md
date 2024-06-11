@@ -23,7 +23,10 @@ Access our service and create your account at https://www.[domain].com
 
 After cloning this repository, add ```MYSQL_PASSWORD='your sql password'```
 for environment variable in the configuration. Then, run ```go mod tidy```
-to import dependencies. For the directory choose main file path ( ```'file path'\matcha\cmd\main```). 
+to import dependencies. For the directory choose main file path ( ```'file path'\matcha\cmd\main```).
+
+Run this to prevent tracking and modifying of the common config file:
+```git update-index --skip-worktree .idea/runConfigurations/go_build_github_com_matcha_devs_matcha_cmd.xml```
 
 To test modules, run ```go test ./...``` in the terminal.
 

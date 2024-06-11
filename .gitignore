@@ -65,7 +65,6 @@ xcuserdata/
 .idea/**/dictionaries
 .idea/**/shelf
 .idea/git_toolbox_prj.xml
-.idea/**/go_build_github_com_matcha_devs_matcha_cmd.xml
 
 # AWS User-specific
 .idea/**/aws.xml
