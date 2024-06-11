@@ -139,3 +139,5 @@ func DeleteUser(id int) {
 		log.Println("Error deleting the user id ", id, " - ", err)
 	}
 }
+
+//TODO(): make a db.Close()
