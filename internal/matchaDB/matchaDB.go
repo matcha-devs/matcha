@@ -1,6 +1,6 @@
 // Copyright (c) 2024 Seoyoung Cho and Carlos Andres Cotera Jurado.
 
-package database
+package matchaDB
 
 import (
 	"database/sql"
@@ -19,10 +19,10 @@ type MatchaDB struct {
 func Init() *MatchaDB {
 	password := os.Getenv("MYSQL_PASSWORD")
 	rootDsn := "root:" + password + "@tcp(localhost:3306)/"
-	// Connect to MySQL without specifying a database
+	// Connect to MySQL without specifying a matchaDB
 	db, err := sql.Open("mysql", rootDsn)
 	if err != nil {
-		log.Fatal("Error opening database - ", err)
+		log.Fatal("Error opening matchaDB - ", err)
 	}
 	if err := db.Ping(); err != nil {
 		log.Fatal("Error connecting to MySQL - ", err)
@@ -45,7 +45,7 @@ func Init() *MatchaDB {
 	if err = db.Ping(); err != nil {
 		log.Fatal("Error connecting to Database - ", err)
 	}
-	text, err := os.ReadFile("internal/query/init.sql")
+	text, err := os.ReadFile("internal/queries/init.sql")
 	if err != nil {
 		log.Fatal("Error reading init.sql file - ", err)
 	}
@@ -62,7 +62,7 @@ func Init() *MatchaDB {
 	}
 	if userCount == 0 {
 		fmt.Println("There is no user. Running 'gen_users.sql' to create new users.")
-		text, err := os.ReadFile("internal/query/gen_users.sql")
+		text, err := os.ReadFile("internal/queries/gen_users.sql")
 		if err != nil {
 			log.Fatal("Error reading gen_users.sql file - ", err)
 		}
@@ -72,7 +72,7 @@ func Init() *MatchaDB {
 		}
 	}
 
-	// Re-open the database for the security purpose
+	// Re-open the matchaDB for the security purpose
 	if err := db.Close(); err != nil {
 		log.Println("Error closing Database - ", err)
 	}
@@ -86,35 +86,35 @@ func Init() *MatchaDB {
 	return &MatchaDB{db}
 }
 
-func (self MatchaDB) AuthenticateLogin(username string, password string) error {
+func (matcha MatchaDB) AuthenticateLogin(username string, password string) error {
 	var dbPassword string
-	err := self.db.QueryRow("SELECT password FROM users WHERE username = ?", username).Scan(&dbPassword)
+	err := matcha.db.QueryRow("SELECT password FROM users WHERE username = ?", username).Scan(&dbPassword)
 	if dbPassword != password {
 		err = errors.New("invalid password")
 	}
 	return err
 }
 
-func (self MatchaDB) getOpenID() int {
+func (matcha MatchaDB) getOpenID() int {
 	var id int
-	err := self.db.QueryRow("SELECT id FROM openid LIMIT 1").Scan(&id)
+	err := matcha.db.QueryRow("SELECT id FROM openid LIMIT 1").Scan(&id)
 	if id == 0 && !errors.Is(err, sql.ErrNoRows) {
 		log.Fatalf("Error retrieving first row of openID table: %v", err)
 	}
 	return id
 }
 
-func (self MatchaDB) AddUser(username string, email string, password string) error {
+func (matcha MatchaDB) AddUser(username string, email string, password string) error {
 	var (
 		query = "INSERT INTO users (username, email, password"
-		id    = self.getOpenID()
+		id    = matcha.getOpenID()
 	)
 	if id == 0 { // if there is no open ID, assign a new id to the user.
 		query += fmt.Sprintf(") VALUES (\"%s\", \"%s\", \"%s\")", username, email, password)
 	} else { // Otherwise, reuse the open ID
 		query += fmt.Sprintf(", id) VALUES (\"%s\", \"%s\", \"%s\", %d)", username, email, password, id)
 	}
-	_, err := self.db.Exec(query)
+	_, err := matcha.db.Exec(query)
 	if err != nil {
 		log.Fatal("Error adding user - ", err)
 	}
@@ -122,22 +122,22 @@ func (self MatchaDB) AddUser(username string, email string, password string) err
 	return err
 }
 
-func (self MatchaDB) GetUserID(varName string, variable string) int {
+func (matcha MatchaDB) GetUserID(varName string, variable string) int {
 	var id int
-	err := self.db.QueryRow(fmt.Sprintf("SELECT id FROM users WHERE %s = ?", varName), variable).Scan(&id)
+	err := matcha.db.QueryRow(fmt.Sprintf("SELECT id FROM users WHERE %s = ?", varName), variable).Scan(&id)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Println("Error finding id using ", varName, " - ", err)
 	}
 	return id
 }
 
-func (self MatchaDB) DeleteUser(id int) error {
-	_, err := self.db.Exec("INSERT INTO openid (id) VALUES(?)", id)
+func (matcha MatchaDB) DeleteUser(id int) error {
+	_, err := matcha.db.Exec("INSERT INTO openid (id) VALUES(?)", id)
 	if err != nil {
 		log.Println("Error inserting openID ", id, " to the table - ", err)
 		return err
 	}
-	_, err = self.db.Exec("DELETE FROM users WHERE id = ?", id)
+	_, err = matcha.db.Exec("DELETE FROM users WHERE id = ?", id)
 	if err != nil {
 		log.Println("Error deleting the user id ", id, " - ", err)
 		return err
@@ -145,9 +145,9 @@ func (self MatchaDB) DeleteUser(id int) error {
 	return nil
 }
 
-func (self MatchaDB) Close() error {
-	if err := self.db.Close(); err != nil {
-		log.Println("mysqldb close failure: %v", err)
+func (matcha MatchaDB) Close() error {
+	if err := matcha.db.Close(); err != nil {
+		log.Println("mysqldb close failure:", err)
 		return err
 	}
 	return nil
