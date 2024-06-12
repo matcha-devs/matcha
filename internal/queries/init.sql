@@ -2,9 +2,9 @@
 CREATE TABLE IF NOT EXISTS users
 (
     id         BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    username   VARCHAR(255) NOT NULL UNIQUE,
-    email      VARCHAR(255) NOT NULL UNIQUE,
-    password   VARCHAR(255) NOT NULL,
+    username   VARCHAR(255)        NOT NULL UNIQUE,
+    email      VARCHAR(255)        NOT NULL UNIQUE,
+    password   VARCHAR(255)        NOT NULL,
     created_at timestamp DEFAULT NOW()
 );
 
@@ -24,8 +24,8 @@ CREATE TABLE IF NOT EXISTS assets
 
 CREATE TABLE IF NOT EXISTS liquid
 (
-    id   INT UNSIGNED PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
+    id         INT UNSIGNED PRIMARY KEY,
+    name       VARCHAR(255) NOT NULL,
     created_at timestamp DEFAULT NOW()
 );
 

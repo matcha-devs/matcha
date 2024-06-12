@@ -3,7 +3,6 @@
 package main
 
 import (
-	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -11,27 +10,27 @@ import (
 	"strings"
 	"time"
 
-	"github.com/matcha-devs/matcha/internal/database"
+	"github.com/matcha-devs/matcha/internal/matchaDB"
 
 	_ "github.com/go-sql-driver/mysql"
 )
 
 var (
-	app              = NewApplication(database.Init())
+	app          = NewApplication(matchaDB.Init())
+	maxRouteTime = time.Second
+	t            = template.Must(
+		template.ParseGlob(strings.Join([]string{"internal", "templates", "*.html"}, string(os.PathSeparator))),
+	)
 	validEntryPoints = map[string]struct{}{
 		"signup": {}, "signup-submit": {}, "signup-fail": {},
 		"login": {}, "login-submit": {}, "login-fail": {},
 		"dashboard": {}, "settings": {}, "delete-user": {},
 	}
-	t = template.Must(
-		template.ParseGlob(strings.Join([]string{"internal", "templates", "*.html"}, string(os.PathSeparator))),
-	)
-	maxRouteTime = time.Second
 )
 
 func loadPage(w http.ResponseWriter, r *http.Request, title string) {
 	username := r.FormValue("username")
-	user := database.User{
+	user := matchaDB.User{
 		ID:       app.db.GetUserID("username", username),
 		Username: username,
 		Email:    "test",
@@ -51,7 +50,7 @@ func signupSubmit(w http.ResponseWriter, r *http.Request) {
 	}
 	password := r.FormValue("psw")
 	if password != r.FormValue("psw-repeat") {
-		fmt.Println("Passwords didnt match.")
+		log.Println("Passwords didnt match.")
 		w.WriteHeader(http.StatusBadRequest)
 		loadPage(w, r, "signup-fail")
 		return
@@ -82,6 +81,7 @@ func loginSubmit(w http.ResponseWriter, r *http.Request) {
 		loadPage(w, r, "dashboard")
 	}
 }
+
 func deleteUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		w.WriteHeader(http.StatusBadRequest)
@@ -105,24 +105,29 @@ func deleteUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func route(w http.ResponseWriter, r *http.Request) {
-	title := strings.TrimLeft(r.URL.Path, "/")
-	fmt.Println(title)
-	switch title {
+	path := strings.TrimLeft(r.URL.Path, string(os.PathSeparator))
+	log.Println("Routing {" + path + "}")
+	switch path {
+	case "":
+		loadPage(w, r, "index")
 	case "signup-submit":
 		signupSubmit(w, r)
 	case "login-submit":
 		loginSubmit(w, r)
 	case "delete-user":
 		deleteUser(w, r)
-	case "":
-		loadPage(w, r, "landing")
-	case "main.css":
-		http.ServeFile(w, r, "internal/templates/main.css")
 	default:
-		if _, exists := validEntryPoints[title]; exists {
-			loadPage(w, r, title)
-		} else {
+		_, exists := validEntryPoints[path]
+		_, err := os.Stat(path)
+		switch {
+		case exists:
+			loadPage(w, r, path)
+		case err == nil:
+			http.ServeFile(w, r, path)
+		case os.IsNotExist(err):
 			http.NotFound(w, r)
+		default:
+			log.Println(err)
 		}
 	}
 }
@@ -142,11 +147,23 @@ func routeWithTimeout(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	server := http.Server{
-		Addr:         ":8080",
-		WriteTimeout: 5 * time.Second,
-		Handler:      http.TimeoutHandler(http.HandlerFunc(routeWithTimeout), maxRouteTime, "Timeout!\n"),
+		Addr:                         ":8080",
+		Handler:                      http.TimeoutHandler(http.HandlerFunc(routeWithTimeout), maxRouteTime, ""),
+		DisableGeneralOptionsHandler: false,
+		TLSConfig:                    nil,
+		ReadTimeout:                  time.Second,
+		ReadHeaderTimeout:            2 * time.Second,
+		WriteTimeout:                 time.Second,
+		IdleTimeout:                  30 * time.Second,
+		MaxHeaderBytes:               0,
+		TLSNextProto:                 nil,
+		ConnState:                    nil,
+		ErrorLog:                     nil,
+		BaseContext:                  nil,
+		ConnContext:                  nil,
 	}
+	log.Println("Starting the server on", server.Addr)
 	if err := server.ListenAndServe(); err != nil {
-		os.Exit(1)
+		panic(err)
 	}
 }
