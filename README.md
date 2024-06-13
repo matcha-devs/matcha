@@ -27,25 +27,28 @@ Pull requests are welcome. For major changes, please open an issue first
 to discuss what you would like to change.
 Please make sure to update tests as appropriate.
 
-After cloning this repository, add ```MYSQL_PASSWORD='your sql password'```
-for environment variable in the configuration. Then, run ```go mod tidy```
-to import dependencies. For the directory choose main file path ( ```'file path'\matcha\cmd\main```).
+To prevent tracking/modifying the common config file, **please run this command after cloning**:
 
-Run this to prevent tracking and modifying of the common config file:
-```git update-index --skip-worktree .idea/runConfigurations/go_build_github_com_matcha_devs_matcha_cmd.xml```
+```git update-index --skip-worktree .idea/runConfigurations/go_build_github_com_matcha_devs_matcha.xml```
 
-To test modules, run ```go test ./...``` in the terminal.
+Then, **add** ```MYSQL_PASSWORD=[your SQL password]``` to your **environment variables** in the **config file**.
+
+Then, **run**: ```go mod tidy```to import dependencies.
+
+To test modules, *run*: ```go test ./...```.
 
 ## Dependencies
 
 * Web service developed in **Go**
+* Database implemented with **MySQL**
 
 ## Authors
 
-* [Seoyoung Cho](https://github.com/seoyoungcho213) **co-owner** (backend)
-* [Carlos Cotera](https://github.com/carlosacj55) **co-owner** (frontend)
-* [Ali A Shah](https://github.com/alishah634) (backend)
-* [Andrea Goh](https://github.com/andreag0101) (frontend)
+* [Seoyoung Cho](https://github.com/seoyoungcho213) **co-owner**
+* [Carlos Cotera](https://github.com/carlosacj55) **co-owner**
+* [Ali A Shah](https://github.com/alishah634)
+* [Andrea Goh](https://github.com/andreag0101)
+* [Faaiz Memon](httpppps://github.com/faaizmemonpurdue)
 
 ## License
 
