@@ -3,10 +3,10 @@ package database
 import (
 	"testing"
 
-	"github.com/matcha-devs/matcha/internal/matchaDB"
+	"github.com/matcha-devs/matcha/internal/sql"
 )
 
-var db = matchaDB.Init()
+var db = sql.Init()
 
 // TODO(@Alishah634): Move Tests to Test Modules and activate modules
 

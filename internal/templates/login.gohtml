@@ -1,13 +1,9 @@
 <!-- Copyright (c) 2024 Andrea Goh. -->
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <link rel="stylesheet" href="/internal/stylesheets/main.css">
-    <title>Login Fail</title>
-</head>
 
-<form method="POST" action="/login-submit">
+{{ template "title" }}Login{{ template "end_title"}}
+<body>
+<form action="/login-submit" method="POST">
     <div class="container">
         <h1>Login</h1>
         <hr>
@@ -16,11 +12,11 @@
         <label><b>Password</b>
             <input name="password" placeholder="Enter Password" required type="password">
             <input checked="checked" name="remember" style="margin-bottom:15px" type="checkbox"> Remember me<br></label>
-        <p style="color:red;">Try Again</p>
         <a href="http://localhost:8080">
             <button class="btn1" type="button">Cancel</button>
         </a>
         <button class="btn2" type="submit">Login</button>
     </div>
 </form>
-</html>
+</body>
+{{template "footer"}}

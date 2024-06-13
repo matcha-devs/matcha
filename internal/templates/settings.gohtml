@@ -1,19 +1,8 @@
 <!-- Copyright (c) 2024 Andrea Goh. -->
 
-<!DOCTYPE html>
-<html lang="en">
-<meta content="width=device-width, initial-scale=1" name="viewport">
-<head>
-    <link rel="stylesheet" href="/internal/stylesheets/main.css">
-    <title>Settings</title>
-</head>
-
+{{ template "title" }}Settings{{ template "end_title"}}
 <body>
-<div class="icon-bar">
-    <a href="http://localhost:8080/dashboard"><i class="fa fa-home"></i></a>
-    <a class="active" href="http://localhost:8080/settings"><i class="fa fa-gear"></i></a>
-</div>
-
+{{ template "nav_bar"}}
 <form method="POST" action="/delete-user">
     <div class="container">
         <h1>Delete User</h1>
@@ -25,6 +14,5 @@
         <button class="btn1" type="submit">Delete User</button>
     </div>
 </form>
-
 </body>
-</html>
+{{ template "footer" }}

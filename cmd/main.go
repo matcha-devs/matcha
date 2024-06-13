@@ -7,19 +7,20 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/matcha-devs/matcha/internal/matchaDB"
-
 	_ "github.com/go-sql-driver/mysql"
+
+	"github.com/matcha-devs/matcha/internal/sql"
 )
 
 var (
-	app          = NewApplication(matchaDB.Init())
+	app          = NewApp(sql.Init())
 	maxRouteTime = time.Second
 	t            = template.Must(
-		template.ParseGlob(strings.Join([]string{"internal", "templates", "*.html"}, string(os.PathSeparator))),
+		template.ParseGlob(filepath.Join("internal", "templates", "*.gohtml")),
 	)
 	validEntryPoints = map[string]struct{}{
 		"signup": {}, "signup-submit": {}, "signup-fail": {},
@@ -30,13 +31,13 @@ var (
 
 func loadPage(w http.ResponseWriter, r *http.Request, title string) {
 	username := r.FormValue("username")
-	user := matchaDB.User{
+	user := sql.User{
 		ID:       app.db.GetUserID("username", username),
 		Username: username,
 		Email:    "test",
 		Password: "test",
 	}
-	err := t.ExecuteTemplate(w, title+".html", user)
+	err := t.ExecuteTemplate(w, title+".gohtml", user)
 	if err != nil {
 		log.Println("Error executing template - ", err)
 	}

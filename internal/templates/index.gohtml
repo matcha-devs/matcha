@@ -1,12 +1,6 @@
 <!-- Copyright (c) 2024 Andrea Goh. -->
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <link rel="stylesheet" href="/internal/stylesheets/main.css">
-    <title>Landing</title>
-</head>
-
+{{ template "title" }}Landing{{ template "end_title"}}
 <div class="container">
     <h1 style="color:#505c45;">Welcome to MATCHA</h1>
     <a href="http://localhost:8080/signup">
@@ -16,4 +10,4 @@
         <button class="btn2" type="submit">Login</button>
     </a>
 </div>
-</html>
+{{template "footer"}}

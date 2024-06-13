@@ -1,6 +1,6 @@
 // Copyright (c) 2024 Seoyoung Cho and Carlos Andres Cotera Jurado.
 
-package matchaDB
+package sql
 
 import (
 	"database/sql"
@@ -19,7 +19,7 @@ type MatchaDB struct {
 func Init() *MatchaDB {
 	password := os.Getenv("MYSQL_PASSWORD")
 	rootDsn := "root:" + password + "@tcp(localhost:3306)/"
-	// Connect to MySQL without specifying a matchaDB
+	// Connect to MySQL without specifying matchaDB
 	db, err := sql.Open("mysql", rootDsn)
 	if err != nil {
 		log.Fatal("Error opening matchaDB - ", err)
@@ -72,7 +72,7 @@ func Init() *MatchaDB {
 		}
 	}
 
-	// Re-open the matchaDB for the security purpose
+	// Re-open matchaDB for the security purpose
 	if err := db.Close(); err != nil {
 		log.Println("Error closing Database - ", err)
 	}
