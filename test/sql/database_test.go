@@ -8,9 +8,11 @@ import (
 
 var db = mySQL.Open()
 
+// TODO(@SeoYoung Cho):what do is the panic error you are having?:
+
 // TODO(@Alishah634): Move Tests to Test Modules and activate modules
 
-// TODO(@Alishah634): Fix AuthenticateLogin panic error
+// TODO(@Alishah634): Fix AuthenticateLogin panic error 
 func TestAuthenticateLogin(t *testing.T) {
 	t.Log("TestAuthenticateLogin Started")
 
