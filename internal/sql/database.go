@@ -22,36 +22,36 @@ func Open() *Database {
 	// Connect to MySQL without specifying matchaDB
 	db, err := sql.Open("mysql", rootDsn)
 	if err != nil {
-		log.Fatal("Error opening matchaDB - ", err)
+		log.Fatal("Error opening matchaDB-", err)
 	}
 	if err := db.Ping(); err != nil {
-		log.Fatal("Error connecting to MySQL - ", err)
+		log.Fatal("Error connecting to MySQL-", err)
 	}
 
 	// Create the matcha_db if it does not exist
 	_, err = db.Exec("CREATE DATABASE IF NOT EXISTS matcha_db")
 	if err != nil {
-		log.Fatal("Error opening Database - ", err)
+		log.Fatal("Error opening Database-", err)
 	}
 	if err := db.Close(); err != nil {
-		log.Fatal("Error closing Database - ", err)
+		log.Fatal("Error closing Database-", err)
 	}
 
 	// Connect to matcha_db to run 'init.sql' script
 	db, err = sql.Open("mysql", rootDsn+"matcha_db?multiStatements=true")
 	if err != nil {
-		log.Fatal("Error opening Database - ", err)
+		log.Fatal("Error opening Database-", err)
 	}
 	if err = db.Ping(); err != nil {
-		log.Fatal("Error connecting to Database - ", err)
+		log.Fatal("Error connecting to Database-", err)
 	}
 	text, err := os.ReadFile("internal/sql/queries/init.sql")
 	if err != nil {
-		log.Fatal("Error reading init.sql file - ", err)
+		log.Fatal("Error reading init.sql file-", err)
 	}
 	_, err = db.Exec(string(text))
 	if err != nil {
-		log.Fatal("Error executing 'init.sql' - ", err)
+		log.Fatal("Error executing 'init.sql'-", err)
 	}
 
 	// If there is no user, then make test users.
@@ -64,24 +64,24 @@ func Open() *Database {
 		fmt.Println("There is no user. Running 'gen_users.sql' to create new users.")
 		text, err := os.ReadFile("internal/sql/queries/gen_users.sql")
 		if err != nil {
-			log.Fatal("Error reading gen_users.sql file - ", err)
+			log.Fatal("Error reading gen_users.sql file-", err)
 		}
 		_, err = db.Exec(string(text))
 		if err != nil {
-			log.Fatal("Error executing 'gen_users.sql' - ", err)
+			log.Fatal("Error executing 'gen_users.sql'-", err)
 		}
 	}
 
 	// Re-open matchaDB for the security purpose
 	if err := db.Close(); err != nil {
-		log.Println("Error closing Database - ", err)
+		log.Println("Error closing Database-", err)
 	}
 	db, err = sql.Open("mysql", rootDsn+"matcha_db")
 	if err != nil {
-		log.Fatal("Error opening Database - ", err)
+		log.Fatal("Error opening Database-", err)
 	}
 	if err = db.Ping(); err != nil {
-		log.Fatal("Error connecting to Database - ", err)
+		log.Fatal("Error connecting to Database-", err)
 	}
 	return &Database{db}
 }
@@ -116,7 +116,7 @@ func (matcha Database) AddUser(username string, email string, password string) e
 	}
 	_, err := matcha.db.Exec(query)
 	if err != nil {
-		log.Fatal("Error adding user - ", err)
+		log.Fatal("Error adding user-", err)
 	}
 	fmt.Println("User Added Successfully")
 	return err
@@ -126,7 +126,7 @@ func (matcha Database) GetUserID(varName string, variable string) int {
 	var id int
 	err := matcha.db.QueryRow(fmt.Sprintf("SELECT id FROM users WHERE %s = ?", varName), variable).Scan(&id)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		log.Println("Error finding id using ", varName, " - ", err)
+		log.Println("Error finding id using ", varName, "-", err)
 	}
 	return id
 }
