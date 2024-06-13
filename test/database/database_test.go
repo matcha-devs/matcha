@@ -6,7 +6,7 @@ import (
 	"github.com/matcha-devs/matcha/internal/sql"
 )
 
-var db = sql.Init()
+var db = sql.Open()
 
 // TODO(@Alishah634): Move Tests to Test Modules and activate modules
 

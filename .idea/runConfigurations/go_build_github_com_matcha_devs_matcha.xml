@@ -1,0 +1,14 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="go build github.com/matcha-devs/matcha" type="GoApplicationRunConfiguration" factoryName="Go Application" focusToolWindowBeforeRun="true" nameIsGenerated="true">
+    <module name="matcha" />
+    <working_directory value="$PROJECT_DIR$" />
+    <envs>
+      <env name="MYSQL_PASSWORD" value="Notasqlpassword!" />
+    </envs>
+    <kind value="PACKAGE" />
+    <package value="github.com/matcha-devs/matcha" />
+    <directory value="$PROJECT_DIR$/cmd" />
+    <filePath value="$PROJECT_DIR$/../matcha|$PROJECT_DIR$/cmd/main.go" />
+    <method v="2" />
+  </configuration>
+</component>
