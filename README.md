@@ -21,6 +21,12 @@ https://github.com/matcha-devs/matcha/actions/workflows/go.yml)
 
 Access our service and create your account at https://www.[domain].com
 
+## Contributing
+
+Pull requests are welcome. For major changes, please open an issue first
+to discuss what you would like to change.
+Please make sure to update tests as appropriate.
+
 After cloning this repository, add ```MYSQL_PASSWORD='your sql password'```
 for environment variable in the configuration. Then, run ```go mod tidy```
 to import dependencies. For the directory choose main file path ( ```'file path'\matcha\cmd\main```).
@@ -29,12 +35,6 @@ Run this to prevent tracking and modifying of the common config file:
 ```git update-index --skip-worktree .idea/runConfigurations/go_build_github_com_matcha_devs_matcha_cmd.xml```
 
 To test modules, run ```go test ./...``` in the terminal.
-
-## Contributing
-
-Pull requests are welcome. For major changes, please open an issue first
-to discuss what you would like to change.
-Please make sure to update tests as appropriate.
 
 ## Dependencies
 
