@@ -1,6 +1,6 @@
 // Copyright (c) 2024 Seoyoung Cho and Carlos Andres Cotera Jurado.
 
-package sql
+package mySQL
 
 import "time"
 

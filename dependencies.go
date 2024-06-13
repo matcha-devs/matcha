@@ -1,7 +1,7 @@
 package main
 
 type Dependencies struct {
-	db Database
+	DB Database
 }
 
 func InitDependencies(db Database) *Dependencies {

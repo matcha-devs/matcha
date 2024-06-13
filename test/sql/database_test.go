@@ -1,12 +1,12 @@
-package database
+package sql
 
 import (
 	"testing"
 
-	"github.com/matcha-devs/matcha/internal/sql"
+	"github.com/matcha-devs/matcha/internal/mySQL"
 )
 
-var db = sql.Open()
+var db = mySQL.Open()
 
 // TODO(@Alishah634): Move Tests to Test Modules and activate modules
 

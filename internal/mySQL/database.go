@@ -1,6 +1,6 @@
 // Copyright (c) 2024 Seoyoung Cho and Carlos Andres Cotera Jurado.
 
-package sql
+package mySQL
 
 import (
 	"database/sql"
@@ -45,7 +45,7 @@ func Open() *Database {
 	if err = db.Ping(); err != nil {
 		log.Fatal("Error connecting to Database-", err)
 	}
-	text, err := os.ReadFile("internal/sql/queries/init.sql")
+	text, err := os.ReadFile("internal/mySQL/queries/init.sql")
 	if err != nil {
 		log.Fatal("Error reading init.sql file-", err)
 	}
@@ -62,7 +62,7 @@ func Open() *Database {
 	}
 	if userCount == 0 {
 		fmt.Println("There is no user. Running 'gen_users.sql' to create new users.")
-		text, err := os.ReadFile("internal/sql/queries/gen_users.sql")
+		text, err := os.ReadFile("internal/mySQL/queries/gen_users.sql")
 		if err != nil {
 			log.Fatal("Error reading gen_users.sql file-", err)
 		}
