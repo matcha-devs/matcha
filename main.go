@@ -6,7 +6,6 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -30,7 +29,7 @@ var (
 )
 
 func route(w http.ResponseWriter, r *http.Request) {
-	path := strings.TrimLeft(r.URL.Path, string(os.PathSeparator))
+	path := strings.TrimLeft(r.URL.Path, "/")
 	log.Println("Routing {" + path + "}")
 	switch path {
 	case "":
