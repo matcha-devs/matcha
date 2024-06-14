@@ -1,4 +1,4 @@
-package sql
+package mySQL_test
 
 import (
 	"testing"
@@ -12,7 +12,7 @@ var db = mySQL.Open()
 
 // TODO(@Alishah634): Move Tests to Test Modules and activate modules
 
-// TODO(@Alishah634): Fix AuthenticateLogin panic error 
+// TODO(@Alishah634): Fix AuthenticateLogin panic error
 func TestAuthenticateLogin(t *testing.T) {
 	t.Log("TestAuthenticateLogin Started")
 
