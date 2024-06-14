@@ -4,11 +4,15 @@ package main
 
 import (
 	"context"
+	"errors"
 	"html/template"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -66,7 +70,13 @@ func routeWithTimeout(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	// Close dependencies before exiting main
 	defer deps.Close()
+
+	// Create a waiting channel to catch the "crtl+c" interrupt
+	ctrlC := make(chan os.Signal, 1)
+	signal.Notify(ctrlC, syscall.SIGINT, syscall.SIGTERM)
+
 	mux := http.NewServeMux()
 	// TODO(@CarlosACJ55): Make a clean transition from the switch case to ServeMux
 	//mux.Handle("/{$}", http.TimeoutHandler(http.HandlerFunc(loadPage), maxRouteTime, ""))
@@ -88,8 +98,17 @@ func main() {
 		BaseContext:                  nil,
 		ConnContext:                  nil,
 	}
-	log.Println("Starting the server on", server.Addr)
-	if err := server.ListenAndServe(); err != nil {
-		panic(err)
+	go func() {
+		log.Println("Starting the server on", server.Addr, "🫡")
+		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalln("HTTP server error", err)
+		}
+	}()
+	<-ctrlC
+	ctx, release := context.WithTimeout(context.Background(), 10*time.Second)
+	defer release()
+	if err := server.Shutdown(ctx); err != nil {
+		log.Fatalln("Server shutdown err -", err)
 	}
+	log.Println("Server shutdown 😴")
 }

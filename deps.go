@@ -15,6 +15,7 @@ func (deps Deps) Close() {
 	if err != nil {
 		log.Println(err)
 	}
+	log.Println("Dependencies closed 🩺")
 }
 
 type Database interface {
