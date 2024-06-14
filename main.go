@@ -5,86 +5,23 @@ package main
 import (
 	"context"
 	"errors"
-	"html/template"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
-	"strings"
 	"syscall"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
-
 	"github.com/matcha-devs/matcha/internal/mySQL"
+	"github.com/matcha-devs/matcha/structs"
 )
 
 var (
-	deps         = NewDeps(mySQL.Open())
-	maxRouteTime = time.Second
-	tmpl         = template.Must(
-		template.ParseGlob(filepath.Join("internal", "templates", "*.gohtml")),
-	)
-	validEntryPoints = map[string]struct{}{
-		"signup": {}, "signup-submit": {}, "signup-fail": {},
-		"login": {}, "login-submit": {}, "login-fail": {},
-		"dashboard": {}, "settings": {}, "delete-user": {},
-	}
-)
-
-func route(w http.ResponseWriter, r *http.Request) {
-	path := strings.TrimLeft(r.URL.Path, "/")
-	log.Println("Routing {" + path + "}")
-	switch path {
-	case "":
-		loadPage(w, r, "index")
-	case "signup-submit":
-		signupSubmit(w, r)
-	case "login-submit":
-		loginSubmit(w, r)
-	case "delete-user":
-		deleteUser(w, r)
-	default:
-		if _, exists := validEntryPoints[path]; exists {
-			loadPage(w, r, path)
-		} else {
-			http.NotFound(w, r)
-		}
-	}
-}
-
-// TODO(@FaaizMemonPurdue): This is an example of how go routines should be used, but we still need server timeouts
-func routeWithTimeout(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), maxRouteTime)
-	defer cancel()
-	select {
-	case <-ctx.Done():
-		log.Println("Routing took longer than", maxRouteTime)
-	//case <-time.After(maxRouteTime):
-	default:
-		start := time.Now()
-		route(w, r)
-		log.Println("Routing done after", time.Since(start))
-	}
-}
-
-func main() {
-	// Close dependencies before exiting main
-	defer deps.Close()
-
-	// Create a waiting channel to catch the "crtl+c" interrupt
-	ctrlC := make(chan os.Signal, 1)
-	signal.Notify(ctrlC, syscall.SIGINT, syscall.SIGTERM)
-
-	mux := http.NewServeMux()
-	// TODO(@CarlosACJ55): Make a clean transition from the switch case to ServeMux
-	//mux.Handle("/{$}", http.TimeoutHandler(http.HandlerFunc(loadPage), maxRouteTime, ""))
-	mux.Handle("/public/", http.StripPrefix("/public", http.FileServer(http.Dir("public"))))
-	mux.Handle("/", http.TimeoutHandler(http.HandlerFunc(routeWithTimeout), maxRouteTime, ""))
-	server := http.Server{
+	deps   *structs.App
+	server = http.Server{
 		Addr:                         ":8080",
-		Handler:                      mux,
+		Handler:                      newMatchaRouter(),
 		DisableGeneralOptionsHandler: false,
 		TLSConfig:                    nil,
 		ReadTimeout:                  time.Second,
@@ -98,17 +35,31 @@ func main() {
 		BaseContext:                  nil,
 		ConnContext:                  nil,
 	}
+)
+
+func main() {
+	// Create a channel to wait for the "crtl+c" interrupt to ensure dependencies are closed safely before exiting.
+	ctrlC := make(chan os.Signal, 1)
+	signal.Notify(ctrlC, syscall.SIGINT, syscall.SIGTERM)
+
+	// Open those dependencies now that it is safe to do so.
+	deps = structs.NewDeps(mySQL.Open())
+	defer deps.Close()
+
+	// Run server indefinitely on a new goroutine, then block the main goroutine until ctrl+c interrupt is raised.
 	go func() {
-		log.Println("Starting the server on", server.Addr, "🫡")
+		log.Println("Server starting on:", server.Addr, "🫡")
 		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalln("HTTP server error", err)
+			log.Fatalln("HTTP server error -", err)
 		}
 	}()
 	<-ctrlC
+
+	// Allow 10s max for clients to disconnect and shut the server down.
 	ctx, release := context.WithTimeout(context.Background(), 10*time.Second)
 	defer release()
 	if err := server.Shutdown(ctx); err != nil {
 		log.Fatalln("Server shutdown err -", err)
 	}
-	log.Println("Server shutdown 😴")
+	log.Println("Server has shutdown 👋🏽")
 }

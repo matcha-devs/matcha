@@ -1,15 +1,19 @@
 package main
 
 import (
+	"html/template"
 	"log"
 	"net/http"
+	"path/filepath"
 
-	"github.com/matcha-devs/matcha/internal/mySQL"
+	"github.com/matcha-devs/matcha/structs"
 )
+
+var tmpl = template.Must(template.ParseGlob(filepath.Join("internal", "templates", "*.gohtml")))
 
 func loadPage(w http.ResponseWriter, r *http.Request, title string) {
 	username := r.FormValue("username")
-	user := mySQL.User{
+	user := structs.User{
 		ID:       deps.DB.GetUserID("username", username),
 		Username: username,
 		Email:    "test",
