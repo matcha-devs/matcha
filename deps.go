@@ -1,11 +1,20 @@
 package main
 
-type Dependencies struct {
+import "log"
+
+type Deps struct {
 	DB Database
 }
 
-func InitDependencies(db Database) *Dependencies {
-	return &Dependencies{db}
+func NewDeps(db Database) *Deps {
+	return &Deps{db}
+}
+
+func (deps Deps) Close() {
+	err := deps.DB.Close()
+	if err != nil {
+		log.Println(err)
+	}
 }
 
 type Database interface {

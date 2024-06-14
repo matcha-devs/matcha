@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	deps         = InitDependencies(mySQL.Open())
+	deps         = NewDeps(mySQL.Open())
 	maxRouteTime = time.Second
 	tmpl         = template.Must(
 		template.ParseGlob(filepath.Join("internal", "templates", "*.gohtml")),
@@ -66,6 +66,7 @@ func routeWithTimeout(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	defer deps.Close()
 	mux := http.NewServeMux()
 	// TODO(@CarlosACJ55): Make a clean transition from the switch case to ServeMux
 	//mux.Handle("/{$}", http.TimeoutHandler(http.HandlerFunc(loadPage), maxRouteTime, ""))
