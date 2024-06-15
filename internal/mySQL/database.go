@@ -16,7 +16,7 @@ type Database struct {
 	db *sql.DB 
 }
 
-func Open(database_name string ) *Database {
+func Open(database_name string, queries_path string) *Database {
 	password := os.Getenv("MYSQL_PASSWORD")
 	rootDsn := "root:" + password + "@tcp(localhost:3306)/"
 	// Connect to MySQL without specifying matchaDB
@@ -45,7 +45,7 @@ func Open(database_name string ) *Database {
 	if err = db.Ping(); err != nil {
 		log.Fatal("Error connecting to Database-", err)
 	}
-	text, err := os.ReadFile("internal/mySQL/queries/init.sql")
+	text, err := os.ReadFile(queries_path+"init.sql")
 	if err != nil {
 		log.Fatal("Error reading init.sql file-", err)
 	}
@@ -62,7 +62,7 @@ func Open(database_name string ) *Database {
 	}
 	if userCount == 0 {
 		fmt.Println("There is no user. Running 'gen_users.sql' to create new users.")
-		text, err := os.ReadFile("internal/mySQL/queries/gen_users.sql")
+		text, err := os.ReadFile(queries_path+"gen_users.sql")
 		if err != nil {
 			log.Fatal("Error reading gen_users.sql file-", err)
 		}
@@ -83,6 +83,7 @@ func Open(database_name string ) *Database {
 	if err = db.Ping(); err != nil {
 		log.Fatal("Error connecting to Database-", err)
 	}
+	fmt.Println("HERE!!")
 	return &Database{db}
 }
 
