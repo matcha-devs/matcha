@@ -83,7 +83,6 @@ func Open(database_name string, queries_path string) *Database {
 	if err = db.Ping(); err != nil {
 		log.Fatal("Error connecting to Database-", err)
 	}
-	fmt.Println("HERE!!")
 	return &Database{db}
 }
 
