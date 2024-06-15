@@ -43,7 +43,7 @@ func main() {
 	signal.Notify(ctrlC, syscall.SIGINT, syscall.SIGTERM)
 
 	// Open those dependencies now that it is safe to do so.
-	deps = structs.NewDeps(mySQL.Open())
+	deps = structs.NewDeps(mySQL.Open("matcha_db"))
 	defer deps.Close()
 
 	// Run server indefinitely on a new goroutine, then block the main goroutine until ctrl+c interrupt is raised.

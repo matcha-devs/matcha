@@ -6,7 +6,7 @@ import (
 	"github.com/matcha-devs/matcha/internal/mySQL"
 )
 
-var db = mySQL.Open()
+var db = mySQL.Open("testing_db")
 
 // TODO(@SeoYoung Cho):what do is the panic error you are having?:
 

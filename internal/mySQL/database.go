@@ -13,10 +13,10 @@ import (
 )
 
 type Database struct {
-	db *sql.DB
+	db *sql.DB 
 }
 
-func Open() *Database {
+func Open(database_name string ) *Database {
 	password := os.Getenv("MYSQL_PASSWORD")
 	rootDsn := "root:" + password + "@tcp(localhost:3306)/"
 	// Connect to MySQL without specifying matchaDB
@@ -29,7 +29,7 @@ func Open() *Database {
 	}
 
 	// Create the matcha_db if it does not exist
-	_, err = db.Exec("CREATE DATABASE IF NOT EXISTS matcha_db")
+	_, err = db.Exec("CREATE DATABASE IF NOT EXISTS " + database_name)
 	if err != nil {
 		log.Fatal("Error opening Database-", err)
 	}
@@ -38,7 +38,7 @@ func Open() *Database {
 	}
 
 	// Connect to matcha_db to run 'init.sql' script
-	db, err = sql.Open("mysql", rootDsn+"matcha_db?multiStatements=true")
+	db, err = sql.Open("mysql", rootDsn+database_name+"?multiStatements=true")
 	if err != nil {
 		log.Fatal("Error opening Database-", err)
 	}
@@ -76,7 +76,7 @@ func Open() *Database {
 	if err := db.Close(); err != nil {
 		log.Println("Error closing Database-", err)
 	}
-	db, err = sql.Open("mysql", rootDsn+"matcha_db")
+	db, err = sql.Open("mysql", rootDsn+database_name)
 	if err != nil {
 		log.Fatal("Error opening Database-", err)
 	}
