@@ -17,9 +17,10 @@ type Database struct {
 }
 
 // @TODO Alishah634 Add username and password DEPENDCY !!!!
-func Open(database_name string, queries_path string) *Database {
-	password := os.Getenv("MYSQL_PASSWORD")
-	rootDsn := "root:" + password + "@tcp(localhost:3306)/"
+func Open(database_name string, database_user string, database_password string, queries_path string) *Database {
+	// password := os.Getenv("MYSQL_PASSWORD")
+	password := database_password
+	rootDsn := database_user + ":" + password + "@tcp(localhost:3306)/"
 	// Connect to MySQL without specifying matchaDB
 	db, err := sql.Open("mysql", rootDsn)
 	if err != nil {

@@ -55,7 +55,7 @@ func setupTestDB(t *testing.T) *mySQL.Database {
 	}
 
 	// Open the custom testing database with initial SQL setup
-	test_db := mySQL.Open("test_db", "../../internal/mySQL/queries/")
+	test_db := mySQL.Open("test_db", "root", password, "../../internal/mySQL/queries/")
 	if test_db == nil {
 		t.Fatal("Failed to open test database")
 	}
