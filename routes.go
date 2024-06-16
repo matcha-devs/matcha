@@ -1,9 +1,7 @@
 package main
 
 import (
-	"log"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -16,20 +14,6 @@ var (
 	}
 )
 
-func loadIndex(w http.ResponseWriter, r *http.Request) {
-	loadPage(w, r, "index")
-}
-
-func entryPoint(w http.ResponseWriter, r *http.Request) {
-	path := strings.TrimLeft(r.URL.Path, "/")
-	log.Println("Routing {" + path + "}")
-	if _, exists := validEntryPoints[path]; !exists {
-		log.Println("Not a valid entry point:", path)
-		http.NotFound(w, r)
-	}
-	loadPage(w, r, path)
-}
-
 func handlerWithTimeout(handlerFunc http.HandlerFunc) http.Handler {
 	return http.TimeoutHandler(handlerFunc, maxHandleTime, "")
 }
@@ -41,7 +25,7 @@ func newMatchaRouter() *http.ServeMux {
 	mux.Handle("POST /login-submit", handlerWithTimeout(loginSubmit))
 	mux.Handle("POST /delete-user", handlerWithTimeout(deleteUser))
 	mux.Handle("/public/", http.StripPrefix("/public", http.FileServer(http.Dir("public"))))
-	mux.Handle("/", handlerWithTimeout(entryPoint)) // TODO(@CarlosACJ55): Improve handling of entry points.
+	mux.Handle("/", handlerWithTimeout(loadEntryPoint)) // TODO(@CarlosACJ55): Improve handling of entry points.
 	return mux
 }
 
@@ -54,7 +38,7 @@ func newMatchaRouter() *http.ServeMux {
 // 		log.Println("Routing took longer than", maxHandleTime)
 // 	default:
 // 		start := time.Now()
-// 		entryPoint(w, r)
+// 		loadEntryPoint(w, r)
 // 		log.Println("Routing done after", time.Since(start))
 // 	}
 // }

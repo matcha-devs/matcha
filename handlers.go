@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"strings"
 
 	"github.com/matcha-devs/matcha/structs"
 )
@@ -23,6 +24,20 @@ func loadPage(w http.ResponseWriter, r *http.Request, title string) {
 	if err != nil {
 		log.Println("Error executing template-", err)
 	}
+}
+
+func loadIndex(w http.ResponseWriter, r *http.Request) {
+	loadPage(w, r, "index")
+}
+
+func loadEntryPoint(w http.ResponseWriter, r *http.Request) {
+	path := strings.TrimLeft(r.URL.Path, "/")
+	log.Println("Routing {" + path + "}")
+	if _, exists := validEntryPoints[path]; !exists {
+		log.Println("Not a valid entry point:", path)
+		http.NotFound(w, r)
+	}
+	loadPage(w, r, path)
 }
 
 func signupSubmit(w http.ResponseWriter, r *http.Request) {
