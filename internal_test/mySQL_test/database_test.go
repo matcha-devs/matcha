@@ -2,11 +2,10 @@ package mySQL_test
 
 import (
 	"database/sql"
+	_ "fmt"
 	"log"
-	"fmt"
 	"os"
 	"testing"
-
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/matcha-devs/matcha/internal/mySQL"
 )
@@ -16,20 +15,11 @@ import (
 var test_db_connection *sql.DB
 
 // Mock environment variable for testing
-func init() {
-	// Set the MySQL password for testing
-	fmt.Println("Setting up test environment")
-
-	// test_password := os.Getenv("TEST_MYSQL_PASSWORD")
-	// fmt.Println("Test password:", test_password)
-	// password := os.Getenv("MYSQL_PASSWORD")
-	// fmt.Println(("Password:"), password)
-}
-
 // Helper function to create a test database connection and ensure it's clean
 func setupTestDB(t *testing.T) *mySQL.Database {
-	password := os.Getenv("TEST_MYSQL_PASSWORD")
-	// Connect to MySQL without specifying matchaDB
+	// Get the password from the environment, currently using the admin password this may change in the future!!!
+	password := os.Getenv("MYSQL_PASSWORD")
+	// Connect to MySQL without specifying a database
 	var err error
 	test_db_connection, err = sql.Open("mysql", "root:"+password+"@tcp(localhost:3306)/")
 	if err != nil {
@@ -39,26 +29,36 @@ func setupTestDB(t *testing.T) *mySQL.Database {
 		t.Fatal("Failed to ping test database connection:", err)
 	}
 
-	// Open the custom testing database
+	// Ensure a clean test database by dropping any previous instances
+	_, err = test_db_connection.Exec("DROP DATABASE IF EXISTS test_db")
+	if err != nil {
+		t.Fatal("Failed to drop test database:", err)
+	}
+	// Create a new test database
+	_, err = test_db_connection.Exec("CREATE DATABASE test_db")
+	if err != nil {
+		t.Fatal("Failed to create test database:", err)
+	}
+
+	// Close the initial connection and reopen with the new database
+	if err := test_db_connection.Close(); err != nil {
+		log.Fatal("Error closing initial database connection:", err)
+	}
+
+	// Connect to the newly created test database
+	test_db_connection, err = sql.Open("mysql", "root:"+password+"@tcp(localhost:3306)/test_db")
+	if err != nil {
+		t.Fatal("Failed to open connection to test database:", err)
+	}
+	if err := test_db_connection.Ping(); err != nil {
+		t.Fatal("Failed to ping test database connection:", err)
+	}
+
+	// Open the custom testing database with initial SQL setup
 	test_db := mySQL.Open("test_db", "../../internal/mySQL/queries/")
 	if test_db == nil {
 		t.Fatal("Failed to open test database")
 	}
-	
-	// Create the matcha_db if it does not exist
-	_, err = test_db_connection.Exec("CREATE DATABASE IF NOT EXISTS " + "test_db")
-	if err != nil {
-		log.Fatal("Error opening Database-", err)
-	}
-	if err := test_db_connection.Close(); err != nil {
-		log.Fatal("Error closing Database-", err)
-	}
-
-	// // Clean the database before running tests
-	// _, err = test_db_connection.Exec("DELETE FROM users")
-	// if err != nil {
-	// 	t.Fatal("Failed to clean test database:", err)
-	// }
 
 	return test_db
 }
@@ -73,6 +73,7 @@ func TestOpenAndClose(t *testing.T) {
 	err := test_db.Close()
 	if err != nil {
 		t.Error("Failed to close database:", err)
+		return
 	}
 }
 
@@ -121,15 +122,15 @@ func TestDeleteUser(t *testing.T) {
 		t.Fatal("Failed to add user:", err)
 	}
 
-	// // Verify the user was added
+	// Verify the user was added
 	var id int
-	// err = test_db_connection.QueryRow("SELECT id FROM users WHERE username = ?", "deleteuser").Scan(&id)
-	// if err != nil {
-	// 	t.Fatal("Failed to find added user:", err)
-	// }
-	// if id == 0 {
-	// 	t.Error("Added user ID is zero")
-	// }
+	err = test_db_connection.QueryRow("SELECT id FROM users WHERE username = ?", "deleteuser").Scan(&id)
+	if err != nil {
+		t.Fatal("Failed to find added user:", err)
+	}
+	if id == 0 {
+		t.Error("Added user ID is zero")
+	}
 
 	// Delete the user
 	err = test_db.DeleteUser(id)
@@ -154,7 +155,6 @@ func TestGetUserID(t *testing.T) {
 	if err != nil {
 		t.Fatal("Failed to add user:", err)
 	}
-
 	// Get user ID by username
 	id := test_db.GetUserID("username", "useriduser")
 	if id == 0 {

@@ -16,6 +16,7 @@ type Database struct {
 	db *sql.DB 
 }
 
+// @TODO Alishah634 Add username and password DEPENDCY !!!!
 func Open(database_name string, queries_path string) *Database {
 	password := os.Getenv("MYSQL_PASSWORD")
 	rootDsn := "root:" + password + "@tcp(localhost:3306)/"
@@ -45,6 +46,7 @@ func Open(database_name string, queries_path string) *Database {
 	if err = db.Ping(); err != nil {
 		log.Fatal("Error connecting to Database-", err)
 	}
+
 	text, err := os.ReadFile(queries_path+"init.sql")
 	if err != nil {
 		log.Fatal("Error reading init.sql file-", err)
@@ -52,24 +54,6 @@ func Open(database_name string, queries_path string) *Database {
 	_, err = db.Exec(string(text))
 	if err != nil {
 		log.Fatal("Error executing 'init.sql'-", err)
-	}
-
-	// If there is no user, then make test users.
-	var userCount int
-	err = db.QueryRow("SELECT COUNT(*) AS user_count FROM users").Scan(&userCount)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if userCount == 0 {
-		fmt.Println("There is no user. Running 'gen_users.sql' to create new users.")
-		text, err := os.ReadFile(queries_path+"gen_users.sql")
-		if err != nil {
-			log.Fatal("Error reading gen_users.sql file-", err)
-		}
-		_, err = db.Exec(string(text))
-		if err != nil {
-			log.Fatal("Error executing 'gen_users.sql'-", err)
-		}
 	}
 
 	// Re-open matchaDB for the security purpose
@@ -118,7 +102,7 @@ func (matcha Database) AddUser(username string, email string, password string) e
 	if err != nil {
 		log.Fatal("Error adding user-", err)
 	}
-	fmt.Println("User Added Successfully")
+	// fmt.Println("User Added Successfully")
 	return err
 }
 
