@@ -1,15 +1,12 @@
 package main
 
 import (
-	"context"
-	"log"
 	"net/http"
-	"strings"
 	"time"
 )
 
 var (
-	maxRouteTime     = time.Second
+	maxHandleTime    = time.Second
 	validEntryPoints = map[string]struct{}{
 		"signup": {}, "signup-submit": {}, "signup-fail": {},
 		"login": {}, "login-submit": {}, "login-fail": {},
@@ -17,46 +14,31 @@ var (
 	}
 )
 
+func handlerWithTimeout(handlerFunc http.HandlerFunc) http.Handler {
+	return http.TimeoutHandler(handlerFunc, maxHandleTime, "")
+}
+
 func newMatchaRouter() *http.ServeMux {
 	mux := http.NewServeMux()
-	// TODO(@CarlosACJ55): Make a clean transition from the switch case to ServeMux
-	// mux.Handle("/{$}", http.TimeoutHandler(http.HandlerFunc(loadPage), maxRouteTime, ""))
+	mux.Handle("GET /{$}", handlerWithTimeout(loadIndex))
+	mux.Handle("POST /signup-submit", handlerWithTimeout(signupSubmit))
+	mux.Handle("POST /login-submit", handlerWithTimeout(loginSubmit))
+	mux.Handle("POST /delete-user", handlerWithTimeout(deleteUser))
 	mux.Handle("/public/", http.StripPrefix("/public", http.FileServer(http.Dir("public"))))
-	mux.Handle("/", http.TimeoutHandler(http.HandlerFunc(routeWithTimeout), maxRouteTime, ""))
+	mux.Handle("/", handlerWithTimeout(loadEntryPoint)) // TODO(@CarlosACJ55): Improve handling of entry points.
 	return mux
 }
 
-func route(w http.ResponseWriter, r *http.Request) {
-	path := strings.TrimLeft(r.URL.Path, "/")
-	log.Println("Routing {" + path + "}")
-	switch path {
-	case "":
-		loadPage(w, r, "index")
-	case "signup-submit":
-		signupSubmit(w, r)
-	case "login-submit":
-		loginSubmit(w, r)
-	case "delete-user":
-		deleteUser(w, r)
-	default:
-		if _, exists := validEntryPoints[path]; exists {
-			loadPage(w, r, path)
-		} else {
-			http.NotFound(w, r)
-		}
-	}
-}
-
 // TODO(@FaaizMemonPurdue): This is an example of how go routines should be used, but we still need API call timeouts
-func routeWithTimeout(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), maxRouteTime)
-	defer cancel()
-	select {
-	case <-ctx.Done():
-		log.Println("Routing took longer than", maxRouteTime)
-	default:
-		start := time.Now()
-		route(w, r)
-		log.Println("Routing done after", time.Since(start))
-	}
-}
+// func routeWithTimeout(w http.ResponseWriter, r *http.Request) {
+// 	ctx, cancel := context.WithTimeout(r.Context(), maxHandleTime)
+// 	defer cancel()
+// 	select {
+// 	case <-ctx.Done():
+// 		log.Println("Routing took longer than", maxHandleTime)
+// 	default:
+// 		start := time.Now()
+// 		loadEntryPoint(w, r)
+// 		log.Println("Routing done after", time.Since(start))
+// 	}
+// }
