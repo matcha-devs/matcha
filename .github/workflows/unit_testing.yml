@@ -8,19 +8,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    services:
-      mysql:
-        image: mysql:latest
-        ports:
-          - 3306:3306
-        options: > 
-          --health-cmd="mysqladmin ping --silent" # Command to check MySQL service health
-          --health-interval=10s                   # Interval between health checks
-          --health-timeout=5s                     # Timeout for each health check
-          --health-retries=5                      # Number of retries before considering the service unhealthy
-        env:
-          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
-
     steps:
       - uses: actions/checkout@v3
 
@@ -29,22 +16,10 @@ jobs:
         with:
           go-version: '1.22.3'
 
-      - name: Wait for MySQL
-        run: |
-          until mysqladmin ping -h 127.0.0.1 --silent; do
-            echo 'Waiting for MySQL...'
-            sleep 3
-          done
-
-      - name: Set up environment variables
-        run: echo "TEST_MYSQL_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" >> $GITHUB_ENV
-
       - name: Build
         run: go build -v ./...
 
       - name: Run Tests
-        env:
-          TEST_MYSQL_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
         run: |
           go test ./... -v -coverprofile=coverage.out
 
@@ -52,7 +27,7 @@ jobs:
         if: failure()
         run: |
           cat coverage.out | sed ''/PASS/s//$(printf "\033[32mPASS\033[0m")/'' | sed ''/FAIL/s//$(printf "\033[31mFAIL\033[0m")/''
-      
+
       - name: Generate Coverage Report
         if: success()
         run: go tool cover -html=coverage.out
