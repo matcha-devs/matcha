@@ -13,7 +13,7 @@ import (
 )
 
 type Database struct {
-	db *sql.DB 
+	db *sql.DB
 }
 
 // @TODO Alishah634 Add username and password DEPENDCY !!!!
