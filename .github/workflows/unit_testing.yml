@@ -21,12 +21,12 @@ jobs:
 
       - name: Run Tests
         run: |
-          go test ./... -v -coverprofile=coverage.out
+          go test ./... -v -coverprofile=coverage.out | tee test-output.log
 
       - name: Colorize Output
-        if: failure()
         run: |
-          cat coverage.out | sed ''/PASS/s//$(printf "\033[32mPASS\033[0m")/'' | sed ''/FAIL/s//$(printf "\033[31mFAIL\033[0m")/''
+          cat test-output.log | sed ''/PASS/s//$(printf "\033[32mPASS\033[0m")/'' | sed ''/FAIL/s//$(printf "\033[31mFAIL\033[0m")/''
+        continue-on-error: true
 
       - name: Generate Coverage Report
         if: success()
