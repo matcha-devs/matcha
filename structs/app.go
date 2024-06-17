@@ -1,13 +1,12 @@
-	package structs
+package structs
 
-	import (
-		"log"
+import (
+	"log"
+	"github.com/matcha-devs/matcha/dependencies"
+)
 
-		"github.com/matcha-devs/matcha/dependencies"
-	)
-
-	type App struct {
-		DB dependencies.Database
+type App struct {
+	DB dependencies.Database
 }
 
 func NewDeps(db dependencies.Database) *App {
