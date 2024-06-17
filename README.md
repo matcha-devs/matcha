@@ -30,10 +30,10 @@ Please make sure to update tests as appropriate.
 1. Clone this repo
 2. To prevent tracking/modifying the run config file, **run**:
    ```git update-index --skip-worktree .idea/runConfigurations/go_build_github_com_matcha_devs_matcha.xml```
-4. To enable your databaase, **add** your SQL password to the ```MYSQL_PASSWORD```
+3. To enable your databaase, **add** your SQL password to the ```MYSQL_PASSWORD```
    **environment variable** in the **config file**.
-5. To import dependencies, **run**: ```go mod tidy```.
-6. To run tests, **run**: ```go test ./...```.
+4. To import dependencies, **run**: ```go mod tidy```.
+5. To run tests, **run**: ```go test ./...```.
 
 ## Dependencies
 
