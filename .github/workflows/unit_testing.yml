@@ -21,7 +21,7 @@ jobs:
 
       - name: Run Tests
         run: |
-          go test ./... -v -coverprofile=coverage.out | tee test-output.log
+          go test ./... -v -coverprofile=coverage.out
 
       - name: Generate Coverage Report
         if: success()
