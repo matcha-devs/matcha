@@ -23,19 +23,17 @@ Access our service and create your account at https://www.[domain].com
 
 ## Contributing
 
-Pull requests are welcome. For major changes, please open an issue first
-to discuss what you would like to change.
+Pull requests are welcome.
+For major changes, please open an issue first and discuss what you would like to change.
 Please make sure to update tests as appropriate.
 
-To prevent tracking/modifying the common config file, **please run this command after cloning**:
-
-```git update-index --skip-worktree .idea/runConfigurations/go_build_github_com_matcha_devs_matcha.xml```
-
-Then, **add** ```MYSQL_PASSWORD=[your SQL password]``` to your **environment variables** in the **config file**.
-
-Then, **run**: ```go mod tidy```to import dependencies.
-
-To test modules, *run*: ```go test ./...```.
+1. Clone this repo
+2. To prevent tracking/modifying the run config file, **run**:
+   ```git update-index --skip-worktree .idea/runConfigurations/go_build_github_com_matcha_devs_matcha.xml```
+3. To enable your database, **add** your SQL password to the ```MYSQL_PASSWORD```
+   **environment variable** in the **config file**.
+4. To import dependencies, **run**: ```go mod tidy```.
+5. To run tests, **run**: ```go test ./...```.
 
 ## Dependencies
 
@@ -48,7 +46,7 @@ To test modules, *run*: ```go test ./...```.
 * [Carlos Cotera](https://github.com/carlosacj55) **co-owner**
 * [Ali A Shah](https://github.com/alishah634)
 * [Andrea Goh](https://github.com/andreag0101)
-* [Faaiz Memon](httpppps://github.com/faaizmemonpurdue)
+* [Faaiz Memon](https://github.com/faaizmemonpurdue)
 
 ## License
 
