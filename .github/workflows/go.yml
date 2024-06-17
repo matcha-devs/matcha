@@ -5,7 +5,7 @@ name: Go
 
 on:
   push:
-    branches: [ "master", "testing-setup" ]
+    branches: [ "master"]
   pull_request:
     branches: [ "master" ]
 
