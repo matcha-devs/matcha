@@ -23,8 +23,8 @@ Access our service and create your account at https://www.[domain].com
 
 ## Contributing
 
-Pull requests are welcome. For major changes, please open an issue first
-to discuss what you would like to change.
+Pull requests are welcome.
+For major changes, please open an issue first and discuss what you would like to change.
 Please make sure to update tests as appropriate.
 
 1. Clone this repo
