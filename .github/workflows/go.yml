@@ -25,4 +25,8 @@ jobs:
         run: go build -v ./...
 
       - name: Test
-        run: go test ./... -v
+        run: go test ./... -v -coverprofile=coverage.out | tee test-output.log
+
+      - name: Generate Coverage Report
+        if: success()
+        run: go tool cover -html=coverage.out
