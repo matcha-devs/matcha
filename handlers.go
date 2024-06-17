@@ -6,23 +6,40 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
+	"time"
 
-	"github.com/matcha-devs/matcha/structs"
+	"github.com/matcha-devs/matcha/internal/structs"
 )
 
+// Load to memory and generate all templates, panic if it fails.
 var tmpl = template.Must(template.ParseGlob(filepath.Join("internal", "templates", "*.gohtml")))
+
+// TODO(@FaaizMemonPurdue): This is an example of how go routines should be used, but we still need API call timeouts
+// func routeWithTimeout(w http_server.ResponseWriter, r *http_server.Request) {
+// 	ctx, cancel := context.WithTimeout(r.Context(), maxHandleTime)
+// 	defer cancel()
+// 	select {
+// 	case <-ctx.Done():
+// 		log.Println("Routing took longer than", maxHandleTime)
+// 	default:
+// 		start := time.Now()
+// 		loadEntryPoint(w, r)
+// 		log.Println("Routing done after", time.Since(start))
+// 	}
+// }
 
 func loadPage(w http.ResponseWriter, r *http.Request, title string) {
 	username := r.FormValue("username")
 	user := structs.User{
-		ID:       deps.DB.GetUserID("username", username),
-		Username: username,
-		Email:    "test",
-		Password: "test",
+		ID:        matcha.database.GetUserID("username", username),
+		Username:  username,
+		Email:     "test",
+		Password:  "test",
+		CreatedAt: time.Now(),
 	}
 	err := tmpl.ExecuteTemplate(w, title+".gohtml", user)
 	if err != nil {
-		log.Println("Error executing template-", err)
+		log.Println("Error executing template -", err)
 	}
 }
 
@@ -52,7 +69,7 @@ func signupSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	username := r.FormValue("username")
-	err := deps.DB.AddUser(username, r.FormValue("email"), password)
+	err := matcha.database.AddUser(username, r.FormValue("email"), password)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		loadPage(w, r, "signup-fail")
@@ -67,7 +84,7 @@ func loginSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	username := r.FormValue("username")
-	err := deps.DB.AuthenticateLogin(username, r.FormValue("password"))
+	err := matcha.database.AuthenticateLogin(username, r.FormValue("password"))
 	if err != nil {
 		log.Println("Login failed:", err)
 		http.Redirect(w, r, "/login-fail", http.StatusSeeOther)
@@ -78,20 +95,19 @@ func loginSubmit(w http.ResponseWriter, r *http.Request) {
 
 func deleteUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "invalid request", http.StatusSeeOther)
 		loadPage(w, r, "/")
 		return
 	}
 	username := r.FormValue("username")
-	password := r.FormValue("password")
-	err := deps.DB.AuthenticateLogin(username, password)
+	err := matcha.database.AuthenticateLogin(username, r.FormValue("password"))
 	if err != nil {
 		log.Println("Delete User failed:", err)
 		w.WriteHeader(http.StatusUnauthorized)
 		loadPage(w, r, "settings")
 	} else {
-		id := deps.DB.GetUserID("username", username)
-		err := deps.DB.DeleteUser(id)
+		id := matcha.database.GetUserID("username", username)
+		err := matcha.database.DeleteUser(id)
 		if err != nil {
 			log.Println("Delete User failed:", err)
 		}

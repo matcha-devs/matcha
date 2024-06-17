@@ -3,63 +3,41 @@
 package main
 
 import (
-	"context"
-	"errors"
 	"log"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/matcha-devs/matcha/internal/mySQL"
-	"github.com/matcha-devs/matcha/structs"
+	internalDatabase "github.com/matcha-devs/matcha/internal/database"
+	internalServer "github.com/matcha-devs/matcha/internal/server"
 )
 
-var (
-	deps   *structs.App
-	server = http.Server{
-		Addr:                         ":8080",
-		Handler:                      newMatchaRouter(),
-		DisableGeneralOptionsHandler: false,
-		TLSConfig:                    nil,
-		ReadTimeout:                  time.Second,
-		ReadHeaderTimeout:            2 * time.Second,
-		WriteTimeout:                 time.Second,
-		IdleTimeout:                  30 * time.Second,
-		MaxHeaderBytes:               0,
-		TLSNextProto:                 nil,
-		ConnState:                    nil,
-		ErrorLog:                     nil,
-		BaseContext:                  nil,
-		ConnContext:                  nil,
-	}
-)
+var matcha *app
 
 func main() {
-	// Create a channel to wait for the "crtl+c" interrupt to ensure dependencies are closed safely before exiting.
+	// Channel to catch "crtl+c" such that dependencies will be closed safely before opening them.
 	ctrlC := make(chan os.Signal, 1)
 	signal.Notify(ctrlC, syscall.SIGINT, syscall.SIGTERM)
 
-	// Open those dependencies now that it is safe to do so.
-	deps = structs.NewDeps(mySQL.Open("matcha_db", "root", os.Getenv("MYSQL_PASSWORD"), "internal/mySQL/queries/"))
-	defer deps.Close()
+	// err := os.Setenv("MY_SQL_PASSWORD", "Notasqlpassword!")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	// Run server indefinitely on a new goroutine, then block the main goroutine until ctrl+c interrupt is raised.
-	go func() {
-		log.Println("Server starting on:", server.Addr, "🫡")
-		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalln("HTTP server error -", err)
-		}
-	}()
-	<-ctrlC
+	// Open said dependencies.
+	matcha = newApp(
+		internalServer.New(router()), internalDatabase.New("matcha_db", "root", os.Getenv("MY_SQL_PASSWORD")),
+	)
+	defer matcha.close()
 
-	// Allow 10s max for clients to disconnect and shut the server down.
-	ctx, release := context.WithTimeout(context.Background(), 10*time.Second)
-	defer release()
-	if err := server.Shutdown(ctx); err != nil {
-		log.Fatalln("Server shutdown err -", err)
+	// Open database connection.
+	if err := matcha.database.Open(); err != nil {
+		log.Println("database startup error -", err)
 	}
-	log.Println("Server has shutdown 👋🏽")
+
+	// Run server on a new goroutine.
+	go matcha.server.Run()
+
+	// Block the main goroutine until ctrl+c interrupt is raised.
+	<-ctrlC
 }
