@@ -48,7 +48,7 @@ To test modules, *run*: ```go test ./...```.
 * [Carlos Cotera](https://github.com/carlosacj55) **co-owner**
 * [Ali A Shah](https://github.com/alishah634)
 * [Andrea Goh](https://github.com/andreag0101)
-* [Faaiz Memon](httpppps://github.com/faaizmemonpurdue)
+* [Faaiz Memon](https://github.com/faaizmemonpurdue)
 
 ## License
 
