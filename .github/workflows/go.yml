@@ -5,7 +5,7 @@ name: Go
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master"]
   pull_request:
     branches: [ "master" ]
 
@@ -25,4 +25,4 @@ jobs:
         run: go build -v ./...
 
       - name: Test
-        run: go test -v ./...
+        run: go test ./... -v

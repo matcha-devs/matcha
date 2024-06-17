@@ -16,9 +16,11 @@ type Database struct {
 	db *sql.DB
 }
 
-func Open() *Database {
-	password := os.Getenv("MYSQL_PASSWORD")
-	rootDsn := "root:" + password + "@tcp(localhost:3306)/"
+// @TODO Alishah634 Add username and password DEPENDCY !!!!
+func Open(database_name string, database_user string, database_password string, queries_path string) *Database {
+	// password := os.Getenv("MYSQL_PASSWORD")
+	password := database_password
+	rootDsn := database_user + ":" + password + "@tcp(localhost:3306)/"
 	// Connect to MySQL without specifying matchaDB
 	db, err := sql.Open("mysql", rootDsn)
 	if err != nil {
@@ -29,7 +31,7 @@ func Open() *Database {
 	}
 
 	// Create the matcha_db if it does not exist
-	_, err = db.Exec("CREATE DATABASE IF NOT EXISTS matcha_db")
+	_, err = db.Exec("CREATE DATABASE IF NOT EXISTS " + database_name)
 	if err != nil {
 		log.Fatal("Error opening Database-", err)
 	}
@@ -38,14 +40,15 @@ func Open() *Database {
 	}
 
 	// Connect to matcha_db to run 'init.sql' script
-	db, err = sql.Open("mysql", rootDsn+"matcha_db?multiStatements=true")
+	db, err = sql.Open("mysql", rootDsn+database_name+"?multiStatements=true")
 	if err != nil {
 		log.Fatal("Error opening Database-", err)
 	}
 	if err = db.Ping(); err != nil {
 		log.Fatal("Error connecting to Database-", err)
 	}
-	text, err := os.ReadFile("internal/mySQL/queries/init.sql")
+
+	text, err := os.ReadFile(queries_path+"init.sql")
 	if err != nil {
 		log.Fatal("Error reading init.sql file-", err)
 	}
@@ -54,29 +57,11 @@ func Open() *Database {
 		log.Fatal("Error executing 'init.sql'-", err)
 	}
 
-	// If there is no user, then make test users.
-	var userCount int
-	err = db.QueryRow("SELECT COUNT(*) AS user_count FROM users").Scan(&userCount)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if userCount == 0 {
-		fmt.Println("There is no user. Running 'gen_users.sql' to create new users.")
-		text, err := os.ReadFile("internal/mySQL/queries/gen_users.sql")
-		if err != nil {
-			log.Fatal("Error reading gen_users.sql file-", err)
-		}
-		_, err = db.Exec(string(text))
-		if err != nil {
-			log.Fatal("Error executing 'gen_users.sql'-", err)
-		}
-	}
-
 	// Re-open matchaDB for the security purpose
 	if err := db.Close(); err != nil {
 		log.Println("Error closing Database-", err)
 	}
-	db, err = sql.Open("mysql", rootDsn+"matcha_db")
+	db, err = sql.Open("mysql", rootDsn+database_name)
 	if err != nil {
 		log.Fatal("Error opening Database-", err)
 	}
@@ -118,7 +103,7 @@ func (matcha Database) AddUser(username string, email string, password string) e
 	if err != nil {
 		log.Fatal("Error adding user-", err)
 	}
-	fmt.Println("User Added Successfully")
+	// fmt.Println("User Added Successfully")
 	return err
 }
 

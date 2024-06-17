@@ -2,7 +2,6 @@ package structs
 
 import (
 	"log"
-
 	"github.com/matcha-devs/matcha/dependencies"
 )
 
