@@ -78,11 +78,10 @@ func TestOpenAndClose(t *testing.T) {
 }
 
 // TestAddUserAndAuthenticate tests adding a user and authenticating login
-func TestAddUserAndAuthenticate(t *testing.T) {
+func TestAddUser(t *testing.T) {
 	test_db := setupTestDB(t)
 	defer test_db.Close()
 
-	// Add a user
 	err := test_db.AddUser("testuser", "testuser@example.com", "testpass")
 	if err != nil {
 		t.Fatal("Failed to add user:", err)
@@ -96,6 +95,16 @@ func TestAddUserAndAuthenticate(t *testing.T) {
 	}
 	if id == 0 {
 		t.Error("Added user ID is zero")
+	}
+}
+
+func TestAuthenticateLogin(t *testing.T) {
+	test_db := setupTestDB(t)
+	defer test_db.Close()
+
+	err := test_db.AddUser("testuser", "testuser@example.com", "testpass")
+	if err != nil {
+		t.Fatal("Failed to add user:", err)
 	}
 
 	// Authenticate valid login
