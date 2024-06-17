@@ -1,1 +1,33 @@
-      
+name: Unit-Testing
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.22.3'
+
+      - name: Build
+        run: go build -v ./...
+
+      - name: Run Tests
+        run: |
+          go test ./... -v -coverprofile=coverage.out | tee test-output.log
+
+      - name: Colorize Unit Test Output
+        run: |
+          cat test-output.log | sed ''/PASS/s//$(printf "\033[32mPASS\033[0m")/'' | sed ''/FAIL/s//$(printf "\033[31mFAIL\033[0m")/''
+        continue-on-error: true
+
+      - name: Generate Coverage Report
+        if: success()
+        run: go tool cover -html=coverage.out
