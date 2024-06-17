@@ -27,10 +27,11 @@ jobs:
       - name: Test
         run: go test ./... -v 
       
+      if failure(): 
       - name: Analyze Test Results
-        if: failure() 
-        run: go test./.. -v | sed ''/PASS/s//$(printf "\033[32mPASS\033[0m")/'' | sed ''/FAIL/s//$(printf "\033[31mFAIL\033[0m")/'' && 
-          go test ./... -v > test-output.log &&
+        run: |
+          go test ./... -v | tee test-output.log 
+          cat test-output.log | sed ''/PASS/s//$(printf "\033[32mPASS\033[0m")/'' | sed ''/FAIL/s//$(printf "\033[31mFAIL\033[0m")/''
           if grep -q "FAIL" test-output.log; then
             echo "Tests failed"
             exit 1
