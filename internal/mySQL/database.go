@@ -48,7 +48,7 @@ func Open(database_name string, database_user string, database_password string, 
 		log.Fatal("Error connecting to Database-", err)
 	}
 
-	text, err := os.ReadFile(queries_path+"init.sql")
+	text, err := os.ReadFile(queries_path + "init.sql")
 	if err != nil {
 		log.Fatal("Error reading init.sql file-", err)
 	}
@@ -73,7 +73,7 @@ func Open(database_name string, database_user string, database_password string, 
 
 func (matcha Database) AuthenticateLogin(username string, password string) error {
 	var dbPassword string
-	err := matcha.db.QueryRow("SELECT password FROM users WHERE username = ?", username).Scan(&dbPassword)
+	err := matcha.db.QueryRow("SELECT password FROM users WHERE BINARY username = ?", username).Scan(&dbPassword)
 	if dbPassword != password {
 		err = errors.New("invalid password")
 	}
@@ -109,7 +109,7 @@ func (matcha Database) AddUser(username string, email string, password string) e
 
 func (matcha Database) GetUserID(varName string, variable string) int {
 	var id int
-	err := matcha.db.QueryRow(fmt.Sprintf("SELECT id FROM users WHERE %s = ?", varName), variable).Scan(&id)
+	err := matcha.db.QueryRow(fmt.Sprintf("SELECT id FROM users WHERE BINARY %s = ?", varName), variable).Scan(&id)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Println("Error finding id using ", varName, "-", err)
 	}
@@ -122,7 +122,7 @@ func (matcha Database) DeleteUser(id int) error {
 		log.Println("Error inserting openID ", id, " to the table - ", err)
 		return err
 	}
-	_, err = matcha.db.Exec("DELETE FROM users WHERE id = ?", id)
+	_, err = matcha.db.Exec("DELETE FROM users WHERE BINARY id = ?", id)
 	if err != nil {
 		log.Println("Error deleting the user id ", id, " - ", err)
 		return err
