@@ -12,13 +12,13 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     env:
       DB_HOST: 127.0.0.1
       DB_PORT: 3306
+      DB_DATABASE: test_db
       DB_USER: root
       DB_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
-      DB_DATABASE: test_db
+      MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
 
     steps:
       - uses: actions/checkout@v3
@@ -31,9 +31,9 @@ jobs:
       - name: Set up MySQL
         run: |
           sudo /etc/init.d/mysql start
-          mysql -e 'CREATE DATABASE ${{ env.DB_DATABASE }};' -u${{ env.DB_USER }} -p${{ env.DB_PASSWORD }}
-
-
+          mysql -e "CREATE DATABASE IF NOT EXISTS $DB_DATABASE;" -u$DB_USER -p$DB_PASSWORD
+      
+      
       - name: Set up environment variables
         run: echo "MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> $GITHUB_ENV
 
