@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -74,7 +75,7 @@ func (db *MySQLDatabase) Open() error {
 		log.Println("Error opening database -", err)
 		return err
 	}
-	log.Println("MySQL Database connecting to", db.rootDsn+db.dbName, "🫡")
+	log.Println("MySQL Database connecting to", db.rootDsn[strings.Index(db.rootDsn, "@"):]+db.dbName, "🫡")
 	if err := db.underlyingDB.Ping(); err != nil {
 		log.Println("Error connecting to database -", err)
 		return err
