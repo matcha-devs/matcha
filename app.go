@@ -16,13 +16,13 @@ func newApp(server server, db database) *app {
 
 func (app *app) run() {
 	// Open database connection.
-	if err := matcha.database.Open(); err != nil {
+	if err := app.database.Open(); err != nil {
 		log.Println("database open error -", err)
 	}
 
 	// Run server on a new goroutine.
 	go func() {
-		if err := matcha.server.Run(); err != nil {
+		if err := app.server.Run(); err != nil {
 			log.Println("server run error -", err)
 		}
 	}()
