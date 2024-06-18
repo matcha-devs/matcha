@@ -19,14 +19,9 @@ func main() {
 	ctrlC := make(chan os.Signal, 1)
 	signal.Notify(ctrlC, syscall.SIGINT, syscall.SIGTERM)
 
-	// err := os.Setenv("MY_SQL_PASSWORD", "Notasqlpassword!")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
 	// Open said dependencies.
 	matcha = newApp(
-		internalServer.New(router()), internalDatabase.New("matcha_db", "root", os.Getenv("MY_SQL_PASSWORD")),
+		internalServer.New(router()), internalDatabase.New("matcha_db", "root", os.Getenv("MYSQL_PASSWORD")),
 	)
 	defer matcha.close()
 

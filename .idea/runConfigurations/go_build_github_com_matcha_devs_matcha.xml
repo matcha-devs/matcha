@@ -3,7 +3,7 @@
     <module name="matcha" />
     <working_directory value="$PROJECT_DIR$" />
     <envs>
-      <env name="MY_SQL_PASSWORD" value="" />
+      <env name="MYSQL_PASSWORD" value="" />
     </envs>
     <kind value="PACKAGE" />
     <package value="github.com/matcha-devs/matcha" />
