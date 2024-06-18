@@ -9,7 +9,7 @@ import (
 )
 
 type HTTPServer struct {
-	Server http.Server
+	underlyingServer http.Server
 }
 
 func New(handler http.Handler) *HTTPServer {
@@ -34,8 +34,8 @@ func New(handler http.Handler) *HTTPServer {
 }
 
 func (s *HTTPServer) Run() error {
-	log.Println("HTTP server starting on", s.Server.Addr, "🫡")
-	err := s.Server.ListenAndServe()
+	log.Println("HTTP server starting on", s.underlyingServer.Addr, "🫡")
+	err := s.underlyingServer.ListenAndServe()
 	if !errors.Is(err, http.ErrServerClosed) {
 		log.Fatalln("HTTP server run error -", err)
 	}
@@ -45,7 +45,7 @@ func (s *HTTPServer) Run() error {
 func (s *HTTPServer) Shutdown(maxClientDisconnectTime time.Duration) error {
 	ctx, release := context.WithTimeout(context.Background(), maxClientDisconnectTime)
 	defer release()
-	if err := s.Server.Shutdown(ctx); err != nil {
+	if err := s.underlyingServer.Shutdown(ctx); err != nil {
 		log.Println("HTTP server close error -", err)
 		return err
 	}
