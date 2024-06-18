@@ -19,7 +19,6 @@ jobs:
       DB_USER: root
       DB_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
       DB_DATABASE: test_db
-      MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
 
     steps:
       - uses: actions/checkout@v3
