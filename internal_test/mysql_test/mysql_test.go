@@ -52,10 +52,11 @@ func setupDBAndOpenSubject(t *testing.T) *internalDatabase.MySQLDatabase {
 	}
 
 	// Open the custom testing database with initial SQL setup
-	subject := internalDatabase.New("test_db", "root", password)
+	subject := internalDatabase.New("test_db", "root", password, "../../internal/database/queries/")
 	if subject == nil {
 		t.Fatal("Failed to open test database")
 	}
+	subject.Open()
 
 	return subject
 }
@@ -131,7 +132,7 @@ func TestDeleteUser(t *testing.T) {
 	defer func() {
 		err := subject.Close()
 		if err != nil {
-
+			t.Error("Failed to close database:", err)
 		}
 	}()
 
@@ -174,22 +175,56 @@ func TestGetUserID(t *testing.T) {
 		}
 	}()
 
-	err := subject.AddUser("user_id_user", "user_id_user@example.com", "user_id_pass")
-	if err != nil {
-		t.Fatal("Failed to add user:", err)
-	}
+	t.Run("AddUserAndGetUserID", func(t *testing.T) {
+		err := subject.AddUser("user_id_user", "user_id_user@example.com", "user_id_pass")
+		if err != nil {
+			t.Fatal("Failed to add user:", err)
+		}
 
-	// Get user ID by username
-	id := subject.GetUserID("username", "user_id_user")
-	if id != 1 {
-		t.Error("Failed to get user ID by username")
-	}
+		// Get user ID by username
+		id := subject.GetUserID("username", "user_id_user")
+		if id != 1 {
+			t.Error("Failed to get user ID by username")
+		}
+		// Get user ID by email
+		id = subject.GetUserID("email", "user_id_user@example.com")
+		if id != 1 {
+			t.Error("Failed to get user ID by email")
+		}
+	})
 
-	// Get user ID by email
-	id = subject.GetUserID("email", "user_id_user@example.com")
-	if id == 1 {
-		t.Error("Failed to get user ID by email")
-	}
+	t.Run("AddMultipleUsersAndGetUserID", func(t *testing.T) {
+		log.Println("Testing for multiple users")
+		err := subject.AddUser("user2_id_user2", "user2_id_user2@example.com", "user2_id2_pass")
+		if err != nil {
+			t.Fatal("Failed to add user:", err)
+		}
+
+		// Get user ID by username
+		id := subject.GetUserID("username", "user2_id_user2")
+		if id != 2 {
+			t.Error("Failed to get user ID by username")
+		}
+		// Get user ID by email
+		id = subject.GetUserID("email", "user2_id_user2@example.com")
+		if id != 2 {
+			t.Error("Failed to get user ID by email")
+		}
+	})
+
+	t.Run("GetNonExistentUserID", func(t *testing.T) {
+		log.Println("Testing for when the user does not exist")
+		// Get user ID by username
+		id := subject.GetUserID("username", "user3_id_user3")
+		if id > 0 {
+			t.Error("Expected to not find a user by username, but found one")
+		}
+		// Get user ID by email
+		id = subject.GetUserID("email", "user3_id_user3@example.com")
+		if id > 0 {
+			t.Error("Expected to not find a user by email, but found one")
+		}
+	})
 }
 
 func TestMain(m *testing.M) {
