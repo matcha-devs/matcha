@@ -91,8 +91,13 @@ func (mysql *MySQLDatabase) Close() error {
 
 func (mysql *MySQLDatabase) AuthenticateLogin(username string, password string) error {
 	var dbPassword string
-	err := mysql.underlyingDB.QueryRow("SELECT password FROM users WHERE username = ?", username).Scan(&dbPassword)
-	if dbPassword != password {
+	err := mysql.underlyingDB.QueryRow(
+		"SELECT password FROM users WHERE BINARY username = ?",
+		username,
+	).Scan(&dbPassword)
+	if errors.Is(err, sql.ErrNoRows) {
+		err = errors.New("invalid username")
+	} else if dbPassword != password {
 		err = errors.New("invalid password")
 	}
 	return err
@@ -127,7 +132,10 @@ func (mysql *MySQLDatabase) AddUser(username string, email string, password stri
 
 func (mysql *MySQLDatabase) GetUserID(varName string, variable string) int {
 	var id int
-	err := mysql.underlyingDB.QueryRow(fmt.Sprintf("SELECT id FROM users WHERE %s = ?", varName), variable).Scan(&id)
+	err := mysql.underlyingDB.QueryRow(
+		fmt.Sprintf("SELECT id FROM users WHERE BINARY %s = ?", varName),
+		variable,
+	).Scan(&id)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Println("Error finding id using", varName, "-", err)
 	}
@@ -140,7 +148,7 @@ func (mysql *MySQLDatabase) DeleteUser(id int) error {
 		log.Println("Error inserting openID", id, " to the table -", err)
 		return err
 	}
-	_, err = mysql.underlyingDB.Exec("DELETE FROM users WHERE id = ?", id)
+	_, err = mysql.underlyingDB.Exec("DELETE FROM users WHERE BINARY id = ?", id)
 	if err != nil {
 		log.Println("Error deleting the user id", id, " -", err)
 		return err
