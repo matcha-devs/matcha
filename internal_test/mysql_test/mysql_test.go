@@ -3,7 +3,6 @@ package database_test
 import (
 	"database/sql"
 	"errors"
-	_ "fmt"
 	"log"
 	"os"
 	"strings"
@@ -19,7 +18,6 @@ var probe *sql.DB
 func setupDBAndOpenSubject(t *testing.T) *internalDatabase.MySQLDatabase {
 	// Get the password from the environment, currently using the admin password this may change in the future!!!
 	password := os.Getenv("MYSQL_PASSWORD")
-
 	// Connect to MySQL root
 	var err error
 	probe, err = sql.Open("mysql", "root:"+password+"@tcp(localhost:3306)/")
@@ -117,17 +115,37 @@ func TestAuthenticateLogin(t *testing.T) {
 		t.Fatal("Failed to add user:", err)
 	}
 
-	// Authenticate valid login
-	err = subject.AuthenticateLogin("test_user", "test_pass")
-	if err != nil {
-		t.Error("Valid login failed:", err)
-	}
+	t.Run("Valid_Login", func(t *testing.T) {
+		// Authenticate valid login
+		err = subject.AuthenticateLogin("test_user", "test_pass")
+		if err != nil {
+			t.Error("Valid login failed:", err)
+		}
+	})
 
-	// Authenticate invalid login
-	err = subject.AuthenticateLogin("test_user", "wrong_pass")
-	if err == nil {
-		t.Error("Invalid login did not fail")
-	}
+	t.Run("Invalid_Password", func(t *testing.T) {
+		// Authenticate invalid login
+		err = subject.AuthenticateLogin("test_user", "wrong_pass")
+		if err == nil {
+			t.Error("Invalid login did not fail")
+		}
+	})
+
+	t.Run("Invalid_Username", func(t *testing.T) {
+		// Authenticate invalid login
+		err = subject.AuthenticateLogin("wrong_user", "test_pass")
+		if err == nil {
+			t.Error("Invalid login did not fail")
+		}
+	})
+
+	t.Run("Invalid_Username_and_Password", func(t *testing.T) {
+		// Authenticate invalid login
+		err = subject.AuthenticateLogin("wrong_user", "wrong_pass")
+		if err == nil {
+			t.Error("Invalid login did not fail")
+		}
+	})
 }
 
 func TestDeleteUser(t *testing.T) {
@@ -179,7 +197,7 @@ func TestGetUserID(t *testing.T) {
 	}()
 
 	t.Run(
-		"AddUserAndGetUserID", func(t *testing.T) {
+		"Valid_Users", func(t *testing.T) {
 			err := subject.AddUser("user_id_user", "user_id_user@example.com", "user_id_pass")
 			if err != nil {
 				t.Fatal("Failed to add user:", err)
@@ -205,7 +223,7 @@ func TestGetUserID(t *testing.T) {
 	)
 
 	t.Run(
-		"AddMultipleUsersAndGetUserID", func(t *testing.T) {
+		"Multiple_Users", func(t *testing.T) {
 			log.Println("Testing for multiple users")
 			err := subject.AddUser("user2_id_user2", "user2_id_user2@example.com", "user2_id2_pass")
 			if err != nil {
@@ -232,7 +250,7 @@ func TestGetUserID(t *testing.T) {
 	)
 
 	t.Run(
-		"GetNonExistentUserID", func(t *testing.T) {
+		"NonExistent_User", func(t *testing.T) {
 			log.Println("Testing for when the user does not exist")
 			// Get user ID by username
 			id, err := subject.GetUserID("username", "user3_id_user3")
