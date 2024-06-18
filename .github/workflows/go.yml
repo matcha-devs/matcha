@@ -5,9 +5,9 @@ name: Go
 
 on:
   push:
-    branches: ["master"]
+    branches: [ "master" ]
   pull_request:
-    branches: ["master"]
+    branches: [ "master" ]
 
 jobs:
   build:
@@ -17,17 +17,7 @@ jobs:
       DB_DATABASE: test_db
       DB_USER: root
       DB_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
-
-    services:
-      mysql:
-        image: mysql:latest
-        ports:
-          - 3306:3306
-        options: > 
-          --health-cmd="mysqladmin ping --silent" --health-retries=5
-        env:
-          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
-
+      
     steps:
       - uses: actions/checkout@v3
 
@@ -36,18 +26,13 @@ jobs:
         with:
           go-version: '1.22.3'
 
-      - name: Wait for MySQL
+      - name: Set up MySQL
         run: |
-          until mysqladmin ping -h 127.0.0.1 --silent; do
-            echo 'Waiting for MySQL...'
-            sleep 3
-          done
+          sudo /etc/init.d/mysql start
+          mysql -e 'CREATE DATABASE IF NOT EXISTS ${{ env.DB_DATABASE }};' -u${{ env.DB_USER }} -p${{ env.DB_PASSWORD }}
 
       - name: Set up environment variables
         run: echo "MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> $GITHUB_ENV
-
-      - name: Create Database
-        run: mysql -u${{ env.DB_USER }} -p${{ env.DB_PASSWORD }} -e 'CREATE DATABASE IF NOT EXISTS ${{ env.DB_DATABASE }};'
 
       - name: Build
         run: go build -v ./...
@@ -55,18 +40,10 @@ jobs:
       - name: Test
         env:
           MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
-        run: go test ./... -v 
-
-      - name: Analyze Test Results
-        if: failure()
         run: |
           go test ./... -v | tee test-output.log 
-          cat test-output.log | sed ''/PASS/s//$(printf "\033[32mPASS\033[0m")/'' | sed ''/FAIL/s//$(printf "\033[31mFAIL\033[0m")/''
           if grep -q "FAIL" test-output.log; then
-            echo "Tests failed"
             exit 1
-          else
-            echo "All tests passed"
           fi
 
       - name: Code Coverage Test
