@@ -132,7 +132,7 @@ func (db *MySQLDatabase) AddUser(username string, email string, password string)
 	return err
 }
 
-func (db *MySQLDatabase) GetUserID(varName string, variable string) int {
+func (db *MySQLDatabase) GetUserID(varName string, variable string) (int, error) {
 	var id int
 	err := db.underlyingDB.QueryRow(
 		fmt.Sprintf("SELECT id FROM users WHERE BINARY %s = ?", varName), variable,
@@ -140,7 +140,7 @@ func (db *MySQLDatabase) GetUserID(varName string, variable string) int {
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Println("Error finding id using", varName, "-", err)
 	}
-	return id
+	return id, err
 }
 
 func (db *MySQLDatabase) DeleteUser(id int) error {

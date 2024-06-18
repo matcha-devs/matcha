@@ -186,12 +186,18 @@ func TestGetUserID(t *testing.T) {
 			}
 
 			// Get user ID by username
-			id := subject.GetUserID("username", "user_id_user")
+			id, err := subject.GetUserID("username", "user_id_user")
+			if err != nil {
+				t.Error("Error occurred while finding userID")
+			}
 			if id != 1 {
 				t.Error("Failed to get user ID by username")
 			}
 			// Get user ID by email
-			id = subject.GetUserID("email", "user_id_user@example.com")
+			id, err = subject.GetUserID("email", "user_id_user@example.com")
+			if err != nil {
+				t.Error("Error occurred while finding userID")
+			}
 			if id != 1 {
 				t.Error("Failed to get user ID by email")
 			}
@@ -207,12 +213,18 @@ func TestGetUserID(t *testing.T) {
 			}
 
 			// Get user ID by username
-			id := subject.GetUserID("username", "user2_id_user2")
+			id, err := subject.GetUserID("username", "user2_id_user2")
+			if err != nil {
+				t.Error("Error occurred while finding userID")
+			}
 			if id != 2 {
 				t.Error("Failed to get user ID by username")
 			}
 			// Get user ID by email
-			id = subject.GetUserID("email", "user2_id_user2@example.com")
+			id, err = subject.GetUserID("email", "user2_id_user2@example.com")
+			if err != nil {
+				t.Error("Error occurred while finding userID")
+			}
 			if id != 2 {
 				t.Error("Failed to get user ID by email")
 			}
@@ -223,12 +235,18 @@ func TestGetUserID(t *testing.T) {
 		"GetNonExistentUserID", func(t *testing.T) {
 			log.Println("Testing for when the user does not exist")
 			// Get user ID by username
-			id := subject.GetUserID("username", "user3_id_user3")
+			id, err := subject.GetUserID("username", "user3_id_user3")
+			if err != nil {
+				t.Error("Error occurred while finding userID")
+			}
 			if id > 0 {
 				t.Error("Expected to not find a user by username, but found one")
 			}
 			// Get user ID by email
-			id = subject.GetUserID("email", "user3_id_user3@example.com")
+			id, err = subject.GetUserID("email", "user3_id_user3@example.com")
+			if err != nil {
+				t.Error("Error occurred while finding userID")
+			}
 			if id > 0 {
 				t.Error("Expected to not find a user by email, but found one")
 			}

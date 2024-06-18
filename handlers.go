@@ -30,14 +30,18 @@ var tmpl = template.Must(template.ParseGlob(filepath.Join("internal", "templates
 
 func loadPage(w http.ResponseWriter, r *http.Request, title string) {
 	username := r.FormValue("username")
+	id, err := matcha.database.GetUserID("username", username)
+	if err != nil {
+		log.Fatalf("Load Page Failed - can't get userID: ", err)
+	}
 	user := structs.User{
-		ID:        matcha.database.GetUserID("username", username),
+		ID:        id,
 		Username:  username,
 		Email:     "test",
 		Password:  "test",
 		CreatedAt: time.Now(),
 	}
-	err := tmpl.ExecuteTemplate(w, title+".gohtml", user)
+	err = tmpl.ExecuteTemplate(w, title+".gohtml", user)
 	if err != nil {
 		log.Println("Error executing template -", err)
 	}
@@ -106,8 +110,11 @@ func deleteUser(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 		loadPage(w, r, "settings")
 	} else {
-		id := matcha.database.GetUserID("username", username)
-		err := matcha.database.DeleteUser(id)
+		id, err := matcha.database.GetUserID("username", username)
+		if err != nil {
+			log.Fatalf("Delete User failed:", err)
+		}
+		err = matcha.database.DeleteUser(id)
 		if err != nil {
 			log.Println("Delete User failed:", err)
 		}
