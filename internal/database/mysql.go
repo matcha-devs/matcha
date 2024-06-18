@@ -18,13 +18,13 @@ type MySQLDatabase struct {
 	underlyingDB *sql.DB
 }
 
-func New(dbName string, username string, password string, queriesPath string) *MySQLDatabase {
+func New(dbName string, username string, password string) *MySQLDatabase {
 	mysql := MySQLDatabase{
 		rootDsn:      username + ":" + password + "@tcp(localhost:3306)/",
 		dbName:       dbName,
 		underlyingDB: nil,
 	}
-	initScript, err := os.ReadFile(queriesPath + "init.sql")
+	initScript, err := os.ReadFile("internal/database/queries/init.sql")
 	if err != nil {
 		log.Fatal("Error reading init.sql file -", err)
 	}

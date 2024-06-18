@@ -6,6 +6,7 @@ import (
 	_ "fmt"
 	"log"
 	"os"
+	"strings"
 	"testing"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -52,7 +53,7 @@ func setupDBAndOpenSubject(t *testing.T) *internalDatabase.MySQLDatabase {
 	}
 
 	// Open the custom testing database with initial SQL setup
-	subject := internalDatabase.New("test_db", "root", password, "../../internal/database/queries/")
+	subject := internalDatabase.New("test_db", "root", password)
 	if subject == nil {
 		t.Fatal("Failed to open subject database")
 	}
@@ -236,5 +237,14 @@ func TestGetUserID(t *testing.T) {
 }
 
 func TestMain(m *testing.M) {
+	wd, err := os.Getwd()
+	if err != nil {
+		log.Fatal("Failed to get working directory -", err)
+	}
+	if !strings.HasSuffix(wd, "matcha") {
+		if err := os.Chdir("../.."); err != nil {
+			log.Fatal("Failed to change working directory -", err)
+		}
+	}
 	m.Run()
 }

@@ -16,7 +16,7 @@ var matcha *app
 func init() {
 	matcha = newApp(
 		internalServer.New(router()),
-		internalDatabase.New("matcha_db", "root", os.Getenv("MYSQL_PASSWORD"), "internal/database/queries/"),
+		internalDatabase.New("matcha_db", "root", os.Getenv("MYSQL_PASSWORD")),
 	)
 }
 

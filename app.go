@@ -27,6 +27,7 @@ func (app *app) run() {
 		}
 	}()
 }
+
 func (app *app) close() {
 	var success = true
 	if err := app.server.Shutdown(10 * time.Second); err != nil {
