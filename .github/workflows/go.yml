@@ -59,7 +59,7 @@ jobs:
             exit 1
           else
             echo "All tests passed"
-          fi  
+          fi
 
       - name: Code Coverage Test
         if: success()
