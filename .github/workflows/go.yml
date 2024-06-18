@@ -12,6 +12,17 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:latest
+        ports:
+          - 3306:3306
+        options: > 
+          --health-cmd="mysqladmin ping --silent" --health-interval=10s --health-timeout=5s --health-retries=5
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+
     env:
       DB_HOST: 127.0.0.1
       DB_PORT: 3306
@@ -28,12 +39,17 @@ jobs:
         with:
           go-version: '1.22.3'
 
-      - name: Set up MySQL
+      - name: Wait for MySQL
         run: |
-          sudo /etc/init.d/mysql start
-          mysql -e "CREATE DATABASE IF NOT EXISTS $DB_DATABASE;" -u$DB_USER -p$DB_PASSWORD
-      
-      
+          until mysqladmin ping -h ${{ env.DB_HOST }} -uroot -p${{ env.MYSQL_PASSWORD }} --silent; do
+            echo 'Waiting for MySQL...'
+            sleep 3
+          done
+
+      - name: Create Database
+        run: |
+          mysql -h ${{ env.DB_HOST }} -uroot -p${{ env.MYSQL_PASSWORD }} -e "CREATE DATABASE IF NOT EXISTS ${{ env.DB_DATABASE }};"
+
       - name: Set up environment variables
         run: echo "MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> $GITHUB_ENV
 
