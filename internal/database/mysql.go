@@ -109,7 +109,7 @@ func (db *MySQLDatabase) getOpenID() int {
 	var id int
 	err := db.underlyingDB.QueryRow("SELECT id FROM openid LIMIT 1").Scan(&id)
 	if id == 0 && !errors.Is(err, sql.ErrNoRows) {
-		log.Fatalf("Error retrieving first row of openID table: %v", err)
+		log.Fatalln("Error retrieving first row of openID table - ", err)
 	}
 	return id
 }
