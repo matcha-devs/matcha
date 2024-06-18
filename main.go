@@ -21,7 +21,8 @@ func main() {
 
 	// Open said dependencies.
 	matcha = newApp(
-		internalServer.New(router()), internalDatabase.New("matcha_db", "root", os.Getenv("MYSQL_PASSWORD"), "internal/database/queries/"),
+		internalServer.New(router()),
+		internalDatabase.New("matcha_db", "root", os.Getenv("MYSQL_PASSWORD"), "internal/database/queries/"),
 	)
 	defer matcha.close()
 

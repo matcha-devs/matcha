@@ -18,13 +18,13 @@ type MySQLDatabase struct {
 	underlyingDB *sql.DB
 }
 
-func New(dbName string, username string, password string, queries_path string) *MySQLDatabase {
+func New(dbName string, username string, password string, queriesPath string) *MySQLDatabase {
 	mysql := MySQLDatabase{
 		rootDsn:      username + ":" + password + "@tcp(localhost:3306)/",
 		dbName:       dbName,
 		underlyingDB: nil,
 	}
-	initScript, err := os.ReadFile(queries_path+"init.sql")
+	initScript, err := os.ReadFile(queriesPath + "init.sql")
 	if err != nil {
 		log.Fatal("Error reading init.sql file -", err)
 	}
@@ -92,8 +92,7 @@ func (mysql *MySQLDatabase) Close() error {
 func (mysql *MySQLDatabase) AuthenticateLogin(username string, password string) error {
 	var dbPassword string
 	err := mysql.underlyingDB.QueryRow(
-		"SELECT password FROM users WHERE BINARY username = ?",
-		username,
+		"SELECT password FROM users WHERE BINARY username = ?", username,
 	).Scan(&dbPassword)
 	if errors.Is(err, sql.ErrNoRows) {
 		err = errors.New("invalid username")
@@ -133,8 +132,7 @@ func (mysql *MySQLDatabase) AddUser(username string, email string, password stri
 func (mysql *MySQLDatabase) GetUserID(varName string, variable string) int {
 	var id int
 	err := mysql.underlyingDB.QueryRow(
-		fmt.Sprintf("SELECT id FROM users WHERE BINARY %s = ?", varName),
-		variable,
+		fmt.Sprintf("SELECT id FROM users WHERE BINARY %s = ?", varName), variable,
 	).Scan(&id)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Println("Error finding id using", varName, "-", err)
