@@ -241,7 +241,7 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatal("Failed to get working directory -", err)
 	}
-	if !strings.HasSuffix(wd, "matcha") {
+	if !strings.HasSuffix(wd, "/matcha") {
 		if err := os.Chdir("../.."); err != nil {
 			log.Fatal("Failed to change working directory -", err)
 		}
