@@ -3,7 +3,7 @@ package main
 import "time"
 
 type server interface {
-	Run()
+	Run() error
 	Shutdown(maxClientDisconnectTime time.Duration) error
 }
 

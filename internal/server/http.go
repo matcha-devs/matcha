@@ -33,11 +33,13 @@ func New(handler http.Handler) *HTTPServer {
 	}
 }
 
-func (s *HTTPServer) Run() {
+func (s *HTTPServer) Run() error {
 	log.Println("HTTP server starting on", s.Server.Addr, "🫡")
-	if err := s.Server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+	err := s.Server.ListenAndServe()
+	if !errors.Is(err, http.ErrServerClosed) {
 		log.Fatalln("HTTP server run error -", err)
 	}
+	return err
 }
 
 func (s *HTTPServer) Shutdown(maxClientDisconnectTime time.Duration) error {

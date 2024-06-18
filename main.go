@@ -28,11 +28,15 @@ func main() {
 
 	// Open database connection.
 	if err := matcha.database.Open(); err != nil {
-		log.Println("database startup error -", err)
+		log.Println("database open error -", err)
 	}
 
 	// Run server on a new goroutine.
-	go matcha.server.Run()
+	go func() {
+		if err := matcha.server.Run(); err != nil {
+			log.Println("server run error -", err)
+		}
+	}()
 
 	// Block the main goroutine until ctrl+c interrupt is raised.
 	<-ctrlC
