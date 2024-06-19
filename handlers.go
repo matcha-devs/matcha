@@ -32,7 +32,7 @@ func loadPage(w http.ResponseWriter, r *http.Request, title string) {
 	username := r.FormValue("username")
 	id, err := matcha.database.GetUserID("username", username)
 	if err != nil {
-		log.Fatalln("Load Page Failed - can't get userID: ", err)
+		log.Println("Load Page Failed - can't get userID: ", err)
 	}
 	user := structs.User{
 		ID:        id,
@@ -112,7 +112,7 @@ func deleteUser(w http.ResponseWriter, r *http.Request) {
 	} else {
 		id, err := matcha.database.GetUserID("username", username)
 		if err != nil {
-			log.Fatalln("Delete User failed:", err)
+			log.Println("Delete User failed:", err)
 		}
 		err = matcha.database.DeleteUser(id)
 		if err != nil {
