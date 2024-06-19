@@ -31,23 +31,23 @@ func setupDBAndOpenSubject(t *testing.T) *internalDatabase.MySQLDatabase {
 	// Ensure a clean test database by recreating any previous schemas
 	_, err = probe.Exec("DROP DATABASE IF EXISTS test_db")
 	if err != nil {
-		t.Fatal("Failed to drop test database:", err)
+		t.Fatal("Failed to drop test database -", err)
 	}
 	_, err = probe.Exec("CREATE DATABASE test_db")
 	if err != nil {
-		t.Fatal("Failed to create test database:", err)
+		t.Fatal("Failed to create test database -", err)
 	}
 	if err := probe.Close(); err != nil {
-		log.Fatal("Error closing initial database connection:", err)
+		log.Fatal("Error closing initial database connection -", err)
 	}
 
 	// Connect to the newly created test database
 	probe, err = sql.Open("mysql", "root:"+password+"@tcp(localhost:3306)/test_db")
 	if err != nil {
-		t.Fatal("Failed to open connection to test database:", err)
+		t.Fatal("Failed to open connection to test database -", err)
 	}
 	if err := probe.Ping(); err != nil {
-		t.Fatal("Failed to ping test database connection:", err)
+		t.Fatal("Failed to ping test database connection -", err)
 	}
 
 	// Open the custom testing database with initial SQL setup
@@ -56,7 +56,7 @@ func setupDBAndOpenSubject(t *testing.T) *internalDatabase.MySQLDatabase {
 		t.Fatal("Failed to open subject database")
 	}
 	if err := subject.Open(); err != nil {
-		t.Fatal("Failed to open subject database:", err)
+		t.Fatal("Failed to open subject database -", err)
 	}
 
 	return subject
@@ -71,7 +71,7 @@ func TestOpenAndClose(t *testing.T) {
 	// TODO(@Alishah634): Test that all the tables are generated.
 	err := subject.Close()
 	if err != nil {
-		t.Error("Failed to close database:", err)
+		t.Error("Failed to close database -", err)
 	}
 }
 
@@ -80,20 +80,20 @@ func TestAddUser(t *testing.T) {
 	defer func() {
 		err := subject.Close()
 		if err != nil {
-			t.Error("Failed to close database:", err)
+			log.Println("Failed to close database -", err)
 		}
 	}()
 
 	err := subject.AddUser("test_user", "test_user@example.com", "test_pass")
 	if err != nil {
-		t.Fatal("Failed to add user:", err)
+		t.Fatal("Failed to add user -", err)
 	}
 
 	// Verify the user was added
 	var id int
 	err = probe.QueryRow("SELECT id FROM users WHERE username = ?", "test_user").Scan(&id)
 	if err != nil {
-		t.Fatal("Failed to find added user:", err)
+		t.Fatal("Failed to find added user -", err)
 	}
 	if id == 0 {
 		t.Error("Added user ID is zero")
@@ -106,46 +106,54 @@ func TestAuthenticateLogin(t *testing.T) {
 	defer func() {
 		err := subject.Close()
 		if err != nil {
-			t.Error("Failed to close database:", err)
+			t.Error("Failed to close database -", err)
 		}
 	}()
 
 	err := subject.AddUser("test_user", "test_user@example.com", "test_pass")
 	if err != nil {
-		t.Fatal("Failed to add user:", err)
+		t.Fatal("Failed to add user -", err)
 	}
 
-	t.Run("Valid_Login", func(t *testing.T) {
-		// Authenticate valid login
-		err = subject.AuthenticateLogin("test_user", "test_pass")
-		if err != nil {
-			t.Error("Valid login failed:", err)
-		}
-	})
+	t.Run(
+		"Valid_Login", func(t *testing.T) {
+			// Authenticate valid login
+			err = subject.AuthenticateLogin("test_user", "test_pass")
+			if err != nil {
+				t.Error("Valid login failed:", err)
+			}
+		},
+	)
 
-	t.Run("Invalid_Password", func(t *testing.T) {
-		// Authenticate invalid login
-		err = subject.AuthenticateLogin("test_user", "wrong_pass")
-		if err == nil {
-			t.Error("Invalid login did not fail")
-		}
-	})
+	t.Run(
+		"Invalid_Password", func(t *testing.T) {
+			// Authenticate invalid login
+			err = subject.AuthenticateLogin("test_user", "wrong_pass")
+			if err == nil {
+				t.Error("Invalid login did not fail")
+			}
+		},
+	)
 
-	t.Run("Invalid_Username", func(t *testing.T) {
-		// Authenticate invalid login
-		err = subject.AuthenticateLogin("wrong_user", "test_pass")
-		if err == nil {
-			t.Error("Invalid login did not fail")
-		}
-	})
+	t.Run(
+		"Invalid_Username", func(t *testing.T) {
+			// Authenticate invalid login
+			err = subject.AuthenticateLogin("wrong_user", "test_pass")
+			if err == nil {
+				t.Error("Invalid login did not fail")
+			}
+		},
+	)
 
-	t.Run("Invalid_Username_and_Password", func(t *testing.T) {
-		// Authenticate invalid login
-		err = subject.AuthenticateLogin("wrong_user", "wrong_pass")
-		if err == nil {
-			t.Error("Invalid login did not fail")
-		}
-	})
+	t.Run(
+		"Invalid_Username_and_Password", func(t *testing.T) {
+			// Authenticate invalid login
+			err = subject.AuthenticateLogin("wrong_user", "wrong_pass")
+			if err == nil {
+				t.Error("Invalid login did not fail")
+			}
+		},
+	)
 }
 
 func TestDeleteUser(t *testing.T) {
@@ -153,20 +161,20 @@ func TestDeleteUser(t *testing.T) {
 	defer func() {
 		err := subject.Close()
 		if err != nil {
-			t.Error("Failed to close database:", err)
+			t.Error("Failed to close database -", err)
 		}
 	}()
 
 	err := subject.AddUser("delete_user", "delete_user@example.com", "delete_pass")
 	if err != nil {
-		t.Fatal("Failed to add user:", err)
+		t.Fatal("Failed to add user -", err)
 	}
 
 	// Verify the user was added
 	var id int
 	err = probe.QueryRow("SELECT id FROM users WHERE username = ?", "delete_user").Scan(&id)
 	if err != nil {
-		t.Fatal("Failed to find added user:", err)
+		t.Fatal("Failed to find added user -", err)
 	}
 	if id == 0 {
 		t.Error("Added user ID is zero")
@@ -175,7 +183,7 @@ func TestDeleteUser(t *testing.T) {
 	// Delete the user
 	err = subject.DeleteUser(id)
 	if err != nil {
-		t.Fatal("Failed to delete user:", err)
+		t.Fatal("Failed to delete user -", err)
 	}
 
 	// Verify the user was deleted
@@ -192,7 +200,7 @@ func TestGetUserID(t *testing.T) {
 	defer func() {
 		err := subject.Close()
 		if err != nil {
-			t.Error("Failed to close database:", err)
+			t.Error("Failed to close database -", err)
 		}
 	}()
 
@@ -200,7 +208,7 @@ func TestGetUserID(t *testing.T) {
 		"Valid_Users", func(t *testing.T) {
 			err := subject.AddUser("user_id_user", "user_id_user@example.com", "user_id_pass")
 			if err != nil {
-				t.Fatal("Failed to add user:", err)
+				t.Fatal("Failed to add user -", err)
 			}
 
 			// Get user ID by username
@@ -227,7 +235,7 @@ func TestGetUserID(t *testing.T) {
 			log.Println("Testing for multiple users")
 			err := subject.AddUser("user2_id_user2", "user2_id_user2@example.com", "user2_id2_pass")
 			if err != nil {
-				t.Fatal("Failed to add user:", err)
+				t.Fatal("Failed to add user -", err)
 			}
 
 			// Get user ID by username

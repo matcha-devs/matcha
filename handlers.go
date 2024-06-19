@@ -55,7 +55,7 @@ func loadEntryPoint(w http.ResponseWriter, r *http.Request) {
 	path := strings.TrimLeft(r.URL.Path, "/")
 	log.Println("Routing {" + path + "}")
 	if _, exists := validEntryPoints[path]; !exists {
-		log.Println("Not a valid entry point:", path)
+		log.Println("Not a valid entry point -", path)
 		http.NotFound(w, r)
 	}
 	loadPage(w, r, path)
@@ -90,7 +90,7 @@ func loginSubmit(w http.ResponseWriter, r *http.Request) {
 	username := r.FormValue("username")
 	err := matcha.database.AuthenticateLogin(username, r.FormValue("password"))
 	if err != nil {
-		log.Println("Login failed:", err)
+		log.Println("Login failed -", err)
 		http.Redirect(w, r, "/login-fail", http.StatusSeeOther)
 	} else {
 		loadPage(w, r, "dashboard")
@@ -106,17 +106,17 @@ func deleteUser(w http.ResponseWriter, r *http.Request) {
 	username := r.FormValue("username")
 	err := matcha.database.AuthenticateLogin(username, r.FormValue("password"))
 	if err != nil {
-		log.Println("Delete User failed:", err)
+		log.Println("Delete User failed -", err)
 		w.WriteHeader(http.StatusUnauthorized)
 		loadPage(w, r, "settings")
 	} else {
 		id, err := matcha.database.GetUserID("username", username)
 		if err != nil {
-			log.Println("Delete User failed:", err)
+			log.Println("Delete User failed -", err)
 		}
 		err = matcha.database.DeleteUser(id)
 		if err != nil {
-			log.Println("Delete User failed:", err)
+			log.Println("Delete User failed -", err)
 		}
 	}
 }

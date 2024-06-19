@@ -42,7 +42,7 @@ func New(dbName string, username string, password string) *MySQLDatabase {
 	// Create the database if it does not exist
 	_, err = db.Exec("CREATE DATABASE IF NOT EXISTS " + dbName)
 	if err != nil {
-		log.Fatal("Error creating database-", err)
+		log.Fatal("Error creating database -", err)
 	}
 	if err := db.Close(); err != nil {
 		log.Fatal("Error closing database -", err)
@@ -60,10 +60,10 @@ func New(dbName string, username string, password string) *MySQLDatabase {
 	// Run 'init.sql' script.
 	_, err = db.Exec(string(initScript))
 	if err != nil {
-		log.Fatal("Error executing 'init.sql'-", err)
+		log.Fatal("Error executing 'init.sql' -", err)
 	}
 	if err := db.Close(); err != nil {
-		log.Println("Error closing database -", err)
+		log.Fatal("Error closing database -", err)
 	}
 	return &mysql
 }
@@ -126,19 +126,17 @@ func (db *MySQLDatabase) AddUser(username string, email string, password string)
 	}
 	_, err := db.underlyingDB.Exec(query)
 	if err != nil {
-		log.Fatal("Error adding user -", err)
+		log.Println("Error adding user -", err)
 	}
 	fmt.Println("User Added Successfully")
 	return err
 }
 
-func (db *MySQLDatabase) GetUserID(varName string, variable string) (int, error) {
+func (db *MySQLDatabase) GetUserID(column string, row string) (int, error) {
 	var id int
-	err := db.underlyingDB.QueryRow(
-		fmt.Sprintf("SELECT id FROM users WHERE BINARY %s = ?", varName), variable,
-	).Scan(&id)
+	err := db.underlyingDB.QueryRow(fmt.Sprintf("SELECT id FROM users WHERE BINARY %s = ?", column), row).Scan(&id)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		log.Println("Error finding id using", varName, "-", err)
+		log.Println("Error querying users for", column+":"+row, "-", err)
 	}
 	return id, err
 }
