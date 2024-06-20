@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"html/template"
 	"log"
@@ -22,18 +23,38 @@ var (
 // TODO(@FaaizMemonPurdue): Add API call timeouts.
 
 func loadPage(w http.ResponseWriter, r *http.Request, title string) {
-	username := r.FormValue("username")
-	id, err := matcha.database.GetUserID("username", username)
-	var user structs.User
-	if err == nil {
-		log.Println("User found")
-		user = structs.User{
-			ID:        id,
-			Username:  username,
-			Email:     "test",
-			Password:  "test",
-			CreatedAt: time.Now(),
+	var id int
+	var username, email, password string
+	c_user, err := r.Cookie("c_user")
+	if err != nil {
+		switch {
+		case errors.Is(err, http.ErrNoCookie):
+			id = 0
+			username = "user_unknown"
+			email = "user_unknown"
+			password = "user_unknown"
+		default:
+			log.Println(err)
+			http.Error(w, "server error", http.StatusInternalServerError)
+			return
 		}
+	} else {
+		id, err = strconv.Atoi(c_user.Value)
+		if err != nil {
+			log.Println("Str->Int conversion error -", err.Error())
+		}
+		username, email, password, err = matcha.database.GetUserInfo(c_user.Value)
+		if err != nil {
+			http.Error(w, "Error occurred from getting user info", http.StatusInternalServerError)
+			return
+		}
+	}
+	user := structs.User{
+		ID:        id,
+		Username:  username,
+		Email:     email,
+		Password:  password,
+		CreatedAt: time.Now(),
 	}
 	err = tmpl.ExecuteTemplate(w, title+".gohtml", user)
 	if err != nil {
@@ -89,25 +110,27 @@ func loginSubmit(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println("Login failed -", err)
 		http.Redirect(w, r, "/login-fail", http.StatusSeeOther)
-	} else {
-		cookie, err := r.Cookie("c_user")
-		if err != nil {
-			fmt.Println("cookie was not found")
-			id, err := matcha.database.GetUserID("username", username)
-			if err != nil {
-				fmt.Println("getting user id failed -", err)
-			}
-			cookie = &http.Cookie{
-				Name:     "c_user",
-				Value:    strconv.Itoa(id),
-				Expires:  time.Now().Add(20 * time.Minute),
-				HttpOnly: true, // -> make cookie valid for http service only
-				// Secure:   true, -> make cookie valid for https service only
-			}
-			http.SetCookie(w, cookie)
-		}
-		loadPage(w, r, "dashboard")
+		return
 	}
+	cookie, err := r.Cookie("c_user")
+	if err != nil {
+		fmt.Println("cookie was not found")
+		id, err := matcha.database.GetUserID("username", username)
+		if err != nil {
+			fmt.Println("getting user id failed -", err)
+		}
+		cookie = &http.Cookie{
+			Name:     "c_user",
+			Value:    strconv.Itoa(id),
+			Expires:  time.Now().Add(20 * time.Minute),
+			MaxAge: 20 * time.Minute
+			HttpOnly: true,
+			Secure:   true,
+		}
+		http.SetCookie(w, cookie)
+	}
+	loadPage(w, r, "dashboard")
+
 }
 
 func deleteUser(w http.ResponseWriter, r *http.Request) {
