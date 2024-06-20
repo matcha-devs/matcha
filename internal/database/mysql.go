@@ -40,7 +40,7 @@ func New(dbName string, username string, password string) *MySQLDatabase {
 	}
 
 	// Create the database if it does not exist
-	_, err = db.Exec("CREATE DATABASE IF NOT EXISTS " + dbName)
+	_, err = db.Exec(fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s", dbName))
 	if err != nil {
 		log.Fatal("Error creating database -", err)
 	}
