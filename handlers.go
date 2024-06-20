@@ -11,22 +11,13 @@ import (
 	"github.com/matcha-devs/matcha/internal/structs"
 )
 
-// Load to memory and generate all templates, panic if it fails.
-var tmpl = template.Must(template.ParseGlob(filepath.Join("internal", "templates", "*.gohtml")))
+var (
+	// Load to memory and generate all resources, panic if it fails.
+	tmpl         = template.Must(template.ParseGlob(filepath.Join("internal", "templates", "*.gohtml")))
+	publicServer = http.StripPrefix("/public", http.FileServer(http.Dir("public")))
+)
 
-// TODO(@FaaizMemonPurdue): This is an example of how go routines should be used, but we still need API call timeouts
-// func routeWithTimeout(w http_server.ResponseWriter, r *http_server.Request) {
-// 	ctx, cancel := context.WithTimeout(r.Context(), maxHandleTime)
-// 	defer cancel()
-// 	select {
-// 	case <-ctx.Done():
-// 		log.Println("Routing took longer than", maxHandleTime)
-// 	default:
-// 		start := time.Now()
-// 		loadEntryPoint(w, r)
-// 		log.Println("Routing done after", time.Since(start))
-// 	}
-// }
+// TODO(@FaaizMemonPurdue): Add API call timeouts.
 
 func loadPage(w http.ResponseWriter, r *http.Request, title string) {
 	username := r.FormValue("username")
@@ -48,10 +39,6 @@ func loadPage(w http.ResponseWriter, r *http.Request, title string) {
 	}
 }
 
-func loadIndex(w http.ResponseWriter, r *http.Request) {
-	loadPage(w, r, "index")
-}
-
 func loadEntryPoint(w http.ResponseWriter, r *http.Request) {
 	path := strings.TrimLeft(r.URL.Path, "/")
 	if _, exists := validEntryPoints[path]; !exists {
@@ -59,6 +46,14 @@ func loadEntryPoint(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 	}
 	loadPage(w, r, path)
+}
+
+func loadIndex(w http.ResponseWriter, r *http.Request) {
+	loadPage(w, r, "index")
+}
+
+func servePublicFile(w http.ResponseWriter, r *http.Request) {
+	publicServer.ServeHTTP(w, r)
 }
 
 func signupSubmit(w http.ResponseWriter, r *http.Request) {

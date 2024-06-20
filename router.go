@@ -20,11 +20,11 @@ func withClientTimeout(handlerFunc http.HandlerFunc) http.Handler {
 
 func router() *http.ServeMux {
 	mux := http.NewServeMux()
+	mux.Handle("/", withClientTimeout(loadEntryPoint))
 	mux.Handle("GET /{$}", withClientTimeout(loadIndex))
+	mux.Handle("GET /public/", withClientTimeout(servePublicFile))
 	mux.Handle("POST /signup-submit", withClientTimeout(signupSubmit))
 	mux.Handle("POST /login-submit", withClientTimeout(loginSubmit))
 	mux.Handle("POST /delete-user", withClientTimeout(deleteUser))
-	mux.Handle("/public/", http.StripPrefix("/public", http.FileServer(http.Dir("public"))))
-	mux.Handle("/", withClientTimeout(loadEntryPoint)) // TODO(@CarlosACJ55): Improve handling of entry points.
 	return mux
 }
