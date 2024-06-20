@@ -138,7 +138,8 @@ func TestAddUser(t *testing.T) {
 	subject, probe := setup(t)
 	defer teardown(t, subject, probe)
 
-	if err := subject.AddUser("test_user", "test_user@example.com", "test_pass"); err != nil {
+	err := subject.AddUser("test_user", "test_user@example.com", "test_pass")
+	if err != nil {
 		t.Fatal("Failed to add user -", err)
 	}
 	var id int
@@ -284,7 +285,7 @@ func TestGetUserID(t *testing.T) {
 		"NonExistent_User", func(t *testing.T) {
 			// Get user ID by username
 			id := subject.GetUserID("username", "user3_id_user3")
-			if id > 0 {
+			if id != 0 {
 				t.Error("Expected to not find a user by username, but stored ID")
 			}
 
