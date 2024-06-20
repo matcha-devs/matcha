@@ -144,7 +144,7 @@ func (db *MySQLDatabase) GetUserID(column string, row string) (int, error) {
 	return id, err
 }
 
-func (db *MySQLDatabase) GetUserInfo(id string) (string, string, string, error) {
+func (db *MySQLDatabase) GetUserInfo(id int) (string, string, string, error) {
 	var username, email, password string
 	err := db.underlyingDB.QueryRow("SELECT username, email, password FROM users WHERE id = "+id).Scan(&username, &email, &password)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
