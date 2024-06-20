@@ -23,27 +23,14 @@ var (
 // TODO(@FaaizMemonPurdue): Add API call timeouts.
 
 func loadPage(w http.ResponseWriter, r *http.Request, title string) {
-	var id int
 	var username, email, password string
-	c_user, err := r.Cookie("c_user")
-	if err != nil {
-		switch {
-		case errors.Is(err, http.ErrNoCookie):
-			id = 0
-			username = "user_unknown"
-			email = "user_unknown"
-			password = "user_unknown"
-		default:
-			log.Println(err)
-			http.Error(w, "server error", http.StatusInternalServerError)
-			return
-		}
+	id := getCookieHandler(w, r, "c_user")
+	if id == 0 {
+		username = "user_unknown"
+		email = "user_unknown"
+		password = "user_unknown"
 	} else {
-		id, err = strconv.Atoi(c_user.Value)
-		if err != nil {
-			log.Println("Str->Int conversion error -", err.Error())
-		}
-		username, email, password, err = matcha.database.GetUserInfo(c_user.Value)
+		username, email, password, err = matcha.database.GetUserInfo(id)
 		if err != nil {
 			http.Error(w, "Error occurred from getting user info", http.StatusInternalServerError)
 			return
@@ -155,4 +142,21 @@ func deleteUser(w http.ResponseWriter, r *http.Request) {
 			log.Println("Delete User failed -", err)
 		}
 	}
+}
+
+func getCookieHandler(w http.ResponseWriter, r *http.Request, cookie_name string) int {
+	value, err := cookies.Read(r, cookie_name)
+	if err != nil {
+		switch {
+		case errors.Is(err, http.ErrNoCookie):
+			http.Error(w, "cookie not found", http.StatusBadRequest)
+		case errors.Is(err, cookies.ErrInvalidValue):
+			http.Error(w, "invalid cookie", http.StatusBadRequest)
+		default:
+			log.Println(err)
+			http.Error(w, "server error", http.StatusInternalServerError)
+		}
+		return 0
+	}
+	return strconv.Atoi(value)
 }
