@@ -1,10 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -88,6 +90,22 @@ func loginSubmit(w http.ResponseWriter, r *http.Request) {
 		log.Println("Login failed -", err)
 		http.Redirect(w, r, "/login-fail", http.StatusSeeOther)
 	} else {
+		cookie, err := r.Cookie("c_user")
+		if err != nil {
+			fmt.Println("cookie was not found")
+			id, err := matcha.database.GetUserID("username", username)
+			if err != nil {
+				fmt.Println("getting user id failed -", err)
+			}
+			cookie = &http.Cookie{
+				Name:     "c_user",
+				Value:    strconv.Itoa(id),
+				Expires:  time.Now().Add(20 * time.Minute),
+				HttpOnly: true, // -> make cookie valid for http service only
+				// Secure:   true, -> make cookie valid for https service only
+			}
+			http.SetCookie(w, cookie)
+		}
 		loadPage(w, r, "dashboard")
 	}
 }
