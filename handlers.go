@@ -31,19 +31,20 @@ var tmpl = template.Must(template.ParseGlob(filepath.Join("internal", "templates
 func loadPage(w http.ResponseWriter, r *http.Request, title string) {
 	username := r.FormValue("username")
 	id, err := matcha.database.GetUserID("username", username)
-	if err != nil {
-		log.Println("Load Page Failed - can't get userID: ", err)
-	}
-	user := structs.User{
-		ID:        id,
-		Username:  username,
-		Email:     "test",
-		Password:  "test",
-		CreatedAt: time.Now(),
+	var user structs.User
+	if err == nil {
+		log.Println("User found")
+		user = structs.User{
+			ID:        id,
+			Username:  username,
+			Email:     "test",
+			Password:  "test",
+			CreatedAt: time.Now(),
+		}
 	}
 	err = tmpl.ExecuteTemplate(w, title+".gohtml", user)
 	if err != nil {
-		log.Println("Error executing template -", err)
+		log.Println("Error executing template", title, "-", err)
 	}
 }
 
@@ -53,7 +54,6 @@ func loadIndex(w http.ResponseWriter, r *http.Request) {
 
 func loadEntryPoint(w http.ResponseWriter, r *http.Request) {
 	path := strings.TrimLeft(r.URL.Path, "/")
-	log.Println("Routing {" + path + "}")
 	if _, exists := validEntryPoints[path]; !exists {
 		log.Println("Not a valid entry point -", path)
 		http.NotFound(w, r)
