@@ -1,7 +1,3 @@
-# Pull Request Template
-
-*(Please enter 'N/A' in any sections that are not applicable to your specific pull request)*
-
 ## Purpose
 
 _Describe the problem or feature in question.
@@ -39,22 +35,20 @@ _If you have identified potential solutions or improvements for the issues liste
 
 _Any other information that reviewers should be aware of can be included here._
 
-## Contributors:
-
-Name and what they did:
+## Contributors(@):
 
 ---
 
 ## Checklist before submitting
 
-- [ ] I have performed a self-review of my own code.
-- [ ] I have commented my code, particularly in hard-to-understand areas.
-- [ ] I have made corresponding changes to the documentation (if applicable).
-- [ ] My changes generate no new warnings or errors.
-- [ ] I have added tests that prove my fix is effective or that my feature works.
-- [ ] New and existing unit tests pass locally with my changes.
-- [ ] I have checked my code and corrected any misspellings.
-- [ ] I have confirmed that my PR is targeting the correct branch.
-- [ ] I understand that after merging, my branch may be deleted to keep the repository clean.
-- [ ] I have notified the team with the status of my PR.
-- [ ] If merge conflicts occur I will confer with other members of the team on how to proceed.
+- [] I have performed a self-review of my own code.
+- [] I have commented my code, particularly in hard-to-understand areas.
+- [] I have made corresponding changes to the documentation (if applicable).
+- [] My changes generate no new warnings or errors.
+- [] I have added tests that prove my fix is effective or that my feature works.
+- [] New and existing unit tests pass locally with my changes.
+- [] I have checked my code and corrected any misspellings.
+- [] I have confirmed that my PR is targeting the correct branch.
+- [] I understand that after merging, my branch may be deleted to keep the repository clean.
+- [] I have notified the team with the status of my PR.
+- [] If merge conflicts occur I will confer with other members of the team on how to proceed.
