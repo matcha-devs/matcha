@@ -167,6 +167,15 @@ func (db *MySQLDatabase) GetUserID(varName string, variable string) int {
 	return id
 }
 
+func (db *MySQLDatabase) GetUserInfo(id string) (string, string, string, error) {
+	var username, email, password string
+	err := db.underlyingDB.QueryRow("SELECT username, email, password FROM users WHERE id = "+id).Scan(&username, &email, &password)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		log.Println("Error querying users for ID:", id, "-", err)
+	}
+	return username, email, password, err
+}
+
 func (db *MySQLDatabase) DeleteUser(id int) error {
 	_, err := db.underlyingDB.Exec("INSERT INTO openid (id) VALUES(?)", id)
 	if err != nil {
