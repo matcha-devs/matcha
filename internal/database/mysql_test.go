@@ -1,4 +1,4 @@
-package database_test
+package database
 
 import (
 	"database/sql"
@@ -9,18 +9,14 @@ import (
 	"testing"
 
 	_ "github.com/go-sql-driver/mysql"
-	internalDatabase "github.com/matcha-devs/matcha/internal/database"
 )
 
-// Use this to run SQL queries directly to help test our internal database
-var probe *sql.DB
+// Get the password from the environment, currently using the admin password this may change in the future!
+var password = os.Getenv("MYSQL_PASSWORD")
 
-func setupDBAndOpenSubject(t *testing.T) *internalDatabase.MySQLDatabase {
-	// Get the password from the environment, currently using the admin password this may change in the future!!!
-	password := os.Getenv("MYSQL_PASSWORD")
+func setup(t *testing.T) (subject *MySQLDatabase, probe *sql.DB) {
 	// Connect to MySQL root
-	var err error
-	probe, err = sql.Open("mysql", "root:"+password+"@tcp(localhost:3306)/")
+	probe, err := sql.Open("mysql", "root:"+password+"@tcp(localhost:3306)/")
 	if err != nil {
 		t.Fatal("Failed to open test database connection -", err)
 	}
@@ -37,33 +33,35 @@ func setupDBAndOpenSubject(t *testing.T) *internalDatabase.MySQLDatabase {
 	if err != nil {
 		t.Fatal("Failed to create test database -", err)
 	}
-	if err := probe.Close(); err != nil {
-		log.Fatal("Error closing initial database connection -", err)
-	}
 
 	// Connect to the newly created test database
-	probe, err = sql.Open("mysql", "root:"+password+"@tcp(localhost:3306)/test_db")
+	_, err = probe.Exec("USE test_db")
 	if err != nil {
-		t.Fatal("Failed to open connection to test database -", err)
-	}
-	if err := probe.Ping(); err != nil {
-		t.Fatal("Failed to ping test database connection -", err)
+		log.Fatal(err)
 	}
 
-	// Open the custom testing database with initial SQL setup
-	subject := internalDatabase.New("test_db", "root", password)
-	if subject == nil {
-		t.Fatal("Failed to open subject database")
-	}
+	// Open the internal database implementation to test
+	subject = New("test_db", "root", password)
 	if err := subject.Open(); err != nil {
 		t.Fatal("Failed to open subject database -", err)
 	}
+	return subject, probe
+}
 
-	return subject
+func teardown(t *testing.T, subject *MySQLDatabase, probe *sql.DB) {
+	err := probe.Close()
+	if err != nil {
+		t.Fatal("Failed to close probe database connection -", err)
+	}
+	err = subject.Close()
+	if err != nil {
+		t.Fatal("Failed to close subject database connection -", err)
+	}
 }
 
 func TestOpenAndClose(t *testing.T) {
-	subject := setupDBAndOpenSubject(t)
+	subject, probe := setup(t)
+	defer teardown(t, subject, probe)
 	if subject == nil {
 		t.Error("Database connection is nil")
 		return
@@ -76,13 +74,8 @@ func TestOpenAndClose(t *testing.T) {
 }
 
 func TestAddUser(t *testing.T) {
-	subject := setupDBAndOpenSubject(t)
-	defer func() {
-		err := subject.Close()
-		if err != nil {
-			log.Println("Failed to close database -", err)
-		}
-	}()
+	subject, probe := setup(t)
+	defer teardown(t, subject, probe)
 
 	err := subject.AddUser("test_user", "test_user@example.com", "test_pass")
 	if err != nil {
@@ -101,14 +94,8 @@ func TestAddUser(t *testing.T) {
 }
 
 func TestAuthenticateLogin(t *testing.T) {
-	subject := setupDBAndOpenSubject(t)
-
-	defer func() {
-		err := subject.Close()
-		if err != nil {
-			t.Error("Failed to close database -", err)
-		}
-	}()
+	subject, probe := setup(t)
+	defer teardown(t, subject, probe)
 
 	err := subject.AddUser("test_user", "test_user@example.com", "test_pass")
 	if err != nil {
@@ -157,13 +144,8 @@ func TestAuthenticateLogin(t *testing.T) {
 }
 
 func TestDeleteUser(t *testing.T) {
-	subject := setupDBAndOpenSubject(t)
-	defer func() {
-		err := subject.Close()
-		if err != nil {
-			t.Error("Failed to close database -", err)
-		}
-	}()
+	subject, probe := setup(t)
+	defer teardown(t, subject, probe)
 
 	err := subject.AddUser("delete_user", "delete_user@example.com", "delete_pass")
 	if err != nil {
@@ -196,13 +178,8 @@ func TestDeleteUser(t *testing.T) {
 }
 
 func TestGetUserID(t *testing.T) {
-	subject := setupDBAndOpenSubject(t)
-	defer func() {
-		err := subject.Close()
-		if err != nil {
-			t.Error("Failed to close database -", err)
-		}
-	}()
+	subject, probe := setup(t)
+	defer teardown(t, subject, probe)
 
 	t.Run(
 		"Valid_Users", func(t *testing.T) {
