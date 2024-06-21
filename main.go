@@ -25,9 +25,9 @@ func main() {
 	signal.Notify(ctrlC, syscall.SIGINT, syscall.SIGTERM)
 
 	// Open said dependencies and run application.
-	defer matcha.close()
 	matcha.run()
 
 	// Block the main goroutine until ctrl+c interrupt is raised.
 	<-ctrlC
+	matcha.close()
 }
