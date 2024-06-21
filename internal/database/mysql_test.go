@@ -138,8 +138,7 @@ func TestAddUser(t *testing.T) {
 	subject, probe := setup(t)
 	defer teardown(t, subject, probe)
 
-	err := subject.AddUser("test_user", "test_user@example.com", "test_pass")
-	if err != nil {
+	if err := subject.AddUser("test_user", "test_user@example.com", "test_pass"); err != nil {
 		t.Fatal("Failed to add user -", err)
 	}
 	var id int
