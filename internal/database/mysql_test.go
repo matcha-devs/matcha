@@ -141,8 +141,6 @@ func TestAddUser(t *testing.T) {
 	if err := subject.AddUser("test_user", "test_user@example.com", "test_pass"); err != nil {
 		t.Fatal("Failed to add user -", err)
 	}
-
-	// Verify the user was added
 	var id int
 	if err := probe.QueryRow("SELECT id FROM users WHERE username = ?", "test_user").Scan(&id); err != nil || id != 1 {
 		t.Fatal("Failed to create first user with id 1 -", err)
