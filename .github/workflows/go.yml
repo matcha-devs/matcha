@@ -18,7 +18,7 @@ jobs:
         image: mysql:latest
         ports:
           - 3306:3306
-        options: > 
+        options: >
           --health-cmd="my"sqladmin ping"  --health-interval=10s --health-timeout=5s --health-retries=5
         env:
           MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
@@ -48,7 +48,8 @@ jobs:
 
       - name: Create Database
         run: |
-          mysql -h ${{ env.DB_HOST }} -uroot -p${{ env.MYSQL_PASSWORD }} -e "CREATE DATABASE IF NOT EXISTS ${{ env.DB_DATABASE }};"
+          mysql -h ${{ env.DB_HOST }} -uroot -p${{ env.MYSQL_PASSWORD }} \
+          -e "CREATE DATABASE IF NOT EXISTS ${{ env.DB_DATABASE }};"
 
       - name: Set up environment variables
         run: echo "MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> $GITHUB_ENV
@@ -57,14 +58,14 @@ jobs:
         run: go build -v ./...
 
       - name: Test
-        run:
-          go test ./... -v | tee test-output.log
-      
-      - name: Analyze Failures  
+        run: go test ./... -v | tee test-output.log
+
+      - name: Analyze Failures
         env:
           MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
         run: |
-          cat test-output.log | sed ''/PASS/s//$(printf "\033[32mPASS\033[0m")/'' | sed ''/FAIL/s//$(printf "\033[31mFAIL\033[0m")/'' 
+          cat test-output.log | sed ''/PASS/s//$(printf "\033[32mPASS\033[0m")/'' \
+          | sed ''/FAIL/s//$(printf "\033[31mFAIL\033[0m")/'' 
           if grep -q "FAIL" test-output.log; then
             exit 1
           fi

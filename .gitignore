@@ -64,7 +64,6 @@ xcuserdata/
 .idea/**/usage.statistics.xml
 .idea/**/dictionaries
 .idea/**/shelf
-.idea/git_toolbox_prj.xml
 
 # AWS User-specific
 .idea/**/aws.xml
@@ -77,12 +76,10 @@ xcuserdata/
 .idea/**/dataSources.ids
 .idea/**/dataSources.local.xml
 .idea/**/sqlDataSources.xml
-.idea/**/sqldialects.xml
-.idea/**/dataSources.xml
 .idea/**/dynamic.xml
 .idea/**/uiDesigner.xml
 .idea/**/dbnavigator.xml
-go_build_github_com_matcha_devs_matcha_cmd.xml
+
 # Gradle
 .idea/**/gradle.xml
 .idea/**/libraries

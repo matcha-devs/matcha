@@ -28,43 +28,45 @@ func New(dbName string, username string, password string) *MySQLDatabase {
 	}
 	initScript, err := os.ReadFile("internal/database/queries/init.sql")
 	if err != nil {
-		log.Fatal("Error reading init.sql file -", err)
+		log.Fatalln("Error reading init.sql file -", err)
 	}
 
 	// Connect to MySQL root.
 	db, err := sql.Open("mysql", mysql.rootDsn)
 	if err != nil {
-		log.Fatal("Error opening MySQL rootDsn -", err)
+		log.Fatalln("Error opening MySQL rootDsn -", err)
 	}
 	if err := db.Ping(); err != nil {
-		log.Fatal("Error connecting to MySQL rootDsn -", err)
+		_ = db.Close()
+		log.Fatalln("Error connecting to MySQL rootDsn -", err)
 	}
 
 	// Create the database if it does not exist
-	_, err = db.Exec("CREATE DATABASE IF NOT EXISTS " + dbName)
+	_, err = db.Exec(fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s", dbName))
 	if err != nil {
-		log.Fatal("Error creating database -", err)
+		log.Fatalln("Error creating database -", err)
 	}
 	if err := db.Close(); err != nil {
-		log.Fatal("Error closing database -", err)
+		log.Fatalln("Error closing database -", err)
 	}
 
 	// Connect to the database
 	db, err = sql.Open("mysql", mysql.rootDsn+dbName+"?multiStatements=true")
 	if err != nil {
-		log.Fatal("Error opening database -", err)
+		log.Fatalln("Error opening database -", err)
 	}
 	if err = db.Ping(); err != nil {
-		log.Fatal("Error connecting to database -", err)
+		_ = db.Close()
+		log.Fatalln("Error connecting to database -", err)
 	}
 
 	// Run 'init.sql' script.
 	_, err = db.Exec(string(initScript))
 	if err != nil {
-		log.Fatal("Error executing 'init.sql' -", err)
+		log.Fatalln("Error executing 'init.sql' -", err)
 	}
 	if err := db.Close(); err != nil {
-		log.Fatal("Error closing database -", err)
+		log.Fatalln("Error closing database -", err)
 	}
 	return &mysql
 }
@@ -73,12 +75,13 @@ func (db *MySQLDatabase) Open() error {
 	var err error
 	db.underlyingDB, err = sql.Open("mysql", db.rootDsn+db.dbName+"?parseTime=true")
 	if err != nil {
-		log.Println("Error opening database -", err)
+		log.Fatalln("Error opening database -", err)
 		return err
 	}
 	log.Println("MySQL Database connecting to", db.rootDsn[strings.Index(db.rootDsn, "@"):]+db.dbName, "🫡")
 	if err := db.underlyingDB.Ping(); err != nil {
-		log.Println("Error connecting to database -", err)
+		_ = db.underlyingDB.Close()
+		log.Fatalln("Error connecting to database -", err)
 		return err
 	}
 	return err
@@ -109,7 +112,7 @@ func (db *MySQLDatabase) AuthenticateLogin(username string, password string) (id
 func (db *MySQLDatabase) GetUser(id int) *internal.User {
 	var user = &internal.User{}
 	err := db.underlyingDB.QueryRow("SELECT * FROM users WHERE id = ?", id).Scan(
-		&user.ID, &user.Username, &user.Email, &user.Password, &user.CreatedAt,
+		&user.ID, &user.Username, &user.Email, &user.Password, &user.CreatedOn,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		log.Println("No user with ID:", id, "-", err)
@@ -118,7 +121,7 @@ func (db *MySQLDatabase) GetUser(id int) *internal.User {
 		log.Println("Failed to query users for ID:", id, "-", err)
 		return nil
 	} else if !(user.ID.Valid &&
-		user.Username.Valid && user.Email.Valid && user.Password.Valid && user.CreatedAt.Valid) {
+		user.Username.Valid && user.Email.Valid && user.Password.Valid && user.CreatedOn.Valid) {
 		log.Println("Malformed user with ID:", id, "-", user)
 		return nil
 	}

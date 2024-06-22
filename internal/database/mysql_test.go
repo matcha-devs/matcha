@@ -1,32 +1,31 @@
-package database_test
+package database
 
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"strings"
 	"testing"
 
 	_ "github.com/go-sql-driver/mysql"
-	internalDatabase "github.com/matcha-devs/matcha/internal/database"
 )
 
-// Use this to run SQL queries directly to help test our internal database
-var probe *sql.DB
+// Get the password from the environment, currently using the admin password this may change in the future!
+var password = os.Getenv("MYSQL_PASSWORD")
 
-func setupDBAndOpenSubject(t *testing.T) *internalDatabase.MySQLDatabase {
-	// Get the password from the environment, currently using the admin password this may change in the future!!!
-	password := os.Getenv("MYSQL_PASSWORD")
+func setup(t *testing.T) (subject *MySQLDatabase, probe *sql.DB) {
+	t.Helper()
 
 	// Connect to MySQL root
-	var err error
-	probe, err = sql.Open("mysql", "root:"+password+"@tcp(localhost:3306)/")
+	probe, err := sql.Open("mysql", "root:"+password+"@tcp(localhost:3306)/")
 	if err != nil {
 		t.Fatal("Failed to open test database connection -", err)
 	}
 	if err := probe.Ping(); err != nil {
-		t.Fatal("Failed to ping test database connection -", err)
+		_ = probe.Close()
+		t.Fatal("Failed to ping test database connection", err)
 	}
 
 	// Ensure a clean test database by recreating any previous schemas
@@ -38,78 +37,134 @@ func setupDBAndOpenSubject(t *testing.T) *internalDatabase.MySQLDatabase {
 	if err != nil {
 		t.Fatal("Failed to create test database -", err)
 	}
-	if err := probe.Close(); err != nil {
-		log.Fatal("Error closing initial database connection -", err)
-	}
 
 	// Connect to the newly created test database
-	probe, err = sql.Open("mysql", "root:"+password+"@tcp(localhost:3306)/test_db")
+	_, err = probe.Exec("USE test_db")
 	if err != nil {
-		t.Fatal("Failed to open connection to test database -", err)
-	}
-	if err := probe.Ping(); err != nil {
-		t.Fatal("Failed to ping test database connection -", err)
+		log.Fatalln("Failed to use test_db -", err)
 	}
 
-	// Open the custom testing database with initial SQL setup
-	subject := internalDatabase.New("test_db", "root", password)
-	if subject == nil {
-		t.Fatal("Failed to open subject database")
-	}
+	// Open the internal database implementation to test
+	subject = New("test_db", "root", password)
 	if err := subject.Open(); err != nil {
 		t.Fatal("Failed to open subject database -", err)
 	}
-
-	return subject
+	return subject, probe
 }
 
-func TestOpenAndClose(t *testing.T) {
-	subject := setupDBAndOpenSubject(t)
-	if subject == nil {
-		t.Error("Database connection is nil")
-		return
-	}
-	// TODO(@Alishah634): Test that all the tables are generated.
-	err := subject.Close()
+func teardown(t *testing.T, subject *MySQLDatabase, probe *sql.DB) {
+	t.Helper()
+
+	err := probe.Close()
 	if err != nil {
-		t.Error("Failed to close database -", err)
+		t.Fatal("Failed to close probe database connection -", err)
+	}
+	err = subject.Close()
+	if err != nil {
+		t.Fatal("Failed to close subject database connection -", err)
+	}
+}
+
+func TestConnections(t *testing.T) {
+	subject, probe := setup(t)
+	if err := subject.underlyingDB.Ping(); err != nil {
+		t.Fatal("Failed to open subject db properly -", err)
+	}
+	if err := probe.Ping(); err != nil {
+		t.Fatal("Failed to open probe db properly -", err)
+	}
+	teardown(t, subject, probe)
+	if err := subject.underlyingDB.Ping(); err == nil {
+		t.Fatal("Failed to close subject db properly -", err)
+	}
+	if err := probe.Ping(); err == nil {
+		t.Fatal("Failed to close probe db properly -", err)
+	}
+}
+
+func TestNew(t *testing.T) {
+	subject, probe := setup(t)
+	defer teardown(t, subject, probe)
+
+	expectedTables := map[string]map[string]struct{}{
+		"users":  {"id": {}, "username": {}, "email": {}, "password": {}, "created_on": {}},
+		"openid": {"id": {}, "created_on": {}},
+	}
+
+	tables, err := probe.Query("SHOW TABLES FROM test_db")
+	if err != nil {
+		t.Fatal("Failed to query for all tables -", err)
+	}
+	for tables.Next() {
+		var table string
+		if err := tables.Scan(&table); err != nil || table == "" {
+			t.Fatal("Failed to scan tables -", err)
+		}
+		expectedCols, exists := expectedTables[table]
+		if !exists {
+			t.Fatal("Unexpected table:", table)
+		}
+		t.Run(
+			"verify_columns:"+table, func(t *testing.T) {
+				columns, err := probe.Query(fmt.Sprintf("SHOW COLUMNS FROM test_db.%s", table))
+				if err != nil {
+					t.Fatal("Failed to query for columns -", err)
+				}
+				for columns.Next() {
+					var field, typ, null, key, def, extra sql.NullString
+					err := columns.Scan(&field, &typ, &null, &key, &def, &extra)
+					if err != nil {
+						t.Fatal("Failed to scan column -", err)
+					}
+					delete(expectedCols, field.String)
+				}
+				if len(expectedCols) != 0 {
+					t.Log("Failed to create columns:")
+					for k := range expectedCols {
+						t.Log(k)
+					}
+					t.Fail()
+				}
+			},
+		)
+		delete(expectedTables, table)
+	}
+	if len(expectedTables) != 0 {
+		t.Log("Failed to create tables:")
+		for table := range expectedTables {
+			t.Log(table)
+		}
+		t.Fail()
+	}
+	if err := tables.Close(); err != nil {
+		t.Fatal("Failed to close rows -", err)
 	}
 }
 
 func TestAddUser(t *testing.T) {
-	subject := setupDBAndOpenSubject(t)
-	defer func() {
-		err := subject.Close()
-		if err != nil {
-			log.Println("Failed to close database -", err)
-		}
-	}()
+	subject, probe := setup(t)
+	defer teardown(t, subject, probe)
 
 	err := subject.AddUser("test_user", "test_user@example.com", "test_pass")
 	if err != nil {
 		t.Fatal("Failed to add user -", err)
 	}
-
-	// Verify the user was added
 	var id int
-	err = probe.QueryRow("SELECT id FROM users WHERE username = ?", "test_user").Scan(&id)
-	if err != nil {
-		t.Fatal("Failed to find added user -", err)
+	if err := probe.QueryRow("SELECT id FROM users WHERE username = ?", "test_user").Scan(&id); err != nil || id != 1 {
+		t.Fatal("Failed to create first user with id 1 -", err)
 	}
-	if id == 0 {
-		t.Error("Added user ID is zero")
+
+	if err := subject.AddUser("test_user2", "test_user2@example2.com", "test_pass2"); err != nil {
+		t.Fatal("Failed to add user -", err)
+	}
+	if err := probe.QueryRow("SELECT id FROM users WHERE username = ?", "test_user2").Scan(&id); err != nil || id != 2 {
+		t.Fatal("Failed to sequentially create user with id 2 -", err)
 	}
 }
 
 func TestAuthenticateLogin(t *testing.T) {
-	subject := setupDBAndOpenSubject(t)
-
-	defer func() {
-		err := subject.Close()
-		if err != nil {
-			t.Error("Failed to close database -", err)
-		}
-	}()
+	subject, probe := setup(t)
+	defer teardown(t, subject, probe)
 
 	err := subject.AddUser("test_user", "test_user@example.com", "test_pass")
 	if err != nil {
@@ -158,13 +213,8 @@ func TestAuthenticateLogin(t *testing.T) {
 }
 
 func TestDeleteUser(t *testing.T) {
-	subject := setupDBAndOpenSubject(t)
-	defer func() {
-		err := subject.Close()
-		if err != nil {
-			t.Error("Failed to close database -", err)
-		}
-	}()
+	subject, probe := setup(t)
+	defer teardown(t, subject, probe)
 
 	err := subject.AddUser("delete_user", "delete_user@example.com", "delete_pass")
 	if err != nil {
@@ -174,11 +224,8 @@ func TestDeleteUser(t *testing.T) {
 	// Verify the user was added
 	var id int
 	err = probe.QueryRow("SELECT id FROM users WHERE username = ?", "delete_user").Scan(&id)
-	if err != nil {
+	if err != nil || id == 0 {
 		t.Fatal("Failed to find added user -", err)
-	}
-	if id == 0 {
-		t.Error("Added user ID is zero")
 	}
 
 	// Delete the user
@@ -197,13 +244,8 @@ func TestDeleteUser(t *testing.T) {
 }
 
 func TestGetUserID(t *testing.T) {
-	subject := setupDBAndOpenSubject(t)
-	defer func() {
-		err := subject.Close()
-		if err != nil {
-			t.Error("Failed to close database -", err)
-		}
-	}()
+	subject, probe := setup(t)
+	defer teardown(t, subject, probe)
 
 	t.Run(
 		"Valid_Users", func(t *testing.T) {
@@ -250,7 +292,7 @@ func TestGetUserID(t *testing.T) {
 		"NonExistent_User", func(t *testing.T) {
 			// Get user ID by username
 			id := subject.GetUserID("username", "user3_id_user3")
-			if id > 0 {
+			if id != 0 {
 				t.Error("Expected to not find a user by username, but stored ID")
 			}
 
@@ -266,7 +308,7 @@ func TestGetUserID(t *testing.T) {
 func TestMain(m *testing.M) {
 	wd, err := os.Getwd()
 	if err != nil {
-		log.Fatal("Failed to get working directory -", err)
+		log.Fatalln("Failed to get working directory -", err)
 	}
 	if !strings.HasSuffix(wd, "/matcha") {
 		if err := os.Chdir("../.."); err != nil {

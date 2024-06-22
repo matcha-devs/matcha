@@ -11,5 +11,5 @@ type User struct {
 	Username  sql.NullString
 	Email     sql.NullString
 	Password  sql.NullString
-	CreatedAt sql.NullTime
+	CreatedOn sql.NullTime
 }
