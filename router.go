@@ -5,14 +5,7 @@ import (
 	"time"
 )
 
-var (
-	maxHandleTime    = time.Second
-	validEntryPoints = map[string]struct{}{
-		"signup": {}, "signup-submit": {}, "signup-fail": {},
-		"login": {}, "login-submit": {}, "login-fail": {},
-		"dashboard": {}, "settings": {}, "delete-user": {},
-	}
-)
+const maxHandleTime = time.Second
 
 func withClientTimeout(handlerFunc http.HandlerFunc) http.Handler {
 	return http.TimeoutHandler(handlerFunc, maxHandleTime, "")
@@ -20,11 +13,11 @@ func withClientTimeout(handlerFunc http.HandlerFunc) http.Handler {
 
 func router() *http.ServeMux {
 	mux := http.NewServeMux()
-	mux.Handle("/", withClientTimeout(loadEntryPoint))
-	mux.Handle("GET /{$}", withClientTimeout(loadIndex))
 	mux.Handle("GET /public/", withClientTimeout(servePublicFile))
+	mux.Handle("GET /{$}", withClientTimeout(loadIndex))
 	mux.Handle("POST /signup-submit", withClientTimeout(signupSubmit))
 	mux.Handle("POST /login-submit", withClientTimeout(loginSubmit))
 	mux.Handle("POST /delete-user", withClientTimeout(deleteUser))
+	mux.Handle("GET /", withClientTimeout(loadPage))
 	return mux
 }

@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/matcha-devs/matcha/internal"
 )
 
 type MySQLDatabase struct {
@@ -70,7 +71,7 @@ func New(dbName string, username string, password string) *MySQLDatabase {
 
 func (db *MySQLDatabase) Open() error {
 	var err error
-	db.underlyingDB, err = sql.Open("mysql", db.rootDsn+db.dbName)
+	db.underlyingDB, err = sql.Open("mysql", db.rootDsn+db.dbName+"?parseTime=true")
 	if err != nil {
 		log.Println("Error opening database -", err)
 		return err
@@ -92,17 +93,36 @@ func (db *MySQLDatabase) Close() error {
 	return nil
 }
 
-func (db *MySQLDatabase) AuthenticateLogin(username string, password string) error {
-	var dbPassword string
-	err := db.underlyingDB.QueryRow(
-		"SELECT password FROM users WHERE BINARY username = ?", username,
-	).Scan(&dbPassword)
+func (db *MySQLDatabase) AuthenticateLogin(username string, password string) (id int, err error) {
+	var expectedPassword string
+	err = db.underlyingDB.QueryRow(
+		"SELECT id, password FROM users WHERE BINARY username = ?", username,
+	).Scan(&id, &expectedPassword)
 	if errors.Is(err, sql.ErrNoRows) {
-		err = errors.New("invalid username")
-	} else if dbPassword != password {
-		err = errors.New("invalid password")
+		return 0, errors.New("invalid username")
+	} else if expectedPassword != password {
+		return 0, errors.New("invalid password")
 	}
-	return err
+	return id, err
+}
+
+func (db *MySQLDatabase) GetUser(id int) *internal.User {
+	var user = &internal.User{}
+	err := db.underlyingDB.QueryRow("SELECT * FROM users WHERE id = ?", id).Scan(
+		&user.ID, &user.Username, &user.Email, &user.Password, &user.CreatedAt,
+	)
+	if errors.Is(err, sql.ErrNoRows) {
+		log.Println("No user with ID:", id, "-", err)
+		return nil
+	} else if err != nil {
+		log.Println("Failed to query users for ID:", id, "-", err)
+		return nil
+	} else if !(user.ID.Valid &&
+		user.Username.Valid && user.Email.Valid && user.Password.Valid && user.CreatedAt.Valid) {
+		log.Println("Malformed user with ID:", id, "-", user)
+		return nil
+	}
+	return user
 }
 
 func (db *MySQLDatabase) getOpenID() int {
@@ -132,22 +152,16 @@ func (db *MySQLDatabase) AddUser(username string, email string, password string)
 	return err
 }
 
-func (db *MySQLDatabase) GetUserID(column string, row string) (int, error) {
+func (db *MySQLDatabase) GetUserID(varName string, variable string) int {
 	var id int
-	err := db.underlyingDB.QueryRow(fmt.Sprintf("SELECT id FROM users WHERE BINARY %s = ?", column), row).Scan(&id)
+	err := db.underlyingDB.QueryRow(
+		fmt.Sprintf("SELECT id FROM users WHERE BINARY %s = ?", varName), variable,
+	).Scan(&id)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		log.Println("Error querying users for", column+":"+row, "-", err)
+		log.Println("Error querying users for", varName+":"+variable, "-", err)
+		return 0
 	}
-	return id, err
-}
-
-func (db *MySQLDatabase) GetUserInfo(id int) (string, string, string, error) {
-	var username, email, password string
-	err := db.underlyingDB.QueryRow("SELECT username, email, password FROM users WHERE id = "+id).Scan(&username, &email, &password)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		log.Println("Error querying users for ID:", id, "-", err)
-	}
-	return username, email, password, err
+	return id
 }
 
 func (db *MySQLDatabase) DeleteUser(id int) error {

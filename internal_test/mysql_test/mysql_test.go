@@ -18,6 +18,7 @@ var probe *sql.DB
 func setupDBAndOpenSubject(t *testing.T) *internalDatabase.MySQLDatabase {
 	// Get the password from the environment, currently using the admin password this may change in the future!!!
 	password := os.Getenv("MYSQL_PASSWORD")
+
 	// Connect to MySQL root
 	var err error
 	probe, err = sql.Open("mysql", "root:"+password+"@tcp(localhost:3306)/")
@@ -118,8 +119,8 @@ func TestAuthenticateLogin(t *testing.T) {
 	t.Run(
 		"Valid_Login", func(t *testing.T) {
 			// Authenticate valid login
-			err = subject.AuthenticateLogin("test_user", "test_pass")
-			if err != nil {
+			id, err := subject.AuthenticateLogin("test_user", "test_pass")
+			if err != nil || id != 1 {
 				t.Error("Valid login failed:", err)
 			}
 		},
@@ -128,9 +129,9 @@ func TestAuthenticateLogin(t *testing.T) {
 	t.Run(
 		"Invalid_Password", func(t *testing.T) {
 			// Authenticate invalid login
-			err = subject.AuthenticateLogin("test_user", "wrong_pass")
-			if err == nil {
-				t.Error("Invalid login did not fail")
+			id, err := subject.AuthenticateLogin("test_user", "wrong_pass")
+			if err == nil || id != 0 {
+				t.Error("Invalid login did not fail with id:", id, "-", err)
 			}
 		},
 	)
@@ -138,9 +139,9 @@ func TestAuthenticateLogin(t *testing.T) {
 	t.Run(
 		"Invalid_Username", func(t *testing.T) {
 			// Authenticate invalid login
-			err = subject.AuthenticateLogin("wrong_user", "test_pass")
-			if err == nil {
-				t.Error("Invalid login did not fail")
+			id, err := subject.AuthenticateLogin("wrong_user", "test_pass")
+			if err == nil || id != 0 {
+				t.Error("Invalid login did not fail with id:", id, "-", err)
 			}
 		},
 	)
@@ -148,9 +149,9 @@ func TestAuthenticateLogin(t *testing.T) {
 	t.Run(
 		"Invalid_Username_and_Password", func(t *testing.T) {
 			// Authenticate invalid login
-			err = subject.AuthenticateLogin("wrong_user", "wrong_pass")
-			if err == nil {
-				t.Error("Invalid login did not fail")
+			id, err := subject.AuthenticateLogin("wrong_user", "wrong_pass")
+			if err == nil || id != 0 {
+				t.Error("Invalid login did not fail with id:", id, "-", err)
 			}
 		},
 	)
@@ -206,24 +207,18 @@ func TestGetUserID(t *testing.T) {
 
 	t.Run(
 		"Valid_Users", func(t *testing.T) {
-			err := subject.AddUser("user_id_user", "user_id_user@example.com", "user_id_pass")
-			if err != nil {
+			if err := subject.AddUser("user_id_user", "user_id_user@example.com", "user_id_pass"); err != nil {
 				t.Fatal("Failed to add user -", err)
 			}
 
 			// Get user ID by username
-			id, err := subject.GetUserID("username", "user_id_user")
-			if errors.Is(err, sql.ErrNoRows) {
-				t.Error("Failed to get user ID by username. No user found.")
-			}
+			id := subject.GetUserID("username", "user_id_user")
 			if id != 1 {
 				t.Error("Failed to get user ID by username")
 			}
+
 			// Get user ID by email
-			id, err = subject.GetUserID("email", "user_id_user@example.com")
-			if errors.Is(err, sql.ErrNoRows) {
-				t.Error("Failed to get user ID by email. No user found.")
-			}
+			id = subject.GetUserID("email", "user_id_user@example.com")
 			if id != 1 {
 				t.Error("Failed to get user ID by email")
 			}
@@ -233,24 +228,18 @@ func TestGetUserID(t *testing.T) {
 	t.Run(
 		"Multiple_Users", func(t *testing.T) {
 			log.Println("Testing for multiple users")
-			err := subject.AddUser("user2_id_user2", "user2_id_user2@example.com", "user2_id2_pass")
-			if err != nil {
+			if err := subject.AddUser("user2_id_user2", "user2_id_user2@example.com", "user2_id2_pass"); err != nil {
 				t.Fatal("Failed to add user -", err)
 			}
 
 			// Get user ID by username
-			id, err := subject.GetUserID("username", "user2_id_user2")
-			if errors.Is(err, sql.ErrNoRows) {
-				t.Error("Failed to get user ID by username. No user found.")
-			}
+			id := subject.GetUserID("username", "user2_id_user2")
 			if id != 2 {
 				t.Error("Failed to get user ID by username")
 			}
+
 			// Get user ID by email
-			id, err = subject.GetUserID("email", "user2_id_user2@example.com")
-			if errors.Is(err, sql.ErrNoRows) {
-				t.Error("Failed to get user ID by email. No user found.")
-			}
+			id = subject.GetUserID("email", "user2_id_user2@example.com")
 			if id != 2 {
 				t.Error("Failed to get user ID by email")
 			}
@@ -259,21 +248,15 @@ func TestGetUserID(t *testing.T) {
 
 	t.Run(
 		"NonExistent_User", func(t *testing.T) {
-			log.Println("Testing for when the user does not exist")
 			// Get user ID by username
-			id, err := subject.GetUserID("username", "user3_id_user3")
-			if !errors.Is(err, sql.ErrNoRows) {
-				t.Error("Expected to not find a user by username, but found one")
-			}
+			id := subject.GetUserID("username", "user3_id_user3")
 			if id > 0 {
 				t.Error("Expected to not find a user by username, but stored ID")
 			}
+
 			// Get user ID by email
-			id, err = subject.GetUserID("email", "user3_id_user3@example.com")
-			if !errors.Is(err, sql.ErrNoRows) {
-				t.Error("Expected to not find a user by email, but found one")
-			}
-			if id > 0 {
+			id = subject.GetUserID("email", "user3_id_user3@example.com")
+			if id != 0 {
 				t.Error("Expected to not find a user by email, but stored ID")
 			}
 		},
