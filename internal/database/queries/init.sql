@@ -28,14 +28,14 @@ CREATE TABLE IF NOT EXISTS openid
 -- (
 --     id         INT UNSIGNED PRIMARY KEY,
 --     name       VARCHAR(255) NOT NULL,
---     created_at timestamp DEFAULT NOW()
+--     created_on timestamp DEFAULT NOW()
 -- );
 --
 -- CREATE TABLE IF NOT EXISTS solid
 -- (
 --     id         INT UNSIGNED PRIMARY KEY,
 --     name       VARCHAR(255) NOT NULL,
---     created_at timestamp DEFAULT NOW()
+--     created_on timestamp DEFAULT NOW()
 -- );
 --
 -- CREATE TABLE IF NOT EXISTS transactions
@@ -44,5 +44,5 @@ CREATE TABLE IF NOT EXISTS openid
 --     category   VARCHAR(255) NOT NULL,
 --     amount     INT          NOT NULL,
 --     bank       VARCHAR(255) NOT NULL,
---     created_at timestamp DEFAULT NOW()
+--     created_on timestamp DEFAULT NOW()
 -- );

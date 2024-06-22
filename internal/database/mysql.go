@@ -112,7 +112,7 @@ func (db *MySQLDatabase) AuthenticateLogin(username string, password string) (id
 func (db *MySQLDatabase) GetUser(id int) *internal.User {
 	var user = &internal.User{}
 	err := db.underlyingDB.QueryRow("SELECT * FROM users WHERE id = ?", id).Scan(
-		&user.ID, &user.Username, &user.Email, &user.Password, &user.CreatedAt,
+		&user.ID, &user.Username, &user.Email, &user.Password, &user.CreatedOn,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		log.Println("No user with ID:", id, "-", err)
@@ -121,7 +121,7 @@ func (db *MySQLDatabase) GetUser(id int) *internal.User {
 		log.Println("Failed to query users for ID:", id, "-", err)
 		return nil
 	} else if !(user.ID.Valid &&
-		user.Username.Valid && user.Email.Valid && user.Password.Valid && user.CreatedAt.Valid) {
+		user.Username.Valid && user.Email.Valid && user.Password.Valid && user.CreatedOn.Valid) {
 		log.Println("Malformed user with ID:", id, "-", user)
 		return nil
 	}

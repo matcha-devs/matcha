@@ -99,6 +99,8 @@ func deleteUser(w http.ResponseWriter, r *http.Request) {
 		log.Println("Delete User failed -", err)
 		http.Redirect(w, r, "/settings", http.StatusSeeOther)
 	}
+
+	// TODO(@seoyoungcho213) : Remove user id cookie
 }
 
 func checkLoginStatus(w http.ResponseWriter, r *http.Request) *internal.User {

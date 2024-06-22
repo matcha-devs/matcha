@@ -65,6 +65,23 @@ func teardown(t *testing.T, subject *MySQLDatabase, probe *sql.DB) {
 	}
 }
 
+func TestConnections(t *testing.T) {
+	subject, probe := setup(t)
+	if err := subject.underlyingDB.Ping(); err != nil {
+		t.Fatal("Failed to open subject db properly -", err)
+	}
+	if err := probe.Ping(); err != nil {
+		t.Fatal("Failed to open probe db properly -", err)
+	}
+	teardown(t, subject, probe)
+	if err := subject.underlyingDB.Ping(); err == nil {
+		t.Fatal("Failed to close subject db properly -", err)
+	}
+	if err := probe.Ping(); err == nil {
+		t.Fatal("Failed to close probe db properly -", err)
+	}
+}
+
 func TestNew(t *testing.T) {
 	subject, probe := setup(t)
 	defer teardown(t, subject, probe)
@@ -122,16 +139,6 @@ func TestNew(t *testing.T) {
 	if err := tables.Close(); err != nil {
 		t.Fatal("Failed to close rows -", err)
 	}
-}
-
-func TestOpen(t *testing.T) {
-	subject, probe := setup(t)
-	defer teardown(t, subject, probe)
-}
-
-func TestClose(t *testing.T) {
-	subject, probe := setup(t)
-	defer teardown(t, subject, probe)
 }
 
 func TestAddUser(t *testing.T) {
