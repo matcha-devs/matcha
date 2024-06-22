@@ -13,7 +13,7 @@
 *.vsix
 
 # Binary:
-bin/
+bin
 
 ### C++ template
 # Prerequisites
