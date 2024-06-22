@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -11,152 +10,135 @@ import (
 	"strings"
 	"time"
 
-	"github.com/matcha-devs/matcha/internal/structs"
+	"github.com/matcha-devs/matcha/internal"
 )
 
 var (
 	// Load to memory and generate all resources, panic if it fails.
 	tmpl         = template.Must(template.ParseGlob(filepath.Join("internal", "templates", "*.gohtml")))
 	publicServer = http.StripPrefix("/public", http.FileServer(http.Dir("public")))
+	surfacePages = map[string]struct{}{
+		"signup": {}, "signup-submit": {}, "signup-fail": {}, "login": {}, "login-submit": {}, "login-fail": {},
+	}
 )
-
-// TODO(@FaaizMemonPurdue): Add API call timeouts.
-
-func loadPage(w http.ResponseWriter, r *http.Request, title string) {
-	var username, email, password string
-	id := getCookieHandler(w, r, "c_user")
-	if id == 0 {
-		username = "user_unknown"
-		email = "user_unknown"
-		password = "user_unknown"
-	} else {
-		username, email, password, err = matcha.database.GetUserInfo(id)
-		if err != nil {
-			http.Error(w, "Error occurred from getting user info", http.StatusInternalServerError)
-			return
-		}
-	}
-	user := structs.User{
-		ID:        id,
-		Username:  username,
-		Email:     email,
-		Password:  password,
-		CreatedAt: time.Now(),
-	}
-	err = tmpl.ExecuteTemplate(w, title+".gohtml", user)
-	if err != nil {
-		log.Println("Error executing template", title, "-", err)
-	}
-}
-
-func loadEntryPoint(w http.ResponseWriter, r *http.Request) {
-	path := strings.TrimLeft(r.URL.Path, "/")
-	if _, exists := validEntryPoints[path]; !exists {
-		log.Println("Not a valid entry point -", path)
-		http.NotFound(w, r)
-	}
-	loadPage(w, r, path)
-}
-
-func loadIndex(w http.ResponseWriter, r *http.Request) {
-	loadPage(w, r, "index")
-}
 
 func servePublicFile(w http.ResponseWriter, r *http.Request) {
 	publicServer.ServeHTTP(w, r)
 }
 
-func signupSubmit(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		http.Redirect(w, r, "/", http.StatusSeeOther)
-		return
+func loadIndex(w http.ResponseWriter, _ *http.Request) {
+	err := tmpl.ExecuteTemplate(w, "index.gohtml", nil)
+	if err != nil {
+		log.Println("Error executing template index.gohtml -", err)
 	}
+}
+
+func signupSubmit(w http.ResponseWriter, r *http.Request) {
+	log.Println("signupSubmit")
+
 	password := r.FormValue("psw")
 	if password != r.FormValue("psw-repeat") {
 		log.Println("Passwords didnt match.")
 		http.Redirect(w, r, "/signup-fail", http.StatusSeeOther)
 		return
 	}
+
+	// TODO(@seoyoungcho213): Validate user data, here or in the backend.
 	username := r.FormValue("username")
-	err := matcha.database.AddUser(username, r.FormValue("email"), password)
+	email := r.FormValue("email")
+
+	// TODO(@FaaizMemonPurdue): Add API call timeouts.
+	err := matcha.database.AddUser(username, email, password)
 	if err != nil {
-		w.WriteHeader(http.StatusUnauthorized)
-		loadPage(w, r, "signup-fail")
+		log.Println("Error adding user", username, "-", err)
+		http.Redirect(w, r, "/signup-fail", http.StatusSeeOther)
 	} else {
-		loadPage(w, r, "dashboard")
+		http.Redirect(w, r, "/login", http.StatusPermanentRedirect)
 	}
 }
 
 func loginSubmit(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		http.Redirect(w, r, "/", http.StatusSeeOther)
-		return
-	}
-	username := r.FormValue("username")
-	err := matcha.database.AuthenticateLogin(username, r.FormValue("password"))
+	log.Println("loginSubmit")
+
+	// TODO(@FaaizMemonPurdue): Add API call timeouts.
+	id, err := matcha.database.AuthenticateLogin(r.FormValue("username"), r.FormValue("password"))
 	if err != nil {
 		log.Println("Login failed -", err)
 		http.Redirect(w, r, "/login-fail", http.StatusSeeOther)
 		return
 	}
-	cookie, err := r.Cookie("c_user")
-	if err != nil {
-		fmt.Println("cookie was not found")
-		id, err := matcha.database.GetUserID("username", username)
-		if err != nil {
-			fmt.Println("getting user id failed -", err)
-		}
-		cookie = &http.Cookie{
-			Name:     "c_user",
+	http.SetCookie(
+		w, &http.Cookie{
+			Name:     "c_user_id",
 			Value:    strconv.Itoa(id),
+			Path:     "/",
 			Expires:  time.Now().Add(20 * time.Minute),
-			MaxAge: 20 * time.Minute
+			MaxAge:   20 * 60,
 			HttpOnly: true,
-			Secure:   true,
-		}
-		http.SetCookie(w, cookie)
-	}
-	loadPage(w, r, "dashboard")
-
+			SameSite: http.SameSiteLaxMode,
+		},
+	)
+	http.Redirect(w, r, "/dashboard", http.StatusMovedPermanently)
 }
 
 func deleteUser(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		http.Error(w, "invalid request", http.StatusSeeOther)
-		loadPage(w, r, "/")
+	username := r.FormValue("username")
+
+	// TODO(@FaaizMemonPurdue): Add API call timeouts.
+	id, err := matcha.database.AuthenticateLogin(username, r.FormValue("password"))
+	if err != nil {
+		log.Println("User failed to validate delete request -", err)
+		// TODO(@seoyoungcho213): Log the user out and immediately invalidate their cookie.
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
-	username := r.FormValue("username")
-	err := matcha.database.AuthenticateLogin(username, r.FormValue("password"))
+
+	// TODO(@FaaizMemonPurdue): Add API call timeouts.
+	err = matcha.database.DeleteUser(id)
 	if err != nil {
 		log.Println("Delete User failed -", err)
-		w.WriteHeader(http.StatusUnauthorized)
-		loadPage(w, r, "settings")
-	} else {
-		id, err := matcha.database.GetUserID("username", username)
-		if err != nil {
-			log.Println("Delete User failed -", err)
-		}
-		err = matcha.database.DeleteUser(id)
-		if err != nil {
-			log.Println("Delete User failed -", err)
-		}
+		http.Redirect(w, r, "/settings", http.StatusSeeOther)
 	}
 }
 
-func getCookieHandler(w http.ResponseWriter, r *http.Request, cookie_name string) int {
-	value, err := cookies.Read(r, cookie_name)
-	if err != nil {
-		switch {
-		case errors.Is(err, http.ErrNoCookie):
-			http.Error(w, "cookie not found", http.StatusBadRequest)
-		case errors.Is(err, cookies.ErrInvalidValue):
-			http.Error(w, "invalid cookie", http.StatusBadRequest)
-		default:
-			log.Println(err)
-			http.Error(w, "server error", http.StatusInternalServerError)
-		}
-		return 0
+func checkLoginStatus(w http.ResponseWriter, r *http.Request) *internal.User {
+	cookie, err := r.Cookie("c_user_id")
+	if errors.Is(err, http.ErrNoCookie) {
+		log.Println("Client has no session cookie -", err)
+		http.Error(w, "Unauthorized login session.", http.StatusUnauthorized)
+		return nil
+	} else if err != nil {
+		http.Error(w, "Unauthorized login session.", http.StatusUnauthorized)
+		log.Println("Error getting session cookie -", err)
+		return nil
 	}
-	return strconv.Atoi(value)
+	id, err := strconv.Atoi(cookie.Value)
+	if err != nil {
+		log.Println("Failed to convert user id -", err)
+		http.Error(w, "Invalid login session.", http.StatusBadRequest)
+		return nil
+	} else if id < 1 {
+		log.Println("Invalid user id -", err)
+		http.Error(w, "Invalid login session.", http.StatusBadRequest)
+		return nil
+	}
+	// TODO(@FaaizMemonPurdue): Add API call timeouts.
+	return matcha.database.GetUser(id)
+}
+
+func loadPage(w http.ResponseWriter, r *http.Request) {
+	page := strings.TrimLeft(r.URL.Path, "/")
+	log.Println("loading page {" + page + "}")
+	var user *internal.User
+	if _, exists := surfacePages[page]; !exists {
+		user = checkLoginStatus(w, r)
+		if user == nil {
+			return
+		}
+	}
+	w.WriteHeader(http.StatusOK)
+	err := tmpl.ExecuteTemplate(w, page+".gohtml", user)
+	if err != nil {
+		log.Println("Error executing template", page, "-", err)
+	}
 }
