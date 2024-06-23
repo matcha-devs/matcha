@@ -9,9 +9,10 @@ import (
 	"log"
 	"os"
 	"strings"
-	"golang.org/x/crypto/bcrypt"
+	
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/matcha-devs/matcha/internal"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type MySQLDatabase struct {
@@ -103,9 +104,8 @@ func (db *MySQLDatabase) AuthenticateLogin(username string, password string) (id
 	).Scan(&id, &expectedPassword)
 	if errors.Is(err, sql.ErrNoRows) {
 		return 0, errors.New("invalid username")
-	} 
+	}
 	err = bcrypt.CompareHashAndPassword([]byte(expectedPassword), []byte(password))
-	log.Printf("Password: %s, Expected Password: %s\n", password, expectedPassword)
 	if err != nil {
 		return 0, errors.New("invalid password")
 	}
@@ -141,17 +141,18 @@ func (db *MySQLDatabase) getOpenID() int {
 }
 
 func (db *MySQLDatabase) AddUser(username string, email string, password string) error {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	log.Printf("Hashed Password: %s, from User Password: %s", hashedPassword, password)
 
-	if err != nil {
-		log.Println("Error hashing password -", err)
-		return err
-	}
 	var (
 		query = "INSERT INTO users (username, email, password"
 		id    = db.getOpenID()
 	)
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		log.Println("Error hashing password -", err)
+		return err
+	}
+
 	if id == 0 { // if there is no open ID, assign a new id to the user.
 		query += fmt.Sprintf(") VALUES (\"%s\", \"%s\", \"%s\")", username, email, hashedPassword)
 	} else { // Otherwise, reuse the open ID

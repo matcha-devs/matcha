@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	
 	internalDatabase "github.com/matcha-devs/matcha/internal/database"
 	internalServer "github.com/matcha-devs/matcha/internal/server"
 )
