@@ -31,7 +31,8 @@ jobs:
       MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
       - name: Set up Go
         uses: actions/setup-go@v4
@@ -60,8 +61,6 @@ jobs:
         run: go test ./... -v | tee test-output.log
 
       - name: Analyze Failures
-        env:
-          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
         run: |
           cat test-output.log | sed ''/PASS/s//$(printf "\033[32mPASS\033[0m")/'' \
           | sed ''/FAIL/s//$(printf "\033[31mFAIL\033[0m")/'' 
