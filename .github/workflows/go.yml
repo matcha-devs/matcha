@@ -19,7 +19,7 @@ jobs:
         ports:
           - 3306:3306
         options: >
-          --health-cmd="my"sqladmin ping"  --health-interval=10s --health-timeout=5s --health-retries=5
+          --health-cmd="mysqladmin ping"  --health-interval=10s --health-timeout=5s --health-retries=5
         env:
           MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
 
