@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"html/template"
+	"io"
 	"log"
 	"net/http"
 	"path/filepath"
@@ -15,11 +16,9 @@ import (
 
 var (
 	// Load to memory and generate all resources, panic if it fails.
-	tmpl         = template.Must(template.ParseGlob(filepath.Join("internal", "templates", "*.gohtml")))
+	tmpl         = template.Must(template.ParseGlob(filepath.Join("internal", "templates", "*.go.html")))
 	publicServer = http.StripPrefix("/public", http.FileServer(http.Dir("public")))
-	surfacePages = map[string]struct{}{
-		"signup": {}, "signup-submit": {}, "signup-fail": {}, "login": {}, "login-submit": {}, "login-fail": {},
-	}
+	surfacePages = map[string]struct{}{"signup": {}, "login": {}}
 )
 
 func servePublicFile(w http.ResponseWriter, r *http.Request) {
@@ -51,6 +50,7 @@ func signupSubmit(w http.ResponseWriter, r *http.Request) {
 		log.Println("Error adding user", username, "-", err)
 		http.Redirect(w, r, "/signup-fail", http.StatusSeeOther)
 	} else {
+		log.Println("Registered", username, "successfully")
 		http.Redirect(w, r, "/login", http.StatusPermanentRedirect)
 	}
 }
@@ -60,7 +60,9 @@ func loginSubmit(w http.ResponseWriter, r *http.Request) {
 	id, err := matcha.database.AuthenticateLogin(r.FormValue("username"), r.FormValue("password"))
 	if err != nil {
 		log.Println("Login failed -", err)
-		http.Redirect(w, r, "/login-fail", http.StatusSeeOther)
+		if _, err := io.WriteString(w, "Try Again"); err != nil {
+			log.Println("Error writing  -", err)
+		}
 		return
 	}
 	http.SetCookie(
@@ -74,7 +76,7 @@ func loginSubmit(w http.ResponseWriter, r *http.Request) {
 			SameSite: http.SameSiteLaxMode,
 		},
 	)
-	http.Redirect(w, r, "/dashboard", http.StatusMovedPermanently)
+	w.Header().Set("HX-Redirect", "/dashboard")
 }
 
 func deleteUser(w http.ResponseWriter, r *http.Request) {

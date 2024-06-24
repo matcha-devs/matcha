@@ -141,7 +141,6 @@ func (db *MySQLDatabase) getOpenID() int {
 }
 
 func (db *MySQLDatabase) AddUser(username string, email string, password string) error {
-
 	var (
 		query = "INSERT INTO users (username, email, password"
 		id    = db.getOpenID()
@@ -162,7 +161,6 @@ func (db *MySQLDatabase) AddUser(username string, email string, password string)
 	if err != nil {
 		log.Println("Error adding user -", err)
 	}
-	fmt.Println("User Added Successfully")
 	return err
 }
 
