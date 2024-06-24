@@ -1,9 +1,8 @@
 <!-- Copyright (c) 2024 Andrea Goh. -->
 
-
 {{ template "title" }}Login{{ template "end_title" }}
 <body>
-<form action="/login-submit" method="POST">
+<form hx-post="/login" hx-target="#error-message">
     <div class="container">
         <h1>Login</h1>
         <hr>
@@ -12,11 +11,12 @@
         <label><b>Password</b>
             <input name="password" placeholder="Enter Password" required type="password">
             <input checked="checked" name="remember" style="margin-bottom:15px" type="checkbox"> Remember me<br></label>
-        <a href="http://localhost:8080">
+        <a href="/">
             <button class="btn1" type="button">Cancel</button>
         </a>
         <button class="btn2" type="submit">Login</button>
+        <output id="error-message" style="color:red"></output>
     </div>
 </form>
 </body>
-{{template "footer" }}
+{{ template "footer" }}
