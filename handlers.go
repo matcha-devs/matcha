@@ -34,8 +34,6 @@ func loadIndex(w http.ResponseWriter, _ *http.Request) {
 }
 
 func signupSubmit(w http.ResponseWriter, r *http.Request) {
-	log.Println("signupSubmit")
-
 	password := r.FormValue("psw")
 	if password != r.FormValue("psw-repeat") {
 		log.Println("Passwords didnt match.")
@@ -58,8 +56,6 @@ func signupSubmit(w http.ResponseWriter, r *http.Request) {
 }
 
 func loginSubmit(w http.ResponseWriter, r *http.Request) {
-	log.Println("loginSubmit")
-
 	// TODO(@FaaizMemonPurdue): Add API call timeouts.
 	id, err := matcha.database.AuthenticateLogin(r.FormValue("username"), r.FormValue("password"))
 	if err != nil {
@@ -130,7 +126,6 @@ func checkLoginStatus(w http.ResponseWriter, r *http.Request) *internal.User {
 
 func loadPage(w http.ResponseWriter, r *http.Request) {
 	page := strings.TrimLeft(r.URL.Path, "/")
-	log.Println("loading page {" + page + "}")
 	var user *internal.User
 	if _, exists := surfacePages[page]; !exists {
 		user = checkLoginStatus(w, r)
@@ -139,7 +134,7 @@ func loadPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	w.WriteHeader(http.StatusOK)
-	err := tmpl.ExecuteTemplate(w, page+".gohtml", user)
+	err := tmpl.ExecuteTemplate(w, page+".go.html", user)
 	if err != nil {
 		log.Println("Error executing template", page, "-", err)
 	}
