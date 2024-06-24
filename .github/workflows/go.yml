@@ -13,22 +13,20 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_NAME: test_db
+      DB_PASS: goodAhSQLPassword!
+
     services:
       mysql:
         image: mysql:latest
         ports:
-          - 3306:3306
+          - ${{ env.DB_PORT }}:${{ env.DB_PORT }}
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=5
         env:
-          MYSQL_ROOT_PASSWORD: goodAhSQLPassword!
-
-    env:
-      DB_HOST: 127.0.0.1
-      DB_PORT: 3306
-      DB_DATABASE: test_db
-      DB_USER: root
-      DB_PASSWORD: goodAhSQLPassword!
-      MYSQL_PASSWORD: goodAhSQLPassword!
+          MYSQL_ROOT_PASSWORD: ${{ env.DB_PASS }}
 
     steps:
       - name: Checkout code
@@ -41,18 +39,18 @@ jobs:
 
       - name: Wait for MySQL
         run: |
-          until mysqladmin ping -h ${{ env.DB_HOST }} -uroot -p${{ env.MYSQL_PASSWORD }} --silent; do
+          until mysqladmin ping -h ${{ env.DB_HOST }} -uroot -p ${{ env.DB_PASS }} --silent; do
             echo 'Waiting for MySQL...'
             sleep 3
           done
 
       - name: Create Database
         run: |
-          mysql -h ${{ env.DB_HOST }} -uroot -p${{ env.MYSQL_PASSWORD }} \
-          -e "CREATE DATABASE IF NOT EXISTS ${{ env.DB_DATABASE }};"
+          mysql -h ${{ env.DB_HOST }} -uroot -p ${{ env.DB_PASS }} \
+          -e "CREATE DATABASE IF NOT EXISTS ${{ env.DB_NAME }};"
 
       - name: Set up environment variables
-        run: echo "MYSQL_PASSWORD=goodAhSQLPassword!" >> $GITHUB_ENV
+        run: echo "MYSQL_PASSWORD=${{ env.DB_PASS }}" >> $GITHUB_ENV
 
       - name: Build
         run: go build -v ./...
@@ -61,6 +59,7 @@ jobs:
         run: go test ./... -v | tee test-output.log
 
       - name: Analyze Failures
+        if: failure()
         run: |
           cat test-output.log | sed ''/PASS/s//$(printf "\033[32mPASS\033[0m")/'' \
           | sed ''/FAIL/s//$(printf "\033[31mFAIL\033[0m")/'' 
