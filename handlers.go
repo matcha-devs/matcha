@@ -27,9 +27,9 @@ func servePublicFile(w http.ResponseWriter, r *http.Request) {
 }
 
 func loadIndex(w http.ResponseWriter, _ *http.Request) {
-	err := tmpl.ExecuteTemplate(w, "index.gohtml", nil)
+	err := tmpl.ExecuteTemplate(w, "index.go.html", nil)
 	if err != nil {
-		log.Println("Error executing template index.gohtml -", err)
+		log.Println("Error executing template index.go.html -", err)
 	}
 }
 
