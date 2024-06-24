@@ -32,39 +32,7 @@ func loadIndex(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
-func signupSubmit(w http.ResponseWriter, r *http.Request) {
-	password := r.FormValue("psw")
-	if password != r.FormValue("psw-repeat") {
-		log.Println("Passwords didnt match.")
-		http.Redirect(w, r, "/signup-fail", http.StatusSeeOther)
-		return
-	}
-
-	// TODO(@seoyoungcho213): Validate user data, here or in the backend.
-	username := r.FormValue("username")
-	email := r.FormValue("email")
-
-	// TODO(@FaaizMemonPurdue): Add API call timeouts.
-	err := matcha.database.AddUser(username, email, password)
-	if err != nil {
-		log.Println("Error adding user", username, "-", err)
-		http.Redirect(w, r, "/signup-fail", http.StatusSeeOther)
-	} else {
-		log.Println("Registered", username, "successfully")
-		http.Redirect(w, r, "/login", http.StatusPermanentRedirect)
-	}
-}
-
-func loginSubmit(w http.ResponseWriter, r *http.Request) {
-	// TODO(@FaaizMemonPurdue): Add API call timeouts.
-	id, err := matcha.database.AuthenticateLogin(r.FormValue("username"), r.FormValue("password"))
-	if err != nil {
-		log.Println("Login failed -", err)
-		if _, err := io.WriteString(w, "Try Again"); err != nil {
-			log.Println("Error writing  -", err)
-		}
-		return
-	}
+func setSessionCookie(w http.ResponseWriter, id int) {
 	http.SetCookie(
 		w, &http.Cookie{
 			Name:     "c_user_id",
@@ -76,6 +44,48 @@ func loginSubmit(w http.ResponseWriter, r *http.Request) {
 			SameSite: http.SameSiteLaxMode,
 		},
 	)
+}
+
+func signupSubmit(w http.ResponseWriter, r *http.Request) {
+	password := r.FormValue("psw")
+	if password != r.FormValue("psw-repeat") {
+		log.Println("Passwords didnt match.")
+		if _, err := io.WriteString(w, "Password does not match"); err != nil {
+			log.Println("Error writing signup failure -", err)
+		}
+		return
+	}
+
+	// TODO(@seoyoungcho213): Validate user data, here or in the backend.
+	username := r.FormValue("username")
+	email := r.FormValue("email")
+
+	// TODO(@FaaizMemonPurdue): Add API call timeouts.
+	err := matcha.database.AddUser(username, email, password)
+	if err != nil {
+		log.Println("Incorrect user details for", username, "-", err)
+		if _, err := io.WriteString(w, "Some entries are already in use by another user"); err != nil {
+			log.Println("Error writing server error -", err)
+		}
+		return
+	}
+	id := matcha.database.GetUserID("username", username)
+	setSessionCookie(w, id)
+	log.Println("Registered {"+username+"} with id:", id)
+	w.Header().Set("HX-Redirect", "/dashboard")
+}
+
+func loginSubmit(w http.ResponseWriter, r *http.Request) {
+	// TODO(@FaaizMemonPurdue): Add API call timeouts.
+	id, err := matcha.database.AuthenticateLogin(r.FormValue("username"), r.FormValue("password"))
+	if err != nil {
+		log.Println("Login failed -", err)
+		if _, err := io.WriteString(w, "Try Again"); err != nil {
+			log.Println("Error writing login failure -", err)
+		}
+		return
+	}
+	setSessionCookie(w, id)
 	w.Header().Set("HX-Redirect", "/dashboard")
 }
 
@@ -118,7 +128,7 @@ func checkLoginStatus(w http.ResponseWriter, r *http.Request) *internal.User {
 		http.Error(w, "Invalid login session.", http.StatusBadRequest)
 		return nil
 	} else if id < 1 {
-		log.Println("Invalid user id -", err)
+		log.Println("Invalid user id:", id)
 		http.Error(w, "Invalid login session.", http.StatusBadRequest)
 		return nil
 	}
