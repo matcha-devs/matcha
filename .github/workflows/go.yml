@@ -15,7 +15,6 @@ jobs:
 
     env:
       DB_HOST: 127.0.0.1
-      DB_PORT: 3306
       DB_NAME: test_db
       DB_PASS: goodAhSQLPassword!
 
@@ -23,7 +22,7 @@ jobs:
       mysql:
         image: mysql:latest
         ports:
-          - 3306:${{ env.DB_PORT }}
+          - 3306:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=5
         env:
           MYSQL_ROOT_PASSWORD: ${{ env.DB_PASS }}
