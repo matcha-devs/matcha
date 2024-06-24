@@ -72,8 +72,7 @@ func New(dbName string, username string, password string) *MySQLDatabase {
 	return &mysql
 }
 
-func (db *MySQLDatabase) Open() error {
-	var err error
+func (db *MySQLDatabase) Open() (err error) {
 	db.underlyingDB, err = sql.Open("mysql", db.rootDsn+db.dbName+"?parseTime=true")
 	if err != nil {
 		log.Fatalln("Error opening database -", err)
@@ -88,7 +87,7 @@ func (db *MySQLDatabase) Open() error {
 	return err
 }
 
-func (db *MySQLDatabase) Close() error {
+func (db *MySQLDatabase) Close() (err error) {
 	if err := db.underlyingDB.Close(); err != nil {
 		log.Println("underlying database close failure -", err)
 		return err
@@ -140,18 +139,17 @@ func (db *MySQLDatabase) getOpenID() int {
 	return id
 }
 
-func (db *MySQLDatabase) AddUser(username string, email string, password string) error {
+func (db *MySQLDatabase) AddUser(username string, email string, password string) (err error) {
+	// TODO(@seoyoungcho213): For efficiency, we might be able to return the new id here with only a single query?
 	var (
 		query = "INSERT INTO users (username, email, password"
 		id    = db.getOpenID()
 	)
-
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Println("Error hashing password -", err)
 		return err
 	}
-
 	if id == 0 { // if there is no open ID, assign a new id to the user.
 		query += fmt.Sprintf(") VALUES (\"%s\", \"%s\", \"%s\")", username, email, hashedPassword)
 	} else { // Otherwise, reuse the open ID
@@ -176,14 +174,12 @@ func (db *MySQLDatabase) GetUserID(varName string, variable string) int {
 	return id
 }
 
-func (db *MySQLDatabase) DeleteUser(id int) error {
-	_, err := db.underlyingDB.Exec("INSERT INTO openid (id) VALUES(?)", id)
-	if err != nil {
+func (db *MySQLDatabase) DeleteUser(id int) (err error) {
+	if _, err = db.underlyingDB.Exec("INSERT INTO openid (id) VALUES(?)", id); err != nil {
 		log.Println("Error inserting openID", id, " to the table -", err)
 		return err
 	}
-	_, err = db.underlyingDB.Exec("DELETE FROM users WHERE BINARY id = ?", id)
-	if err != nil {
+	if _, err = db.underlyingDB.Exec("DELETE FROM users WHERE BINARY id = ?", id); err != nil {
 		log.Println("Error deleting the user id", id, " -", err)
 		return err
 	}
