@@ -23,7 +23,7 @@ jobs:
       mysql:
         image: mysql:latest
         ports:
-          - ${{ env.DB_PORT }}:${{ env.DB_PORT }}
+          - 3306:${{ env.DB_PORT }}
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=5
         env:
           MYSQL_ROOT_PASSWORD: ${{ env.DB_PASS }}
