@@ -38,14 +38,14 @@ jobs:
 
       - name: Wait for MySQL
         run: |
-          until mysqladmin ping -h ${{ env.DB_HOST }} -uroot -p ${{ env.DB_PASS }} --silent; do
+          until mysqladmin ping -h ${{ env.DB_HOST }} -uroot -p${{ env.DB_PASS }} --silent; do
             echo 'Waiting for MySQL...'
             sleep 3
           done
 
       - name: Create Database
         run: |
-          mysql -h ${{ env.DB_HOST }} -uroot -p ${{ env.DB_PASS }} \
+          mysql -h ${{ env.DB_HOST }} -uroot -p${{ env.DB_PASS }} \
           -e "CREATE DATABASE IF NOT EXISTS ${{ env.DB_NAME }};"
 
       - name: Set up environment variables
