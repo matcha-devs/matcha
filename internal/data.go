@@ -3,17 +3,18 @@
 package internal
 
 import (
-	"database/sql"
+	"time"
 )
 
 type User struct {
-	ID        sql.Null[int]
-	Username  sql.NullString
-	Email     sql.NullString
-	Password  sql.NullString
-	CreatedOn sql.NullTime
+	ID        int
+	Username  string
+	Email     string
+	Password  string
+	CreatedOn time.Time
 }
 
 func (user User) IsValid() (valid bool) {
-	return user.ID.Valid && user.Username.Valid && user.Email.Valid && user.Password.Valid && user.CreatedOn.Valid
+	return user.ID != 0 && "" != user.Username && "" != user.Email && "" != user.Password &&
+		user.CreatedOn.Before(time.Now())
 }
