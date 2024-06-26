@@ -13,3 +13,7 @@ type User struct {
 	Password  sql.NullString
 	CreatedOn sql.NullTime
 }
+
+func (user User) IsValid() (valid bool) {
+	return user.ID.Valid && user.Username.Valid && user.Email.Valid && user.Password.Valid && user.CreatedOn.Valid
+}
