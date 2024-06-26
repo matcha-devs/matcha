@@ -15,17 +15,12 @@ func newApp(server server, db database) *app {
 }
 
 func (app *app) run() {
-	// Open database connection.
 	if err := app.database.Open(); err != nil {
 		log.Println("database open error -", err)
 	}
-
-	// Run server on a new goroutine.
-	go func() {
-		if err := app.server.Run(); err != nil {
-			log.Println("server run error -", err)
-		}
-	}()
+	if err := app.server.Run(); err != nil {
+		log.Println("server run error -", err)
+	}
 }
 
 func (app *app) close() {
