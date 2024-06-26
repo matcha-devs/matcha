@@ -63,7 +63,7 @@ func signupSubmit(w http.ResponseWriter, r *http.Request) {
 	// TODO(@FaaizMemonPurdue): Add API call timeouts.
 	err := matcha.database.AddUser(username, email, password)
 	if err != nil {
-		log.Println("Incorrect user details for", username, "-", err)
+		log.Println("Error adding user {"+username+"} to database -", err)
 		if _, err := io.WriteString(w, "Some entries are already in use by another user"); err != nil {
 			log.Println("Error writing server error -", err)
 		}
@@ -111,7 +111,7 @@ func deleteUser(w http.ResponseWriter, r *http.Request) {
 	// TODO(@seoyoungcho213) : Remove user id cookie
 }
 
-func checkLoginStatus(w http.ResponseWriter, r *http.Request) *internal.User {
+func checkLoginStatus(w http.ResponseWriter, r *http.Request) (user *internal.User) {
 	cookie, err := r.Cookie("c_user_id")
 	if errors.Is(err, http.ErrNoCookie) {
 		log.Println("Client has no session cookie -", err)

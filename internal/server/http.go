@@ -33,22 +33,21 @@ func New(handler http.Handler) *HTTPServer {
 	}
 }
 
-func (s *HTTPServer) Run() error {
+func (s *HTTPServer) Run() (err error) {
 	log.Println("HTTP server starting on", s.underlyingServer.Addr, "🫡")
-	err := s.underlyingServer.ListenAndServe()
-	if !errors.Is(err, http.ErrServerClosed) {
+	if err = s.underlyingServer.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 		log.Fatalln("HTTP server run error -", err)
 	}
-	return err
+	return
 }
 
-func (s *HTTPServer) Shutdown(maxClientDisconnectTime time.Duration) error {
+func (s *HTTPServer) Shutdown(maxClientDisconnectTime time.Duration) (err error) {
 	ctx, release := context.WithTimeout(context.Background(), maxClientDisconnectTime)
 	defer release()
-	if err := s.underlyingServer.Shutdown(ctx); err != nil {
+	if err = s.underlyingServer.Shutdown(ctx); err != nil {
 		log.Println("HTTP server close error -", err)
-		return err
+	} else {
+		log.Println("HTTP server has shutdown 👋🏽")
 	}
-	log.Println("HTTP server has shutdown 👋🏽")
-	return nil
+	return
 }
