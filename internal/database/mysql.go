@@ -105,7 +105,7 @@ func (db *MySQLDatabase) AuthenticateLogin(username string, password string) (id
 func (db *MySQLDatabase) GetUser(id int) (user *internal.User) {
 	user = &internal.User{}
 	err := db.underlyingDB.QueryRow("SELECT * FROM users WHERE id = ?", id).Scan(
-		user.ID, user.Username, user.Email, user.Password, user.CreatedOn,
+		&user.ID, &user.Username, &user.Email, &user.Password, &user.CreatedOn,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		log.Println("No user with ID:", id, "-", err)
