@@ -80,7 +80,7 @@ func loginSubmit(w http.ResponseWriter, r *http.Request) {
 	id, err := matcha.database.AuthenticateLogin(r.FormValue("username"), r.FormValue("password"))
 	if err != nil {
 		log.Println("Login failed -", err)
-		if _, err := io.WriteString(w, "Try Again"); err != nil {
+		if _, err := io.WriteString(w, err.Error()); err != nil {
 			log.Println("Error writing login failure -", err)
 		}
 		return
