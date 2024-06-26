@@ -23,9 +23,11 @@ func setup(t *testing.T) (subject *MySQLDatabase, probe *sql.DB) {
 	if err != nil {
 		t.Fatal("Failed to open test database connection -", err)
 	}
-	if err := probe.Ping(); err != nil {
-		_ = probe.Close()
-		t.Fatal("Failed to ping test database connection", err)
+	if err = probe.Ping(); err != nil {
+		if err = probe.Close(); err != nil {
+			t.Fatal("Failed to close test database connection -", err)
+		}
+		t.Fatal("Failed to ping test database connection -", err)
 	}
 
 	// Ensure a clean test database by recreating any previous schemas
@@ -165,49 +167,42 @@ func TestAuthenticateLogin(t *testing.T) {
 	subject, probe := setup(t)
 	defer teardown(t, subject, probe)
 
-	if err := subject.AddUser("test_user", "test_user@example.com", "test_pass"); err != nil {
-		t.Fatal("Failed to add user -", err)
+	happyUser := "testUser"
+	happyPass := "testPass"
+	if err := subject.AddUser(happyUser, "test_user@example.com", happyPass); err != nil {
+		t.Fatal("Failed to add", happyUser, "-", err)
 	}
 
-	t.Run(
-		"Valid_Login", func(t *testing.T) {
-			// Authenticate valid login
-			id, err := subject.AuthenticateLogin("test_user", "test_pass")
-			if err != nil || id != 1 {
-				t.Error("Valid login failed:", err)
-			}
-		},
-	)
+	testCases := []struct {
+		name       string
+		username   string
+		password   string
+		expectedID int
+		happyPath  bool
+	}{
+		{name: "valid_login", username: happyUser, password: happyPass, expectedID: 1, happyPath: true},
+		{name: "bad_user", username: "im a mistake", password: happyPass, expectedID: 0, happyPath: false},
+		{name: "bad_pass", username: happyUser, password: "im a mistake", expectedID: 0, happyPath: false},
+		{name: "bad_user_and_pass", username: "we're both", password: "mistakes", expectedID: 0, happyPath: false},
+	}
 
-	t.Run(
-		"Invalid_Password", func(t *testing.T) {
-			// Authenticate invalid login
-			id, err := subject.AuthenticateLogin("test_user", "wrong_pass")
-			if err == nil || id != 0 {
-				t.Error("Invalid login did not fail with id:", id, "-", err)
-			}
-		},
-	)
-
-	t.Run(
-		"Invalid_Username", func(t *testing.T) {
-			// Authenticate invalid login
-			id, err := subject.AuthenticateLogin("wrong_user", "test_pass")
-			if err == nil || id != 0 {
-				t.Error("Invalid login did not fail with id:", id, "-", err)
-			}
-		},
-	)
-
-	t.Run(
-		"Invalid_Username_and_Password", func(t *testing.T) {
-			// Authenticate invalid login
-			id, err := subject.AuthenticateLogin("wrong_user", "wrong_pass")
-			if err == nil || id != 0 {
-				t.Error("Invalid login did not fail with id:", id, "-", err)
-			}
-		},
-	)
+	for _, testCase := range testCases {
+		t.Run(
+			testCase.name, func(t *testing.T) {
+				id, err := subject.AuthenticateLogin(testCase.username, testCase.password)
+				if (err == nil) != testCase.happyPath {
+					mood := "sad"
+					if testCase.happyPath {
+						mood = "happy"
+					}
+					t.Error("Was not expecting a", err, "error in this", mood, "test")
+				}
+				if id != testCase.expectedID {
+					t.Error("got id", id, "expected", testCase.expectedID)
+				}
+			},
+		)
+	}
 }
 
 func TestDeleteUser(t *testing.T) {

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -16,105 +17,95 @@ import (
 )
 
 type MySQLDatabase struct {
-	rootDsn      string
+	rootDSN      string
 	dbName       string
 	underlyingDB *sql.DB
 }
 
-func New(dbName string, username string, password string) *MySQLDatabase {
-	mysql := MySQLDatabase{
-		rootDsn:      username + ":" + password + "@tcp(localhost:3306)/",
+func New(dbName string, username string, password string) (mysql *MySQLDatabase) {
+	// Initialized struct to be returned.
+	mysql = &MySQLDatabase{
+		rootDSN:      username + ":" + password + "@tcp(localhost:3306)/",
 		dbName:       dbName,
 		underlyingDB: nil,
+	}
+
+	// Open a separate connection to the root DSN and create the database if it does not exist
+	initDB, err := sql.Open("mysql", mysql.rootDSN+"?multiStatements=true")
+	if err != nil {
+		log.Fatalln("Error opening MySQL root DSN -", err)
+	}
+	if err = initDB.Ping(); err != nil {
+		if err = initDB.Close(); err != nil {
+			log.Fatalln("Error closing broken MySQL root DSN -", err)
+		}
+		log.Fatalln("Error connecting to MySQL root DSN -", err)
+	}
+	_, err = initDB.Exec("CREATE DATABASE IF NOT EXISTS " + dbName)
+	if err != nil {
+		log.Fatalln("Error creating database -", err)
+	}
+
+	// Move to the database and run 'init_tables.sql' script.
+	_, err = initDB.Exec("USE " + dbName)
+	if err != nil {
+		log.Fatalln("Error using", dbName, "-", err)
 	}
 	initScript, err := os.ReadFile("internal/database/queries/init_tables.sql")
 	if err != nil {
 		log.Fatalln("Error reading init_tables.sql file -", err)
 	}
-
-	// Connect to MySQL root.
-	db, err := sql.Open("mysql", mysql.rootDsn)
-	if err != nil {
-		log.Fatalln("Error opening MySQL rootDsn -", err)
+	if _, err = initDB.Exec(string(initScript)); err != nil {
+		log.Fatalln("Error executing init_tables.sql -", err)
 	}
-	if err := db.Ping(); err != nil {
-		_ = db.Close()
-		log.Fatalln("Error connecting to MySQL rootDsn -", err)
+	if err := initDB.Close(); err != nil {
+		log.Fatalln("Error closing init DB -", err)
 	}
-
-	// Create the database if it does not exist
-	_, err = db.Exec(fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s", dbName))
-	if err != nil {
-		log.Fatalln("Error creating database -", err)
-	}
-	if err := db.Close(); err != nil {
-		log.Fatalln("Error closing database -", err)
-	}
-
-	// Connect to the database
-	db, err = sql.Open("mysql", mysql.rootDsn+dbName+"?multiStatements=true")
-	if err != nil {
-		log.Fatalln("Error opening database -", err)
-	}
-	if err = db.Ping(); err != nil {
-		_ = db.Close()
-		log.Fatalln("Error connecting to database -", err)
-	}
-
-	// Run 'init_tables.sql' script.
-	_, err = db.Exec(string(initScript))
-	if err != nil {
-		log.Fatalln("Error executing 'init_tables.sql' -", err)
-	}
-	if err := db.Close(); err != nil {
-		log.Fatalln("Error closing database -", err)
-	}
-	return &mysql
+	return
 }
 
 func (db *MySQLDatabase) Open() (err error) {
-	db.underlyingDB, err = sql.Open("mysql", db.rootDsn+db.dbName+"?parseTime=true")
-	if err != nil {
-		log.Fatalln("Error opening database -", err)
-		return err
+	if db.underlyingDB, err = sql.Open("mysql", db.rootDSN+db.dbName+"?parseTime=true"); err != nil {
+		log.Println("Error opening database -", err)
+		return
 	}
-	log.Println("MySQL Database connecting to", db.rootDsn[strings.Index(db.rootDsn, "@"):]+db.dbName, "🫡")
-	if err := db.underlyingDB.Ping(); err != nil {
-		_ = db.underlyingDB.Close()
-		log.Fatalln("Error connecting to database -", err)
-		return err
+	log.Println("MySQL Database connecting to", db.rootDSN[strings.Index(db.rootDSN, "@"):]+db.dbName, "🫡")
+	if err = db.underlyingDB.Ping(); err != nil {
+		if err = db.underlyingDB.Close(); err != nil {
+			log.Println("Error closing broken database -", err)
+		}
+		log.Println("Error connecting to database -", err)
 	}
-	return err
+	return
 }
 
 func (db *MySQLDatabase) Close() (err error) {
-	if err := db.underlyingDB.Close(); err != nil {
+	if err = db.underlyingDB.Close(); err != nil {
 		log.Println("underlying database close failure -", err)
-		return err
+	} else {
+		log.Println("MySQL database has closed 👋🏽")
 	}
-	log.Println("MySQL database has closed 👋🏽")
-	return nil
+	return
 }
 
 func (db *MySQLDatabase) AuthenticateLogin(username string, password string) (id int, err error) {
-	var expectedPassword string
-	err = db.underlyingDB.QueryRow(
-		"SELECT id, password FROM users WHERE BINARY username = ?", username,
-	).Scan(&id, &expectedPassword)
+	var hash []byte
+	err = db.underlyingDB.QueryRow("SELECT id, password FROM users WHERE BINARY username = ?", username).Scan(
+		&id, &hash,
+	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return 0, errors.New("invalid username")
 	}
-	err = bcrypt.CompareHashAndPassword([]byte(expectedPassword), []byte(password))
-	if err != nil {
+	if err = bcrypt.CompareHashAndPassword(hash, []byte(password)); err != nil {
 		return 0, errors.New("invalid password")
 	}
-	return id, err
+	return
 }
 
-func (db *MySQLDatabase) GetUser(id int) *internal.User {
-	var user = &internal.User{}
+func (db *MySQLDatabase) GetUser(id int) (user *internal.User) {
+	user = &internal.User{}
 	err := db.underlyingDB.QueryRow("SELECT * FROM users WHERE id = ?", id).Scan(
-		&user.ID, &user.Username, &user.Email, &user.Password, &user.CreatedOn,
+		user.ID, user.Username, user.Email, user.Password, user.CreatedOn,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		log.Println("No user with ID:", id, "-", err)
@@ -122,66 +113,60 @@ func (db *MySQLDatabase) GetUser(id int) *internal.User {
 	} else if err != nil {
 		log.Println("Failed to query users for ID:", id, "-", err)
 		return nil
-	} else if !(user.ID.Valid &&
-		user.Username.Valid && user.Email.Valid && user.Password.Valid && user.CreatedOn.Valid) {
+	} else if !user.IsValid() {
 		log.Println("Malformed user with ID:", id, "-", user)
 		return nil
 	}
-	return user
+	return
 }
 
-func (db *MySQLDatabase) getOpenID() int {
-	var id int
+func (db *MySQLDatabase) getOpenID() (id int) {
 	err := db.underlyingDB.QueryRow("SELECT id FROM openid LIMIT 1").Scan(&id)
-	if id == 0 && !errors.Is(err, sql.ErrNoRows) {
-		log.Fatalln("Error retrieving first row of openID table - ", err)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		log.Println("Failed to query for an openid -", err)
 	}
-	return id
+	return
 }
 
 func (db *MySQLDatabase) AddUser(username string, email string, password string) (err error) {
 	// TODO(@seoyoungcho213): For efficiency, we might be able to return the new id here with only a single query?
-	var (
-		query = "INSERT INTO users (username, email, password"
-		id    = db.getOpenID()
-	)
+	query := "INSERT INTO users (username, email, password"
+	if openID := db.getOpenID(); openID == 0 {
+		log.Println("All existing IDs in use, assigning new ID to {" + username + "}")
+		query += `) VALUES ("%s", "%s", "%s")`
+	} else {
+		log.Println("Re-using open id:", openID, "for {"+username+"}")
+		query += `, id) VALUES ("%s", "%s", "%s, ` + strconv.Itoa(openID) + `)`
+	}
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Println("Error hashing password -", err)
-		return err
+		return
 	}
-	if id == 0 { // if there is no open ID, assign a new id to the user.
-		query += fmt.Sprintf(") VALUES (\"%s\", \"%s\", \"%s\")", username, email, hashedPassword)
-	} else { // Otherwise, reuse the open ID
-		query += fmt.Sprintf(", id) VALUES (\"%s\", \"%s\", \"%s\", %d)", username, email, hashedPassword, id)
-	}
-	_, err = db.underlyingDB.Exec(query)
-	if err != nil {
+	if _, err = db.underlyingDB.Exec(fmt.Sprintf(query, username, email, hashedPassword)); err != nil {
 		log.Println("Error adding user -", err)
 	}
-	return err
+	// TODO(@seoyoungcho213): Make sure to delete the openID if used here ("delete if exists" would be perfect).
+	return
 }
 
-func (db *MySQLDatabase) GetUserID(varName string, variable string) int {
-	var id int
-	err := db.underlyingDB.QueryRow(
-		fmt.Sprintf("SELECT id FROM users WHERE BINARY %s = ?", varName), variable,
-	).Scan(&id)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+func (db *MySQLDatabase) GetUserID(varName string, variable string) (id int) {
+	if err := db.underlyingDB.QueryRow(
+		"SELECT id FROM users WHERE BINARY "+varName+" = ?", variable,
+	).Scan(&id); err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Println("Error querying users for", varName+":"+variable, "-", err)
 		return 0
 	}
-	return id
+	return
 }
 
 func (db *MySQLDatabase) DeleteUser(id int) (err error) {
 	if _, err = db.underlyingDB.Exec("INSERT INTO openid (id) VALUES(?)", id); err != nil {
 		log.Println("Error inserting openID", id, " to the table -", err)
-		return err
+		return
 	}
 	if _, err = db.underlyingDB.Exec("DELETE FROM users WHERE BINARY id = ?", id); err != nil {
 		log.Println("Error deleting the user id", id, " -", err)
-		return err
 	}
-	return nil
+	return
 }
