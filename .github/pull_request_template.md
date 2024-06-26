@@ -13,8 +13,8 @@ use it._
 - _Always include any **new** files or modules you've created._
 
 ### Testing
-- [ ] ➕ Added tests to existing 
-- [ ] 🐣 Started new group of tests
+- [ ] ➕ Added units to existing tests
+- [ ] 🐣 Started a new group of tests
 - [ ] 🙅 New tests aren't needed
 - [ ] 🙋 Need help to add tests
 
