@@ -27,9 +27,9 @@ func New(dbName string, username string, password string) *MySQLDatabase {
 		dbName:       dbName,
 		underlyingDB: nil,
 	}
-	initScript, err := os.ReadFile("internal/database/queries/init.sql")
+	initScript, err := os.ReadFile("internal/database/queries/init_tables.sql")
 	if err != nil {
-		log.Fatalln("Error reading init.sql file -", err)
+		log.Fatalln("Error reading init_tables.sql file -", err)
 	}
 
 	// Connect to MySQL root.
@@ -61,10 +61,10 @@ func New(dbName string, username string, password string) *MySQLDatabase {
 		log.Fatalln("Error connecting to database -", err)
 	}
 
-	// Run 'init.sql' script.
+	// Run 'init_tables.sql' script.
 	_, err = db.Exec(string(initScript))
 	if err != nil {
-		log.Fatalln("Error executing 'init.sql' -", err)
+		log.Fatalln("Error executing 'init_tables.sql' -", err)
 	}
 	if err := db.Close(); err != nil {
 		log.Fatalln("Error closing database -", err)
