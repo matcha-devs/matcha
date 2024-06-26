@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/mail"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -33,6 +34,7 @@ func loadIndex(w http.ResponseWriter, _ *http.Request) {
 }
 
 func setSessionCookie(w http.ResponseWriter, id int) {
+	log.Println("Issued cookie for id:", id)
 	http.SetCookie(
 		w, &http.Cookie{
 			Name:     "c_user_id",
@@ -47,31 +49,41 @@ func setSessionCookie(w http.ResponseWriter, id int) {
 }
 
 func signupSubmit(w http.ResponseWriter, r *http.Request) {
+	username := r.FormValue("username")
+	// TODO(@seoyoungcho213): Validate user data way better here.
+	if username == "" {
+		log.Println("Error adding user {" + username + "} to database")
+		if _, err := io.WriteString(w, "username can't be blank"); err != nil {
+			log.Println("Error writing signup username format error -", err)
+		}
+		return
+	}
+	email := r.FormValue("email")
+	// TODO(@seoyoungcho213): read about mail.ParseAddress' return type and use it to add first+last name formatting too
+	if _, err := mail.ParseAddress("<" + email + ">"); err != nil {
+		log.Println("Error adding user {"+username+"} to database -", err)
+		if _, err := io.WriteString(w, err.Error()); err != nil {
+			log.Println("Error writing signup email format error -", err)
+		}
+		return
+	}
 	password := r.FormValue("psw")
 	if password != r.FormValue("psw-repeat") {
 		log.Println("Passwords didnt match.")
-		if _, err := io.WriteString(w, "Password does not match"); err != nil {
+		if _, err := io.WriteString(w, "passwords do not match"); err != nil {
 			log.Println("Error writing signup failure -", err)
 		}
 		return
 	}
-
-	// TODO(@seoyoungcho213): Validate user data, here or in the backend.
-	username := r.FormValue("username")
-	email := r.FormValue("email")
-
 	// TODO(@FaaizMemonPurdue): Add API call timeouts.
-	err := matcha.database.AddUser(username, email, password)
-	if err != nil {
+	if err := matcha.database.AddUser(username, email, password); err != nil {
 		log.Println("Error adding user {"+username+"} to database -", err)
-		if _, err := io.WriteString(w, "Some entries are already in use by another user"); err != nil {
+		if _, err := io.WriteString(w, err.Error()); err != nil {
 			log.Println("Error writing server error -", err)
 		}
 		return
 	}
-	id := matcha.database.GetUserID("username", username)
-	setSessionCookie(w, id)
-	log.Println("Registered {"+username+"} with id:", id)
+	setSessionCookie(w, matcha.database.GetUserID("username", username))
 	w.Header().Set("HX-Redirect", "/dashboard")
 }
 

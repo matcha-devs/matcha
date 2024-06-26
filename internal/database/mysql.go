@@ -141,10 +141,11 @@ func (db *MySQLDatabase) AddUser(username string, email string, password string)
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Println("Error hashing password -", err)
-		return
+		return errors.New("internal server error")
 	}
 	if _, err = db.underlyingDB.Exec(fmt.Sprintf(query, username, email, hashedPassword)); err != nil {
 		log.Println("Error adding user -", err)
+		return errors.New("internal server error")
 	}
 	// TODO(@seoyoungcho213): Make sure to delete the openID if used here ("delete if exists" would be perfect).
 	return
