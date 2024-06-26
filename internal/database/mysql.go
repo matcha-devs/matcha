@@ -136,7 +136,7 @@ func (db *MySQLDatabase) AddUser(username string, email string, password string)
 		query += `) VALUES ("%s", "%s", "%s")`
 	} else {
 		log.Println("Re-using open id:", openID, "for {"+username+"}")
-		query += `, id) VALUES ("%s", "%s", "%s, ` + strconv.Itoa(openID) + `)`
+		query += `, id) VALUES ("%s", "%s", "%s", ` + strconv.Itoa(openID) + `)`
 	}
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
