@@ -7,8 +7,8 @@ import (
 )
 
 type server interface {
-	Run() error
-	Shutdown(maxClientDisconnectTime time.Duration) error
+	Run() (err error)
+	Shutdown(maxClientDisconnectTime time.Duration) (err error)
 }
 
 type database interface {
