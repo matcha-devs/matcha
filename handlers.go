@@ -102,13 +102,12 @@ func loginSubmit(w http.ResponseWriter, r *http.Request) {
 }
 
 func deleteUser(w http.ResponseWriter, r *http.Request) {
-	username := r.FormValue("username")
-
 	// TODO(@FaaizMemonPurdue): Add API call timeouts.
+	username := r.FormValue("username")
 	id, err := matcha.database.AuthenticateLogin(username, r.FormValue("password"))
 	if err != nil {
-		log.Println("User failed to validate delete request -", err)
-		// TODO(@seoyoungcho213): Log the user out and immediately invalidate their cookie.
+		log.Println("User failed to validate deletion of", username, "-", err)
+		setSessionCookie(w, 0)
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
@@ -117,10 +116,14 @@ func deleteUser(w http.ResponseWriter, r *http.Request) {
 	err = matcha.database.DeleteUser(id)
 	if err != nil {
 		log.Println("Delete User failed -", err)
-		http.Redirect(w, r, "/settings", http.StatusSeeOther)
+		_, err := io.WriteString(w, "internal server error")
+		if err != nil {
+			log.Println("Error writing deleted user internal server error -", err)
+			return
+		}
 	}
-
-	// TODO(@seoyoungcho213) : Remove user id cookie
+	setSessionCookie(w, 0)
+	w.Header().Set("HX-Redirect", "/")
 }
 
 func checkLoginStatus(w http.ResponseWriter, r *http.Request) (user *internal.User) {

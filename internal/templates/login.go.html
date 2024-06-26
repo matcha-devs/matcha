@@ -2,8 +2,8 @@
 
 {{ template "title" }}Login{{ template "end_title" }}
 <body>
-<form hx-post="/login" hx-target="#error-message">
-    <div class="container">
+<div class="container">
+    <form hx-post="/login" hx-target="#error-message">
         <h1>Login</h1>
         <hr>
         <label><b>Username</b>
@@ -15,8 +15,8 @@
             <button class="btn1" type="button">Cancel</button>
         </a>
         <button class="btn2" type="submit">Login</button>
-        <output id="error-message" style="color:red"></output>
-    </div>
-</form>
+    </form>
+    <output id="error-message" style="color:red"></output>
+</div>
 </body>
 {{ template "footer" }}

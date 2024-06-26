@@ -3,8 +3,8 @@
 {{ template "title" }}Settings{{ template "end_title" }}
 <body>
 {{ template "nav_bar" }}
-<form method="POST" action="/delete-user">
-    <div class="container">
+<div class="container">
+    <form hx-post="/delete-user" hx-target="#error-message">
         <h1>Delete User</h1>
         <hr>
         <label><b>Username</b>
@@ -12,7 +12,8 @@
         <label><b>Password</b>
             <input name="password" placeholder="Enter Password" required type="password"></label>
         <button class="btn1" type="submit">Delete User</button>
-    </div>
-</form>
+    </form>
+</div>
+<output id="error-message" style="color:red"></output>
 </body>
 {{ template "footer" }}
