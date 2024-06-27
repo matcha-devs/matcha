@@ -31,7 +31,6 @@ use it._
 
 - [ ] 📜 README.md
 - [ ] 💬 Added **necessary** comments to existing code
-- [ ] 📕 storybook
 - [ ] 🙅 no documentation needed
 
 ## Issues and Bugs
