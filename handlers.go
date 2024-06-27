@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	//go:embed internal/templates/*.go.html all:public
+	//go:embed all:internal/templates all:public
 	content        embed.FS
 	publicServer   = http.FileServer(http.FS(content))
 	templateServer = template.Must(template.ParseFS(content, "internal/templates/*.go.html"))
