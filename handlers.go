@@ -1,13 +1,13 @@
 package main
 
 import (
+	"embed"
 	"errors"
 	"html/template"
 	"io"
 	"log"
 	"net/http"
 	"net/mail"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -16,8 +16,9 @@ import (
 )
 
 var (
-	// Load to memory and generate all resources, panic if it fails.
-	tmpl         = template.Must(template.ParseGlob(filepath.Join("internal", "templates", "*.go.html")))
+	//go:embed internal/templates/*.go.html
+	templates    embed.FS
+	tmpl         = template.Must(template.ParseFS(templates, "internal/templates/*.go.html"))
 	publicServer = http.StripPrefix("/public", http.FileServer(http.Dir("public")))
 	surfacePages = map[string]struct{}{"signup": {}, "login": {}}
 )
