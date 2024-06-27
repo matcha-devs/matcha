@@ -8,13 +8,11 @@ import (
 
 const maxHandleTime = time.Second
 
-func withRequestLogs(handler http.Handler) http.Handler {
-	return http.HandlerFunc(
-		func(w http.ResponseWriter, r *http.Request) {
-			log.Println("Request:", r.Method, r.URL)
-			handler.ServeHTTP(w, r)
-		},
-	)
+func withRequestLogs(handler http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.Println("Request:", r.Method, r.URL)
+		handler.ServeHTTP(w, r)
+	}
 }
 
 func withClientTimeout(handlerFunc http.HandlerFunc) http.Handler {
@@ -23,11 +21,11 @@ func withClientTimeout(handlerFunc http.HandlerFunc) http.Handler {
 
 func loggedRouter() http.Handler {
 	mux := http.NewServeMux()
-	mux.Handle("GET /public/", withClientTimeout(servePublicFile))
-	mux.Handle("GET /{$}", withClientTimeout(loadIndex))
-	mux.Handle("POST /signup", withClientTimeout(signupSubmit))
-	mux.Handle("POST /login", withClientTimeout(loginSubmit))
-	mux.Handle("POST /delete-user", withClientTimeout(deleteUser))
-	mux.Handle("GET /", withClientTimeout(loadPage))
+	mux.Handle("GET /public/", withClientTimeout(getPublic))
+	mux.Handle("GET /{$}", withClientTimeout(getIndex))
+	mux.Handle("POST /signup", withClientTimeout(postSignup))
+	mux.Handle("POST /login", withClientTimeout(postLogin))
+	mux.Handle("POST /delete-user", withClientTimeout(postDeleteUser))
+	mux.Handle("GET /", withClientTimeout(getPage))
 	return withRequestLogs(mux)
 }
