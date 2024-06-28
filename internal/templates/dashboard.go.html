@@ -1,4 +1,4 @@
-<!-- Copyright (c) 2024 Andrea Goh. -->
+<!-- Copyright (c) 2024 Andrea Goh and Seoyoung Cho. -->
 
 {{ template "title" }}Dashboard{{ template "end_title" }}
 <body>
@@ -12,9 +12,7 @@
 </div>
 
 <div>
-    <form action="/logout" method="post">
-        <button class="btn" type="submit">Log out</button>
-    </form>
+    <button hx-post="/logout" class="btn">Log out</button>
 </div>
 
 {{ . }}
