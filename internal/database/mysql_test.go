@@ -316,6 +316,7 @@ func TestGetUser(t *testing.T) {
     }
 }
 
+
 func TestGetUserID(t *testing.T) {
     subject, probe := setup(t)
     defer teardown(t, subject, probe)
@@ -353,6 +354,7 @@ func TestGetUserID(t *testing.T) {
         })
     }
 }
+
 
 func TestMain(m *testing.M) {
 	wd, err := os.Getwd()
