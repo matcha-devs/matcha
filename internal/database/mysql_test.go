@@ -55,7 +55,7 @@ func setup(t *testing.T) (subject *MySQLDatabase, probe *sql.DB) {
 
 func teardown(t *testing.T, subject *MySQLDatabase, probe *sql.DB) {
 	t.Helper()
-	
+
 	err := probe.Close()
 	if err != nil {
 		t.Fatal("Failed to close probe database connection -", err)
@@ -158,11 +158,11 @@ func TestAddUser(t *testing.T) {
 		{"AddSecondUser", "test_user2", "test_user2@example2.com", "test_pass2", 2, false},
 		{"AddDuplicateUsername", "test_user", "unique_email@example.com", "test_pass3", 0, true},
 		{"AddDuplicateEmail", "unique_user", "test_user2@example2.com", "test_pass4", 0, true},
-		
+
 		{"AddEmptyUsername", "", "empty_user@example.com", "test_pass5", 0, true},
 		{"AddEmptyEmail", "empty_email_user", "", "test_pass6", 0, true},
 		{"AddEmptyPassword", "empty_pass_user", "empty_pass_user@example.com", "", 0, true},
-		
+
 		// TODO: The functionality for this test need to be implemented
 		// {"AddInvalidEmail", "invalid_email_user", "invalidemail.com", "test_pass7", 0, true},
 	}
@@ -354,7 +354,6 @@ func TestGetUserID(t *testing.T) {
         })
     }
 }
-
 
 func TestMain(m *testing.M) {
 	wd, err := os.Getwd()
