@@ -256,8 +256,8 @@ func TestGetUser(t *testing.T) {
 	if user.Username != "test_user" {
 		t.Errorf("Expected username to be 'test_user', but got %s", user.Username)
 	}
-	if user.Email != "test_user@examplecom" {
-		t.Errorf("Expected email to be 'test_user@examplecom', but got %s", user.Email)
+	if user.Email != "test_user@example.com" {
+		t.Errorf("Expected email to be 'test_user@example.com', but got %s", user.Email)
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte("test_pass")); err != nil {
