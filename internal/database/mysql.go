@@ -129,7 +129,12 @@ func (db *MySQLDatabase) getOpenID() (id int) {
 }
 
 func (db *MySQLDatabase) AddUser(username string, email string, password string) (err error) {
-	// TODO(@seoyoungcho213): For efficiency, we might be able to return the new id here with only a single query?
+	
+	// TODO: There needs to be a check if the usernames/emails/passwords empty here.
+	if len(username) == 0 || len(email) == 0 || len(password) == 0 {
+		return errors.New("empty fields")
+	}
+	// TODO(@seoyoungcho213): For efficiency, we might be able to return the new id here with only a single query?``
 	query := "INSERT INTO users (username, email, password"
 	if openID := db.getOpenID(); openID == 0 {
 		log.Println("All existing IDs in use, assigning new ID to {" + username + "}")
