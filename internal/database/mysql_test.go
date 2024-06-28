@@ -264,106 +264,96 @@ func TestDeleteUser(t *testing.T) {
 }
 
 func TestGetUser(t *testing.T) {
-	subject, probe := setup(t)
-	defer teardown(t, subject, probe)
+    subject, probe := setup(t)
+    defer teardown(t, subject, probe)
 
-	// Add a test user to the database:
-	if err := subject.AddUser("test_user", "test_user@example.com","test_pass"); err != nil {
-		t.Fatal("Failed to add user -", err)
-	}
+    // Add a test user to the database:
+    if err := subject.AddUser("test_user", "test_user@example.com", "test_pass"); err != nil {
+        t.Fatal("Failed to add user -", err)
+    }
 
-	// Retrieve the user from the database:
-	user := subject.GetUser(1);
-	if user == nil {
-		t.Fatal("Expected to find user with ID 1, but got nil")
-	}
+    testCases := []struct {
+        name       string
+        userID     int
+        expectUser bool
+        username   string
+        email      string
+        password   string
+    }{
+        {"GetExistingUser", 1, true, "test_user", "test_user@example.com", "test_pass"},
+        {"GetNonExistentUser", 999, false, "", "", ""},
+    }
 
-	if user.Username != "test_user" {
-		t.Errorf("Expected username to be 'test_user', but got %s", user.Username)
-	}
-	if user.Email != "test_user@example.com" {
-		t.Errorf("Expected email to be 'test_user@example.com', but got %s", user.Email)
-	}
-
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte("test_pass")); err != nil {
-		t.Errorf("Password does not match: %v", err)
-	}
-	if user.CreatedOn.IsZero() {
-		t.Errorf("Expected created_on to be set, but got zero value")
-	}
-
-	if !user.IsValid() {
-		t.Errorf("Expected valid user, but got invalid user: %v", user)
-	}
-
-	// Try to retrieve a non-existing user
-	nonExistentUser := subject.GetUser(999)
-	if nonExistentUser != nil {
-		t.Errorf("Expected no user with ID 999, but got: %v", nonExistentUser)
-	}
+    for _, tc := range testCases {
+        t.Run(tc.name, func(t *testing.T) {
+            user := subject.GetUser(tc.userID)
+            if tc.expectUser {
+                if user == nil {
+                    t.Fatal("Expected to find user, but got nil")
+                }
+                if user.Username != tc.username {
+                    t.Errorf("Expected username to be '%s', but got %s", tc.username, user.Username)
+                }
+                if user.Email != tc.email {
+                    t.Errorf("Expected email to be '%s', but got %s", tc.email, user.Email)
+                }
+                if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(tc.password)); err != nil {
+                    t.Errorf("Password does not match: %v", err)
+                }
+                if user.CreatedOn.IsZero() {
+                    t.Errorf("Expected created_on to be set, but got zero value")
+                }
+                if !user.IsValid() {
+                    t.Errorf("Expected valid user, but got invalid user: %v", user)
+                }
+            } else {
+                if user != nil {
+                    t.Errorf("Expected no user, but got: %v", user)
+                }
+            }
+        })
+    }
 }
+
 
 func TestGetUserID(t *testing.T) {
-	subject, probe := setup(t)
-	defer teardown(t, subject, probe)
+    subject, probe := setup(t)
+    defer teardown(t, subject, probe)
 
-	t.Run(
-		"Valid_Users", func(t *testing.T) {
-			if err := subject.AddUser("user_id_user", "user_id_user@example.com", "user_id_pass"); err != nil {
-				t.Fatal("Failed to add user -", err)
-			}
+    t.Log("Adding user: user_id_user")
+    if err := subject.AddUser("user_id_user", "user_id_user@example.com", "user_id_pass"); err != nil {
+        t.Fatal("Failed to add user -", err)
+    }
 
-			// Get user ID by username
-			id := subject.GetUserID("username", "user_id_user")
-			if id != 1 {
-				t.Error("Failed to get user ID by username")
-			}
+    t.Log("Adding user: user2_id_user2")
+    if err := subject.AddUser("user2_id_user2", "user2_id_user2@example.com", "user2_id2_pass"); err != nil {
+        t.Fatal("Failed to add user -", err)
+    }
 
-			// Get user ID by email
-			id = subject.GetUserID("email", "user_id_user@example.com")
-			if id != 1 {
-				t.Error("Failed to get user ID by email")
-			}
-		},
-	)
+    testCases := []struct {
+        name     string
+        field    string
+        value    string
+        expected int
+    }{
+        {"GetUserIDByUsername1", "username", "user_id_user", 1},
+        {"GetUserIDByEmail1", "email", "user_id_user@example.com", 1},
+        {"GetUserIDByUsername2", "username", "user2_id_user2", 2},
+        {"GetUserIDByEmail2", "email", "user2_id_user2@example.com", 2},
+        {"GetNonExistentUserIDByUsername", "username", "nonexistent_user", 0},
+        {"GetNonExistentUserIDByEmail", "email", "nonexistent@example.com", 0},
+    }
 
-	t.Run(
-		"Multiple_Users", func(t *testing.T) {
-			log.Println("Testing for multiple users")
-			if err := subject.AddUser("user2_id_user2", "user2_id_user2@example.com", "user2_id2_pass"); err != nil {
-				t.Fatal("Failed to add user -", err)
-			}
-
-			// Get user ID by username
-			id := subject.GetUserID("username", "user2_id_user2")
-			if id != 2 {
-				t.Error("Failed to get user ID by username")
-			}
-
-			// Get user ID by email
-			id = subject.GetUserID("email", "user2_id_user2@example.com")
-			if id != 2 {
-				t.Error("Failed to get user ID by email")
-			}
-		},
-	)
-
-	t.Run(
-		"NonExistent_User", func(t *testing.T) {
-			// Get user ID by username
-			id := subject.GetUserID("username", "user3_id_user3")
-			if id != 0 {
-				t.Error("Expected to not find a user by username, but stored ID")
-			}
-
-			// Get user ID by email
-			id = subject.GetUserID("email", "user3_id_user3@example.com")
-			if id != 0 {
-				t.Error("Expected to not find a user by email, but stored ID")
-			}
-		},
-	)
+    for _, tc := range testCases {
+        t.Run(tc.name, func(t *testing.T) {
+            id := subject.GetUserID(tc.field, tc.value)
+            if id != tc.expected {
+                t.Errorf("got id %d, expected %d", id, tc.expected)
+            }
+        })
+    }
 }
+
 
 func TestMain(m *testing.M) {
 	wd, err := os.Getwd()
