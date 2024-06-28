@@ -55,6 +55,7 @@ func setup(t *testing.T) (subject *MySQLDatabase, probe *sql.DB) {
 
 func teardown(t *testing.T, subject *MySQLDatabase, probe *sql.DB) {
 	t.Helper()
+	
 	err := probe.Close()
 	if err != nil {
 		t.Fatal("Failed to close probe database connection -", err)
