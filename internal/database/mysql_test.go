@@ -10,6 +10,8 @@ import (
 	"testing"
 
 	_ "github.com/go-sql-driver/mysql"
+	"golang.org/x/crypto/bcrypt"
+
 )
 
 // Get the password from the environment, currently using the admin password this may change in the future!
@@ -233,6 +235,46 @@ func TestDeleteUser(t *testing.T) {
 		t.Error("Deleted user still exists -", err)
 	} else if !errors.Is(err, sql.ErrNoRows) {
 		log.Println("Probe failed to verify user -", err)
+	}
+}
+
+func TestGetUser(t *testing.T) {
+	subject, probe := setup(t)
+	defer teardown(t, subject, probe)
+
+	// Add a test user to the database:
+	if err := subject.AddUser("test_user", "test_user@examplecom","test_pass"); err != nil {
+		t.Fatal("Failed to add user -", err)
+	}
+
+	// Retrieve the user from the database:
+	user := subject.GetUser(1);
+	if user == nil {
+		t.Fatal("Expected to find user with ID 1, but got nil")
+	}
+
+	if user.Username != "test_user" {
+		t.Errorf("Expected username to be 'test_user', but got %s", user.Username)
+	}
+	if user.Email != "test_user@examplecom" {
+		t.Errorf("Expected email to be 'test_user@examplecom', but got %s", user.Email)
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte("test_pass")); err != nil {
+		t.Errorf("Password does not match: %v", err)
+	}
+	if user.CreatedOn.IsZero() {
+		t.Errorf("Expected created_on to be set, but got zero value")
+	}
+
+	if !user.IsValid() {
+		t.Errorf("Expected valid user, but got invalid user: %v", user)
+	}
+
+	// Try to retrieve a non-existing user
+	nonExistentUser := subject.GetUser(999)
+	if nonExistentUser != nil {
+		t.Errorf("Expected no user with ID 999, but got: %v", nonExistentUser)
 	}
 }
 
