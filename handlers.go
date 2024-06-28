@@ -87,6 +87,11 @@ func postSignup(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("HX-Redirect", "/dashboard")
 }
 
+func logoutSubmit(w http.ResponseWriter, r *http.Request) {
+	setSessionCookie(w, 0)
+	http.Redirect(w, r, "/", http.StatusMovedPermanently)
+}
+
 func postLogin(w http.ResponseWriter, r *http.Request) {
 	// TODO(@FaaizMemonPurdue): Add API call timeouts.
 	id, err := matcha.database.AuthenticateLogin(r.FormValue("username"), r.FormValue("password"))
@@ -107,7 +112,7 @@ func postDeleteUser(w http.ResponseWriter, r *http.Request) {
 	id, err := matcha.database.AuthenticateLogin(username, r.FormValue("password"))
 	if err != nil {
 		log.Println("User failed to validate deletion of", username, "-", err)
-		setSessionCookie(w, 0)
+		logoutSubmit(w, r)
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
@@ -121,8 +126,7 @@ func postDeleteUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	setSessionCookie(w, 0)
-	w.Header().Set("HX-Redirect", "/")
+	logoutSubmit(w, r)
 }
 
 func checkLoginStatus(w http.ResponseWriter, r *http.Request) (user *internal.User) {
