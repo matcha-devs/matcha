@@ -113,7 +113,6 @@ func postDeleteUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println("User failed to validate deletion of", username, "-", err)
 		logoutSubmit(w, r)
-		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
 
