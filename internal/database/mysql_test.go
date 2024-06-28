@@ -25,7 +25,7 @@ func setup(t *testing.T) (subject *MySQLDatabase, probe *sql.DB) {
 	if err != nil {
 		t.Fatal("Failed to open test database connection -", err)
 	}
-	if err = probe.Ping(); err != nil {
+	if err := probe.Ping(); err != nil {
 		if err = probe.Close(); err != nil {
 			t.Fatal("Failed to close test database connection -", err)
 		}
@@ -33,18 +33,15 @@ func setup(t *testing.T) (subject *MySQLDatabase, probe *sql.DB) {
 	}
 
 	// Ensure a clean test database by recreating any previous schemas
-	_, err = probe.Exec("DROP DATABASE IF EXISTS test_db")
-	if err != nil {
+	if _, err := probe.Exec("DROP DATABASE IF EXISTS test_db"); err != nil {
 		t.Fatal("Failed to drop test database -", err)
 	}
-	_, err = probe.Exec("CREATE DATABASE test_db")
-	if err != nil {
+	if _, err := probe.Exec("CREATE DATABASE test_db");  err != nil {
 		t.Fatal("Failed to create test database -", err)
 	}
 
 	// Connect to the newly created test database
-	_, err = probe.Exec("USE test_db")
-	if err != nil {
+	if _, err := probe.Exec("USE test_db"); err != nil {
 		log.Fatalln("Failed to use test_db -", err)
 	}
 
@@ -58,7 +55,6 @@ func setup(t *testing.T) (subject *MySQLDatabase, probe *sql.DB) {
 
 func teardown(t *testing.T, subject *MySQLDatabase, probe *sql.DB) {
 	t.Helper()
-
 	err := probe.Close()
 	if err != nil {
 		t.Fatal("Failed to close probe database connection -", err)
@@ -149,19 +145,48 @@ func TestAddUser(t *testing.T) {
 	subject, probe := setup(t)
 	defer teardown(t, subject, probe)
 
-	if err := subject.AddUser("test_user", "test_user@example.com", "test_pass"); err != nil {
-		t.Fatal("Failed to add user -", err)
-	}
-	var id int
-	if err := probe.QueryRow("SELECT id FROM users WHERE username = ?", "test_user").Scan(&id); err != nil || id != 1 {
-		t.Fatal("Failed to create first user with id 1 -", err)
+	testCases := []struct {
+		name          string
+		username      string
+		email         string
+		password      string
+		expectedID    int
+		expectedError bool
+	}{
+		{"AddFirstUser", "test_user", "test_user@example.com", "test_pass", 1, false},
+		{"AddSecondUser", "test_user2", "test_user2@example2.com", "test_pass2", 2, false},
+		{"AddDuplicateUsername", "test_user", "unique_email@example.com", "test_pass3", 0, true},
+		{"AddDuplicateEmail", "unique_user", "test_user2@example2.com", "test_pass4", 0, true},
+		
+		{"AddEmptyUsername", "", "empty_user@example.com", "test_pass5", 0, true},
+		{"AddEmptyEmail", "empty_email_user", "", "test_pass6", 0, true},
+		{"AddEmptyPassword", "empty_pass_user", "empty_pass_user@example.com", "", 0, true},
+		
+		// TODO: The functionality for this test need to be implemented
+		// {"AddInvalidEmail", "invalid_email_user", "invalidemail.com", "test_pass7", 0, true},
 	}
 
-	if err := subject.AddUser("test_user2", "test_user2@example2.com", "test_pass2"); err != nil {
-		t.Fatal("Failed to add user -", err)
-	}
-	if err := probe.QueryRow("SELECT id FROM users WHERE username = ?", "test_user2").Scan(&id); err != nil || id != 2 {
-		t.Fatal("Failed to sequentially create user with id 2 -", err)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := subject.AddUser(tc.username, tc.email, tc.password)
+			var id int
+			if tc.expectedError {
+				if err == nil {
+					t.Fatalf("Expected error but got none for case: %s", tc.name)
+				}
+			} else {
+				if err != nil {
+					t.Fatalf("Failed to add user - %v for case: %s", err, tc.name)
+				}
+				err := probe.QueryRow("SELECT id FROM users WHERE username = ?", tc.username).Scan(&id)
+				if err != nil {
+					t.Fatalf("Failed to query user id - %v for case: %s", err, tc.name)
+				}
+				if id != tc.expectedID {
+					t.Fatalf("Expected user id %d but got %d for case: %s", tc.expectedID, id, tc.name)
+				}
+			}
+		})
 	}
 }
 
