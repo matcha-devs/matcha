@@ -243,7 +243,7 @@ func TestGetUser(t *testing.T) {
 	defer teardown(t, subject, probe)
 
 	// Add a test user to the database:
-	if err := subject.AddUser("test_user", "test_user@examplecom","test_pass"); err != nil {
+	if err := subject.AddUser("test_user", "test_user@example.com","test_pass"); err != nil {
 		t.Fatal("Failed to add user -", err)
 	}
 
