@@ -87,7 +87,7 @@ func postSignup(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("HX-Redirect", "/dashboard")
 }
 
-func logout(w http.ResponseWriter, _ *http.Request) {
+func postLogout(w http.ResponseWriter, _ *http.Request) {
 	setSessionCookie(w, 0)
 	w.Header().Set("HX-Redirect", "/")
 }
@@ -112,7 +112,7 @@ func postDeleteUser(w http.ResponseWriter, r *http.Request) {
 	id, err := matcha.database.AuthenticateLogin(username, r.FormValue("password"))
 	if err != nil {
 		log.Println("User failed to validate delete request -", err)
-		logout(w, r)
+		postLogout(w, r)
 		return
 	}
 
@@ -125,7 +125,7 @@ func postDeleteUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	logout(w, r)
+	postLogout(w, r)
 }
 
 func checkLoginStatus(w http.ResponseWriter, r *http.Request) (user *internal.User) {
