@@ -129,7 +129,7 @@ func (db *MySQLDatabase) getOpenID() (id int) {
 }
 
 func (db *MySQLDatabase) AddUser(username string, email string, password string) (err error) {
-	
+
 	// TODO: There needs to be a check if the usernames/emails/passwords empty here.
 	if len(username) == 0 || len(email) == 0 || len(password) == 0 {
 		return errors.New("empty fields")
