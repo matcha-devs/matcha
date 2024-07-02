@@ -162,7 +162,13 @@ func TestAddUser(t *testing.T) {
 		{"AddEmptyPassword", "empty_pass_user", "empty_pass_user@example.com", "", 0, true},
 
 		// TODO: The functionality for this test need to be implemented
-		// {"AddInvalidEmail", "invalid_email_user", "invalidemail.com", "test_pass7", 0, true},
+		// {"AddInvalidEmail", "invalid_email_user", "invalidemail.com", "test_pass7", 0, true}, // TODO: The functionality for this test need to be implemented
+		{"MultipleFailures1", "user_fail", "user_fail@example.com", "", 0, true}, // Should fail
+		{"MultipleFailures2", "user_fail", "", "password", 0, true}, // Should fail
+		{"MultipleFailures3", "", "user_fail@example.com", "password", 0, true}, // Should fail
+		{"ValidAfterFailures", "valid_user", "valid_user@example.com", "password", 3, false}, // Should be ID 3 after failures
+		{"CreateAndReuseOpenID1", "temp_user", "temp_user@example.com", "password", 4, false}, // Should be ID 4
+		{"ReuseOpenID", "new_user", "new_user@example.com", "password", 4, false}, // Should reuse ID 4
 	}
 
 	for _, tc := range testCases {
@@ -184,6 +190,13 @@ func TestAddUser(t *testing.T) {
 					}
 					if id != tc.expectedID {
 						t.Fatalf("Expected user id %d but got %d for case: %s", tc.expectedID, id, tc.name)
+					}
+					// Specific case to delete the user to test reusing open ID
+					if tc.name == "CreateAndReuseOpenID1" {
+						_, err = probe.Exec("DELETE FROM users WHERE id = ?", id)
+						if err != nil {
+							t.Fatalf("Failed to delete user - %v for case: %s", err, tc.name)
+						}
 					}
 				}
 			},
