@@ -208,10 +208,10 @@ func TestAuthenticateLogin(t *testing.T) {
 		expectedID int
 		happyPath  bool
 	}{
-		{name: "valid_login", username: happyUser, password: happyPass, expectedID: 1, happyPath: true},
-		{name: "bad_user", username: "im a mistake", password: happyPass, expectedID: 0, happyPath: false},
-		{name: "bad_pass", username: happyUser, password: "im a mistake", expectedID: 0, happyPath: false},
-		{name: "bad_user_and_pass", username: "we're both", password: "mistakes", expectedID: 0, happyPath: false},
+		{name: "ValidLogin", username: happyUser, password: happyPass, expectedID: 1, happyPath: true},
+		{name: "BadUser", username: "im a mistake", password: happyPass, expectedID: 0, happyPath: false},
+		{name: "BadPass", username: happyUser, password: "im a mistake", expectedID: 0, happyPath: false},
+		{name: "BadUser_and_BadPass", username: "we're both", password: "mistakes", expectedID: 0, happyPath: false},
 	}
 
 	for _, testCase := range testCases {
