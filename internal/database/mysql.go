@@ -5,10 +5,8 @@ package database
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"log"
 	"os"
-	"strconv"
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -120,12 +118,14 @@ func (db *MySQLDatabase) GetUser(id int) (user *internal.User) {
 	return
 }
 
-func (db *MySQLDatabase) getOpenID() (id int) {
-	err := db.underlyingDB.QueryRow("SELECT id FROM openid LIMIT 1").Scan(&id)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		log.Println("Failed to query for an openid -", err)
-	}
-	return
+func (db *MySQLDatabase) getOpenID(tx *sql.Tx) (int, error) {
+    var id int
+    err := tx.QueryRow("SELECT id FROM openid LIMIT 1").Scan(&id)
+    if err != nil && !errors.Is(err, sql.ErrNoRows) {
+        log.Println("Failed to query for an openid -", err)
+        return 0, err
+    }
+    return id, nil
 }
 
 func (db *MySQLDatabase) AddUser(username string, email string, password string) (err error) {
@@ -134,26 +134,55 @@ func (db *MySQLDatabase) AddUser(username string, email string, password string)
 	if len(username) == 0 || len(email) == 0 || len(password) == 0 {
 		return errors.New("empty fields")
 	}
-	// TODO(@seoyoungcho213): For efficiency, we might be able to return the new id here with only a single query?``
-	query := "INSERT INTO users (username, email, password"
-	if openID := db.getOpenID(); openID == 0 {
-		log.Println("All existing IDs in use, assigning new ID to {" + username + "}")
-		query += `) VALUES ("%s", "%s", "%s")`
-	} else {
-		log.Println("Re-using open id:", openID, "for {"+username+"}")
-		query += `, id) VALUES ("%s", "%s", "%s", ` + strconv.Itoa(openID) + `)`
+
+	// Start a transaction:
+	tx, err := db.underlyingDB.Begin()
+	if err != nil {
+		log.Println("Error starting transaction -", err)
+		return errors.New("internal server error")
 	}
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+	
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Println("Error hashing password -", err)
 		return errors.New("internal server error")
 	}
-	if _, err = db.underlyingDB.Exec(fmt.Sprintf(query, username, email, hashedPassword)); err != nil {
+
+	// Get openID within the transaction
+	openID, err := db.getOpenID(tx)
+	if err != nil {
+		log.Println("Error getting open ID -", err)
+		return errors.New("internal server error")
+	}
+	
+	if openID == 0 {
+		log.Println("All existing IDs in use, assigning new ID to {" + username + "}")
+		query := "INSERT INTO users (username, email, password) VALUES (?, ?, ?)"
+		_, err = tx.Exec(query, username, email, hashedPassword)
+	} else {
+		log.Println("Re-using open id:", openID, "for {"+username+"}")
+		query := "INSERT INTO users (username, email, password, id) VALUES (?, ?, ?, ?)"
+		_, err = tx.Exec(query, username, email, hashedPassword, openID)
+	}
+
+	if err != nil {
 		log.Println("Error adding user -", err)
 		return errors.New("internal server error")
 	}
+
+	// Commit the transaction
+	err = tx.Commit()
+	if err != nil {
+		log.Println("Error committing transaction -", err)
+		return errors.New("internal server error")
+	}
 	// TODO(@seoyoungcho213): Make sure to delete the openID if used here ("delete if exists" would be perfect).
-	return
+	return nil
 }
 
 func (db *MySQLDatabase) GetUserID(varName string, variable string) (id int) {
