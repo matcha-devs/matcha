@@ -14,9 +14,10 @@ type server interface {
 type database interface {
 	Open() (err error)
 	Close() (err error)
-	AuthenticateLogin(username string, password string) (id int, err error)
+	AuthenticateLogin(email string, password string) (id int, err error)
 	GetUser(id int) (user *internal.User)
-	AddUser(username string, email string, password string) (err error)
+	AddUser(firstname string, middlename string, lastname string, email string, password string,
+		birthdate string) (id int, err error)
 	GetUserID(varName string, variable string) (id int)
 	DeleteUser(id int) (err error)
 }
