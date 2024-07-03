@@ -87,8 +87,15 @@ func TestNew(t *testing.T) {
 	defer teardown(t, subject, probe)
 
 	expectedTables := map[string]map[string]struct{}{
-		"users":  {"id": {}, "username": {}, "email": {}, "password": {}, "created_on": {}},
+		"users": {"id": {}, "firstname": {}, "middlename": {}, "lastname": {}, "email": {}, "password": {},
+			"birthdate": {}, "created_on": {}},
 		"openid": {"id": {}, "created_on": {}},
+		"asset_class_aggregations": {"id": {}, "cash": {}, "stocks": {}, "credit_card": {}, "other_loan": {},
+			"retirement_cash": {}, "retirement_stocks": {}, "real_estate": {}, "other_property": {}},
+		"transactions": {"id": {}, "user_id": {}, "financial_account_id": {}, "amount": {}, "type": {}},
+		"financial_accounts": {"id": {}, "user_id": {}, "institution_id": {}, "asset_class": {}, "name": {},
+			"net_value": {}},
+		"institutions": {"id": {}, "name": {}},
 	}
 
 	tables, err := probe.Query("SHOW TABLES FROM test_db")
@@ -199,12 +206,12 @@ func TestAuthenticateLogin(t *testing.T) {
 	subject, probe := setup(t)
 	defer teardown(t, subject, probe)
 
-	happyUser := "testUser"
+	happyEmail := "test_user@example.com"
 	happyPass := "testPass"
 	_, err := subject.AddUser("test", "", "user", "test_user@example.com",
 		happyPass, "2000-02-13")
 	if err != nil {
-		t.Fatal("Failed to add", happyUser, "-", err)
+		t.Fatal("Failed to add", happyEmail, "-", err)
 	}
 
 	testCases := []struct {
@@ -214,9 +221,9 @@ func TestAuthenticateLogin(t *testing.T) {
 		expectedID int
 		happyPath  bool
 	}{
-		{name: "valid_login", email: happyUser, password: happyPass, expectedID: 1, happyPath: true},
+		{name: "valid_login", email: happyEmail, password: happyPass, expectedID: 1, happyPath: true},
 		{name: "bad_user", email: "im a mistake", password: happyPass, expectedID: 0, happyPath: false},
-		{name: "bad_pass", email: happyUser, password: "im a mistake", expectedID: 0, happyPath: false},
+		{name: "bad_pass", email: happyEmail, password: "im a mistake", expectedID: 0, happyPath: false},
 		{name: "bad_user_and_pass", email: "we're both", password: "mistakes", expectedID: 0, happyPath: false},
 	}
 
