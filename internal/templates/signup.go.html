@@ -7,12 +7,17 @@
     <p>Please fill in this form to create an account.</p>
     <hr>
     <form hx-post="/signup" hx-target="#error-message">
+        <label><b>Firstname</b>
+            <input name="firstname" placeholder="Enter Firstname" required type="text" pattern="[A-Za-z\s]+"></label>
+        <label><b>Middlename</b>
+            <input name="middlename" placeholder="Enter Middlename" type="text" pattern="[A-Za-z\s]+"></label>
+        <label><b>Lastname</b>
+            <input name="lastname" placeholder="Enter Lastname" required type="text" pattern="[A-Za-z\s]+"></label>
         <label><b>Email</b>
             <input name="email" placeholder="Enter Email" required type="text"></label>
-        <label><b>DOB</b>
-            <input name="DOB" placeholder="Enter Date of Birth" required type="text"></label>
-        <label><b>Username</b>
-            <input name="username" placeholder="Enter Username" required type="text"></label>
+        <label><b>Date of Birth</b>
+            <input name="birthdate" placeholder="Enter Date of Birth(YYYY-MM-DD)" required type="text"></label>
+        <br>
         <label><b>Password</b>
             <input name="psw" placeholder="Enter Password" required type="password"></label>
         <label><b>Repeat Password</b>

@@ -1,3 +1,4 @@
+-- TODO(@seoyoungcho213) : modify this based on AddUser()
 INSERT INTO users (username, email, password)
 VALUES ('Ancient One', 'ancientone@gmail.com', 'pw1'),
        ('Alice', 'alice@example.com', 'pw2'),

@@ -49,19 +49,14 @@ func setSessionCookie(w http.ResponseWriter, id int) {
 }
 
 func postSignup(w http.ResponseWriter, r *http.Request) {
-	username := r.FormValue("username")
+	firstname := r.FormValue("firstname")
 	// TODO(@seoyoungcho213): Validate user data way better here.
-	if username == "" {
-		log.Println("Error adding user {" + username + "} to database")
-		if _, err := io.WriteString(w, "username can't be blank"); err != nil {
-			log.Println("Error writing signup username format error -", err)
-		}
-		return
-	}
+	middlename := r.FormValue("middlename")
+	lastname := r.FormValue("lastname")
 	email := r.FormValue("email")
 	// TODO(@seoyoungcho213): read about mail.ParseAddress' return type and use it to add first+last name formatting too
 	if _, err := mail.ParseAddress("<" + email + ">"); err != nil {
-		log.Println("Error adding user {"+username+"} to database -", err)
+		log.Println("Error adding user {"+email+"} to database -", err)
 		if _, err := io.WriteString(w, err.Error()); err != nil {
 			log.Println("Error writing signup email format error -", err)
 		}
@@ -75,15 +70,17 @@ func postSignup(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+	birthdate := r.FormValue("birthdate")
 	// TODO(@FaaizMemonPurdue): Add API call timeouts.
-	if err := matcha.database.AddUser(username, email, password); err != nil {
-		log.Println("Error adding user {"+username+"} to database -", err)
+	id, err := matcha.database.AddUser(firstname, middlename, lastname, email, password, birthdate)
+	if err != nil {
+		log.Println("Error adding user {"+email+"} to database -", err)
 		if _, err := io.WriteString(w, err.Error()); err != nil {
 			log.Println("Error writing server error -", err)
 		}
 		return
 	}
-	setSessionCookie(w, matcha.database.GetUserID("username", username))
+	setSessionCookie(w, id)
 	w.Header().Set("HX-Redirect", "/dashboard")
 }
 

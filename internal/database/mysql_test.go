@@ -147,19 +147,27 @@ func TestAddUser(t *testing.T) {
 
 	testCases := []struct {
 		name          string
-		username      string
+		firstname     string
+		middlename    string
+		lastname      string
 		email         string
 		password      string
+		birthdate     string
 		expectedID    int
 		expectedError bool
 	}{
-		{"AddFirstUser", "test_user", "test_user@example.com", "test_pass", 1, false},
-		{"AddSecondUser", "test_user2", "test_user2@example2.com", "test_pass2", 2, false},
-		{"AddDuplicateUsername", "test_user", "unique_email@example.com", "test_pass3", 0, true},
-		{"AddDuplicateEmail", "unique_user", "test_user2@example2.com", "test_pass4", 0, true},
-		{"AddEmptyUsername", "", "empty_user@example.com", "test_pass5", 0, true},
-		{"AddEmptyEmail", "empty_email_user", "", "test_pass6", 0, true},
-		{"AddEmptyPassword", "empty_pass_user", "empty_pass_user@example.com", "", 0, true},
+		{"AddFirstUser", "test", "", "user", "test_user@example.com",
+			"test_pass", "2004-12-22", 1, false},
+		{"AddSecondUser", "test", "", "user2", "test_user@example2.com",
+			"test_pass2", "2024-12-22", 2, false},
+		{"AddDuplicateEmail", "unique", "", "user", "test_user@example2.com",
+			"test_pass4", "2024-10-22", 0, true},
+		{"AddEmptyFirstname", "", "", "user", "empty_first@example.com",
+			"test_pass5", "2024-08-22", 0, true},
+		{"AddEmptyLastname", "empty", "email", "", "empty_last@example.com",
+			"test_pass6", "2024-07-22", 0, true},
+		{"AddEmptyPassword", "empty", "pass", "user",
+			"empty_pass_user@example.com", "", "2021-07-22", 0, true},
 
 		// TODO: The functionality for this test need to be implemented
 		// {"AddInvalidEmail", "invalid_email_user", "invalidemail.com", "test_pass7", 0, true},
@@ -168,8 +176,8 @@ func TestAddUser(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(
 			tc.name, func(t *testing.T) {
-				err := subject.AddUser(tc.username, tc.email, tc.password)
-				var id int
+				id, err := subject.AddUser(tc.firstname, tc.middlename, tc.lastname, tc.email, tc.password,
+					tc.birthdate)
 				if tc.expectedError {
 					if err == nil {
 						t.Fatalf("Expected error but got none for case: %s", tc.name)
@@ -177,10 +185,6 @@ func TestAddUser(t *testing.T) {
 				} else {
 					if err != nil {
 						t.Fatalf("Failed to add user - %v for case: %s", err, tc.name)
-					}
-					err := probe.QueryRow("SELECT id FROM users WHERE username = ?", tc.username).Scan(&id)
-					if err != nil {
-						t.Fatalf("Failed to query user id - %v for case: %s", err, tc.name)
 					}
 					if id != tc.expectedID {
 						t.Fatalf("Expected user id %d but got %d for case: %s", tc.expectedID, id, tc.name)
@@ -197,27 +201,29 @@ func TestAuthenticateLogin(t *testing.T) {
 
 	happyUser := "testUser"
 	happyPass := "testPass"
-	if err := subject.AddUser(happyUser, "test_user@example.com", happyPass); err != nil {
+	_, err := subject.AddUser("test", "", "user", "test_user@example.com",
+		happyPass, "2000-02-13")
+	if err != nil {
 		t.Fatal("Failed to add", happyUser, "-", err)
 	}
 
 	testCases := []struct {
 		name       string
-		username   string
+		email      string
 		password   string
 		expectedID int
 		happyPath  bool
 	}{
-		{name: "valid_login", username: happyUser, password: happyPass, expectedID: 1, happyPath: true},
-		{name: "bad_user", username: "im a mistake", password: happyPass, expectedID: 0, happyPath: false},
-		{name: "bad_pass", username: happyUser, password: "im a mistake", expectedID: 0, happyPath: false},
-		{name: "bad_user_and_pass", username: "we're both", password: "mistakes", expectedID: 0, happyPath: false},
+		{name: "valid_login", email: happyUser, password: happyPass, expectedID: 1, happyPath: true},
+		{name: "bad_user", email: "im a mistake", password: happyPass, expectedID: 0, happyPath: false},
+		{name: "bad_pass", email: happyUser, password: "im a mistake", expectedID: 0, happyPath: false},
+		{name: "bad_user_and_pass", email: "we're both", password: "mistakes", expectedID: 0, happyPath: false},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(
 			testCase.name, func(t *testing.T) {
-				id, err := subject.AuthenticateLogin(testCase.username, testCase.password)
+				id, err := subject.AuthenticateLogin(testCase.email, testCase.password)
 				if (err == nil) != testCase.happyPath {
 					mood := "sad"
 					if testCase.happyPath {
@@ -237,16 +243,11 @@ func TestDeleteUser(t *testing.T) {
 	subject, probe := setup(t)
 	defer teardown(t, subject, probe)
 
-	err := subject.AddUser("delete_user", "delete_user@example.com", "delete_pass")
-	if err != nil {
-		t.Fatal("Failed to add user -", err)
-	}
-
+	id, err := subject.AddUser("delete", "", "user", "delete_user@example.com",
+		"delete_pass", "2000-01-01")
 	// Verify the user was added
-	var id int
-	err = probe.QueryRow("SELECT id FROM users WHERE username = ?", "delete_user").Scan(&id)
 	if err != nil || id == 0 {
-		t.Fatal("Failed to find added user -", err)
+		t.Fatal("Failed to add user -", err)
 	}
 
 	// Delete the user
@@ -269,7 +270,8 @@ func TestGetUser(t *testing.T) {
 	defer teardown(t, subject, probe)
 
 	// Add a test user to the database:
-	if err := subject.AddUser("test_user", "test_user@example.com", "test_pass"); err != nil {
+	if _, err := subject.AddUser("test", "", "user", "test_user@example.com",
+		"test_pass", "2000-01-02"); err != nil {
 		t.Fatal("Failed to add user -", err)
 	}
 
@@ -277,12 +279,14 @@ func TestGetUser(t *testing.T) {
 		name       string
 		userID     int
 		expectUser bool
-		username   string
+		firstname  string
+		lastname   string
 		email      string
 		password   string
 	}{
-		{"GetExistingUser", 1, true, "test_user", "test_user@example.com", "test_pass"},
-		{"GetNonExistentUser", 999, false, "", "", ""},
+		{"GetExistingUser", 1, true, "test", "user",
+			"test_user@example.com", "test_pass"},
+		{"GetNonExistentUser", 999, false, "", "", "", ""},
 	}
 
 	for _, tc := range testCases {
@@ -293,8 +297,8 @@ func TestGetUser(t *testing.T) {
 					if user == nil {
 						t.Fatal("Expected to find user, but got nil")
 					}
-					if user.Username != tc.username {
-						t.Errorf("Expected username to be '%s', but got %s", tc.username, user.Username)
+					if user.Firstname != tc.firstname {
+						t.Errorf("Expected username to be '%s', but got %s", tc.firstname, user.Firstname)
 					}
 					if user.Email != tc.email {
 						t.Errorf("Expected email to be '%s', but got %s", tc.email, user.Email)
@@ -323,12 +327,16 @@ func TestGetUserID(t *testing.T) {
 	defer teardown(t, subject, probe)
 
 	t.Log("Adding user: user_id_user")
-	if err := subject.AddUser("user_id_user", "user_id_user@example.com", "user_id_pass"); err != nil {
+	_, err := subject.AddUser("user", "id", "user", "user_id_user@example.com",
+		"user_id_pass", "2000-01-04")
+	if err != nil {
 		t.Fatal("Failed to add user -", err)
 	}
 
 	t.Log("Adding user: user2_id_user2")
-	if err := subject.AddUser("user2_id_user2", "user2_id_user2@example.com", "user2_id2_pass"); err != nil {
+	_, err = subject.AddUser("user2", "id", "user2", "user2_id_user2@example.com",
+		"user2_id2_pass", "2022-01-04")
+	if err != nil {
 		t.Fatal("Failed to add user -", err)
 	}
 
@@ -338,11 +346,8 @@ func TestGetUserID(t *testing.T) {
 		value    string
 		expected int
 	}{
-		{"GetUserIDByUsername1", "username", "user_id_user", 1},
 		{"GetUserIDByEmail1", "email", "user_id_user@example.com", 1},
-		{"GetUserIDByUsername2", "username", "user2_id_user2", 2},
 		{"GetUserIDByEmail2", "email", "user2_id_user2@example.com", 2},
-		{"GetNonExistentUserIDByUsername", "username", "nonexistent_user", 0},
 		{"GetNonExistentUserIDByEmail", "email", "nonexistent@example.com", 0},
 	}
 
