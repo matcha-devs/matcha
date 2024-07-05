@@ -164,8 +164,8 @@ func (db *MySQLDatabase) AddUser(first_name, middle_name, last_name, email, pass
 			log.Println("Error getting user ID -", err)
 			return 0, errors.New("internal server error")
 		}
-		log.Println("All existing IDs in use, assigning new ID to {" + email + "}")
 		id = uint64(userid)
+		log.Println("All existing IDs in use, assigning new ID:", id, "to {"+email+"}")
 	}
 	return
 }
