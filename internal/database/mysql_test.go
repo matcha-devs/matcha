@@ -167,15 +167,17 @@ func TestAddUser(t *testing.T) {
 			"test_pass", "2004-12-22", 1, false},
 		{"AddSecondUser", "test", "", "user2", "test_user@example2.com",
 			"test_pass2", "2024-12-22", 2, false},
+		{"AddDuplicateName", "test", "", "user", "dupl_name@example.com",
+			"test_pass3", "2024-10-22", 3, false},
 		{"AddDuplicateEmail", "unique", "", "user", "test_user@example2.com",
-			"test_pass3", "2024-10-22", 0, true},
+			"test_pass4", "2024-10-22", 0, true},
 		{"AddEmptyFirstname", "", "", "user", "empty_first@example.com",
-			"test_pass4", "2024-08-22", 0, true},
+			"test_pass5", "2024-08-22", 0, true},
 		// TODO : This supposed to be ID:3, but duplicate email increment ID by one. Fix this error.
 		{"AddEmptyMiddlename", "empty", "", "middle", "empty_mid@example.com",
-			"test_pass5", "2024-07-22", 4, false},
+			"test_pass6", "2024-07-22", 5, false},
 		{"AddEmptyLastname", "empty", "email", "", "empty_last@example.com",
-			"test_pass6", "2024-07-22", 0, true},
+			"test_pass7", "2024-07-22", 0, true},
 		{"AddEmptyEmail", "empty", "", "email", "", "test_pass7",
 			"2024-07-22", 0, true},
 		{"AddEmptyPassword", "empty", "pass", "user",
@@ -284,7 +286,7 @@ func TestGetUser(t *testing.T) {
 	defer teardown(t, subject, probe)
 
 	// Add a test user to the database:
-	if _, err := subject.AddUser("test", "_", "user", "test_user@example.com",
+	if _, err := subject.AddUser("test", "", "user", "test_user@example.com",
 		"test_pass", "2000-01-02"); err != nil {
 		t.Fatal("Failed to add user -", err)
 	}
@@ -300,7 +302,7 @@ func TestGetUser(t *testing.T) {
 		password      string
 		date_of_birth string
 	}{
-		{"GetExistingUser", 1, true, "test", "_", "user",
+		{"GetExistingUser", 1, true, "test", "", "user",
 			"test_user@example.com", "test_pass", "2000-01-02"},
 		{"GetNonExistentUser", 999, false, "", "", "", "",
 			"", ""},
