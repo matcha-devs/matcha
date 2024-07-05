@@ -5,13 +5,14 @@ package database
 import (
 	"database/sql"
 	"errors"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/matcha-devs/matcha/internal"
-	"golang.org/x/crypto/bcrypt"
 	"log"
 	"os"
 	"strconv"
 	"strings"
+
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/matcha-devs/matcha/internal"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type MySQLDatabase struct {
@@ -103,7 +104,7 @@ func (db *MySQLDatabase) AuthenticateLogin(email, password string) (id uint64, e
 func (db *MySQLDatabase) GetUser(id uint64) (user *internal.User) {
 	user = &internal.User{}
 	err := db.underlyingDB.QueryRow("SELECT * FROM users WHERE id = ?", id).Scan(
-		&user.ID, &user.Firstname, &user.Middlename, &user.Lastname, &user.Email, &user.Password, &user.DateofBirth,
+		&user.ID, &user.FirstName, &user.MiddleName, &user.LastName, &user.Email, &user.Password, &user.DateofBirth,
 		&user.CreatedOn)
 	if errors.Is(err, sql.ErrNoRows) {
 		log.Println("No user with ID:", id, "-", err)
@@ -124,7 +125,7 @@ func (db *MySQLDatabase) getOpenID() (id uint64, err error) {
 		log.Println("Failed to query for an openid -", err)
 		return 0, errors.New("invalid openid")
 	}
-	return id, nil
+	return
 }
 
 func (db *MySQLDatabase) AddUser(first_name, middle_name, last_name, email, password, date_of_birth string) (
@@ -133,8 +134,10 @@ func (db *MySQLDatabase) AddUser(first_name, middle_name, last_name, email, pass
 		return 0, errors.New("empty fields")
 	}
 	query := "INSERT INTO users (first_name, middle_name, last_name, email, password, date_of_birth"
-	if openID, _ := db.getOpenID(); openID == 0 {
-		log.Println("All existing IDs in use, assigning new ID to {" + email + "}")
+	if openID, err := db.getOpenID(); err != nil && !errors.Is(err, sql.ErrNoRows) {
+		log.Println("Error getting open id -", err)
+		return id, errors.New("internal server error")
+	} else if openID == 0 {
 		query += `) VALUES (?, ?, ?, ?, ?, ?)`
 	} else {
 		log.Println("Re-using open id:", openID, "for {"+email+"}")
@@ -161,9 +164,10 @@ func (db *MySQLDatabase) AddUser(first_name, middle_name, last_name, email, pass
 			log.Println("Error getting user ID -", err)
 			return 0, errors.New("internal server error")
 		}
+		log.Println("All existing IDs in use, assigning new ID to {" + email + "}")
 		id = uint64(userid)
 	}
-	return id, err
+	return
 }
 
 // TODO(@seoyoungcho213): might not use this anymore cuz of cookie

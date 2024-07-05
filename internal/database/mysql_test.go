@@ -316,14 +316,14 @@ func TestGetUser(t *testing.T) {
 					if user == nil {
 						t.Fatal("Expected to find user, but got nil")
 					}
-					if user.Firstname != tc.first_name {
-						t.Errorf("Expected first_name to be '%s', but got %s", tc.first_name, user.Firstname)
+					if user.FirstName != tc.first_name {
+						t.Errorf("Expected first_name to be '%s', but got %s", tc.first_name, user.FirstName)
 					}
-					if user.Middlename != tc.middle_name {
-						t.Errorf("Expected middle_name to be '%s', but got %s", tc.middle_name, user.Middlename)
+					if user.MiddleName != tc.middle_name {
+						t.Errorf("Expected middle_name to be '%s', but got %s", tc.middle_name, user.MiddleName)
 					}
-					if user.Lastname != tc.last_name {
-						t.Errorf("Expected lastname to be '%s', but got %s", tc.last_name, user.Lastname)
+					if user.LastName != tc.last_name {
+						t.Errorf("Expected lastname to be '%s', but got %s", tc.last_name, user.LastName)
 					}
 					if user.Email != tc.email {
 						t.Errorf("Expected email to be '%s', but got %s", tc.email, user.Email)

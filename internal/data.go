@@ -8,9 +8,9 @@ import (
 
 type User struct {
 	ID          uint64
-	Firstname   string
-	Middlename  string
-	Lastname    string
+	FirstName   string
+	MiddleName  string
+	LastName    string
 	Email       string
 	Password    string
 	DateofBirth string
@@ -18,6 +18,6 @@ type User struct {
 }
 
 func (user User) IsValid() (valid bool) {
-	return user.ID != 0 && "" != user.Firstname && "" != user.Lastname && "" != user.Email && "" != user.Password &&
+	return user.ID != 0 && "" != user.FirstName && "" != user.LastName && "" != user.Email && "" != user.Password &&
 		"" != user.DateofBirth && user.CreatedOn.Before(time.Now())
 }
