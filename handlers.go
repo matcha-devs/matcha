@@ -49,10 +49,10 @@ func setSessionCookie(w http.ResponseWriter, id uint64) {
 }
 
 func postSignup(w http.ResponseWriter, r *http.Request) {
-	first_name := r.FormValue("first_name")
+	firstName := r.FormValue("first_name")
 	// TODO(@seoyoungcho213): Validate user data way better here.
-	middle_name := r.FormValue("middle_name")
-	last_name := r.FormValue("last_name")
+	middleName := r.FormValue("middle_name")
+	lastName := r.FormValue("last_name")
 	email := r.FormValue("email")
 	// TODO(@seoyoungcho213): read about mail.ParseAddress' return type and use it to add first+last name formatting too
 	if _, err := mail.ParseAddress("<" + email + ">"); err != nil {
@@ -70,9 +70,9 @@ func postSignup(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	date_of_birth := r.FormValue("date_of_birth")
+	dateOfBirth := r.FormValue("date_of_birth")
 	// TODO(@FaaizMemonPurdue): Add API call timeouts.
-	id, err := matcha.database.AddUser(first_name, middle_name, last_name, email, password, date_of_birth)
+	id, err := matcha.database.AddUser(firstName, middleName, lastName, email, password, dateOfBirth)
 	if err != nil {
 		log.Println("Error adding user {"+email+"} to database -", err)
 		if _, err := io.WriteString(w, err.Error()); err != nil {

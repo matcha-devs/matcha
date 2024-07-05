@@ -154,12 +154,12 @@ func TestAddUser(t *testing.T) {
 
 	testCases := []struct {
 		name          string
-		first_name    string
-		middle_name   string
-		last_name     string
+		firstName     string
+		middleName    string
+		lastName      string
 		email         string
 		password      string
-		date_of_birth string
+		dateOfBirth   string
 		expectedID    uint64
 		expectedError bool
 	}{
@@ -182,18 +182,18 @@ func TestAddUser(t *testing.T) {
 			"2024-07-22", 0, true},
 		{"AddEmptyPassword", "empty", "pass", "user",
 			"empty_pass_user@example.com", "", "2021-07-22", 0, true},
-		{"AddEmptyDateofBirth", "empty", "", "DOB", "empty_dob@example.com",
+		{"AddEmptyDateOfBirth", "empty", "", "DOB", "empty_dob@example.com",
 			"test_pass8", "", 0, true},
 
 		// TODO: The functionality for this test need to be implemented
-		// {"AddInvalidEmail", "invalid_email_user", "invalidemail.com", "test_pass7", 0, true},
+		// {"AddInvalidEmail", "invalid_email_user", "invalid_email.com", "test_pass7", 0, true},
 	}
 
 	for _, tc := range testCases {
 		t.Run(
 			tc.name, func(t *testing.T) {
-				id, err := subject.AddUser(tc.first_name, tc.middle_name, tc.last_name, tc.email, tc.password,
-					tc.date_of_birth)
+				id, err := subject.AddUser(tc.firstName, tc.middleName, tc.lastName, tc.email, tc.password,
+					tc.dateOfBirth)
 				if tc.expectedError {
 					if err == nil {
 						t.Fatalf("Expected error but got none for case: %s", tc.name)
@@ -292,15 +292,15 @@ func TestGetUser(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name          string
-		userID        uint64
-		expectUser    bool
-		first_name    string
-		middle_name   string
-		last_name     string
-		email         string
-		password      string
-		date_of_birth string
+		name        string
+		userID      uint64
+		expectUser  bool
+		firstName   string
+		middleName  string
+		lastName    string
+		email       string
+		password    string
+		dateOfBirth string
 	}{
 		{"GetExistingUser", 1, true, "test", "", "user",
 			"test_user@example.com", "test_pass", "2000-01-02"},
@@ -316,14 +316,14 @@ func TestGetUser(t *testing.T) {
 					if user == nil {
 						t.Fatal("Expected to find user, but got nil")
 					}
-					if user.FirstName != tc.first_name {
-						t.Errorf("Expected first_name to be '%s', but got %s", tc.first_name, user.FirstName)
+					if user.FirstName != tc.firstName {
+						t.Errorf("Expected first_name to be '%s', but got %s", tc.firstName, user.FirstName)
 					}
-					if user.MiddleName != tc.middle_name {
-						t.Errorf("Expected middle_name to be '%s', but got %s", tc.middle_name, user.MiddleName)
+					if user.MiddleName != tc.middleName {
+						t.Errorf("Expected middle_name to be '%s', but got %s", tc.middleName, user.MiddleName)
 					}
-					if user.LastName != tc.last_name {
-						t.Errorf("Expected lastname to be '%s', but got %s", tc.last_name, user.LastName)
+					if user.LastName != tc.lastName {
+						t.Errorf("Expected lastname to be '%s', but got %s", tc.lastName, user.LastName)
 					}
 					if user.Email != tc.email {
 						t.Errorf("Expected email to be '%s', but got %s", tc.email, user.Email)
@@ -331,8 +331,8 @@ func TestGetUser(t *testing.T) {
 					if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(tc.password)); err != nil {
 						t.Errorf("Password does not match: %v", err)
 					}
-					if user.DateofBirth != tc.date_of_birth {
-						t.Errorf("Expected birthdate to be '%s', but got %s", tc.date_of_birth, user.DateofBirth)
+					if user.DateOfBirth != tc.dateOfBirth {
+						t.Errorf("Expected birthdate to be '%s', but got %s", tc.dateOfBirth, user.DateOfBirth)
 					}
 					if user.CreatedOn.IsZero() {
 						t.Errorf("Expected created_on to be set, but got zero value")

@@ -13,11 +13,11 @@ type User struct {
 	LastName    string
 	Email       string
 	Password    string
-	DateofBirth string
+	DateOfBirth string
 	CreatedOn   time.Time
 }
 
 func (user User) IsValid() (valid bool) {
 	return user.ID != 0 && "" != user.FirstName && "" != user.LastName && "" != user.Email && "" != user.Password &&
-		"" != user.DateofBirth && user.CreatedOn.Before(time.Now())
+		"" != user.DateOfBirth && user.CreatedOn.Before(time.Now())
 }
