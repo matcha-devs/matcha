@@ -2,14 +2,14 @@
 
 CREATE TABLE IF NOT EXISTS users
 (
-    id         BIGINT(20) UNSIGNED     NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    firstname  VARCHAR(255)            NOT NULL,
-    middlename VARCHAR(255),
-    lastname   VARCHAR(255)            NOT NULL,
-    email      VARCHAR(255)            NOT NULL UNIQUE,
-    password   VARCHAR(255)            NOT NULL,
-    birthdate VARCHAR(255) NOT NULL,
-    created_on timestamp DEFAULT NOW() NOT NULL
+    id            BIGINT(20) UNSIGNED     NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    first_name    VARCHAR(255)            NOT NULL,
+    middle_name   VARCHAR(255),
+    last_name     VARCHAR(255)            NOT NULL,
+    email         VARCHAR(255)            NOT NULL UNIQUE,
+    password      VARCHAR(255)            NOT NULL,
+    date_of_birth VARCHAR(255)            NOT NULL,
+    created_on    timestamp DEFAULT NOW() NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS openid

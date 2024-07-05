@@ -7,17 +7,17 @@ import (
 )
 
 type User struct {
-	ID         int
-	Firstname  string
-	Middlename string
-	Lastname   string
-	Email      string
-	Password   string
-	Birthdate  string
-	CreatedOn  time.Time
+	ID          uint64
+	Firstname   string
+	Middlename  string
+	Lastname    string
+	Email       string
+	Password    string
+	DateofBirth string
+	CreatedOn   time.Time
 }
 
 func (user User) IsValid() (valid bool) {
 	return user.ID != 0 && "" != user.Firstname && "" != user.Lastname && "" != user.Email && "" != user.Password &&
-		"" != user.Birthdate && user.CreatedOn.Before(time.Now())
+		"" != user.DateofBirth && user.CreatedOn.Before(time.Now())
 }

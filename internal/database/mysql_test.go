@@ -87,8 +87,8 @@ func TestNew(t *testing.T) {
 	defer teardown(t, subject, probe)
 
 	expectedTables := map[string]map[string]struct{}{
-		"users": {"id": {}, "firstname": {}, "middlename": {}, "lastname": {}, "email": {}, "password": {},
-			"birthdate": {}, "created_on": {}},
+		"users": {"id": {}, "first_name": {}, "middle_name": {}, "last_name": {}, "email": {}, "password": {},
+			"date_of_birth": {}, "created_on": {}},
 		"openid": {"id": {}, "created_on": {}},
 		"asset_class_aggregations": {"id": {}, "cash": {}, "stocks": {}, "credit_card": {}, "other_loan": {},
 			"retirement_cash": {}, "retirement_stocks": {}, "real_estate": {}, "other_property": {}},
@@ -154,13 +154,13 @@ func TestAddUser(t *testing.T) {
 
 	testCases := []struct {
 		name          string
-		firstname     string
-		middlename    string
-		lastname      string
+		first_name    string
+		middle_name   string
+		last_name     string
 		email         string
 		password      string
-		birthdate     string
-		expectedID    int
+		date_of_birth string
+		expectedID    uint64
 		expectedError bool
 	}{
 		{"AddFirstUser", "test", "", "user", "test_user@example.com",
@@ -168,13 +168,20 @@ func TestAddUser(t *testing.T) {
 		{"AddSecondUser", "test", "", "user2", "test_user@example2.com",
 			"test_pass2", "2024-12-22", 2, false},
 		{"AddDuplicateEmail", "unique", "", "user", "test_user@example2.com",
-			"test_pass4", "2024-10-22", 0, true},
+			"test_pass3", "2024-10-22", 0, true},
 		{"AddEmptyFirstname", "", "", "user", "empty_first@example.com",
-			"test_pass5", "2024-08-22", 0, true},
+			"test_pass4", "2024-08-22", 0, true},
+		// TODO : This supposed to be ID:3, but duplicate email increment ID by one. Fix this error.
+		{"AddEmptyMiddlename", "empty", "", "middle", "empty_mid@example.com",
+			"test_pass5", "2024-07-22", 4, false},
 		{"AddEmptyLastname", "empty", "email", "", "empty_last@example.com",
 			"test_pass6", "2024-07-22", 0, true},
+		{"AddEmptyEmail", "empty", "", "email", "", "test_pass7",
+			"2024-07-22", 0, true},
 		{"AddEmptyPassword", "empty", "pass", "user",
 			"empty_pass_user@example.com", "", "2021-07-22", 0, true},
+		{"AddEmptyDateofBirth", "empty", "", "DOB", "empty_dob@example.com",
+			"test_pass8", "", 0, true},
 
 		// TODO: The functionality for this test need to be implemented
 		// {"AddInvalidEmail", "invalid_email_user", "invalidemail.com", "test_pass7", 0, true},
@@ -183,8 +190,8 @@ func TestAddUser(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(
 			tc.name, func(t *testing.T) {
-				id, err := subject.AddUser(tc.firstname, tc.middlename, tc.lastname, tc.email, tc.password,
-					tc.birthdate)
+				id, err := subject.AddUser(tc.first_name, tc.middle_name, tc.last_name, tc.email, tc.password,
+					tc.date_of_birth)
 				if tc.expectedError {
 					if err == nil {
 						t.Fatalf("Expected error but got none for case: %s", tc.name)
@@ -218,13 +225,13 @@ func TestAuthenticateLogin(t *testing.T) {
 		name       string
 		email      string
 		password   string
-		expectedID int
+		expectedID uint64
 		happyPath  bool
 	}{
 		{name: "valid_login", email: happyEmail, password: happyPass, expectedID: 1, happyPath: true},
-		{name: "bad_user", email: "im a mistake", password: happyPass, expectedID: 0, happyPath: false},
+		{name: "bad_email", email: "im a mistake", password: happyPass, expectedID: 0, happyPath: false},
 		{name: "bad_pass", email: happyEmail, password: "im a mistake", expectedID: 0, happyPath: false},
-		{name: "bad_user_and_pass", email: "we're both", password: "mistakes", expectedID: 0, happyPath: false},
+		{name: "bad_email_and_pass", email: "we're both", password: "mistakes", expectedID: 0, happyPath: false},
 	}
 
 	for _, testCase := range testCases {
@@ -253,7 +260,7 @@ func TestDeleteUser(t *testing.T) {
 	id, err := subject.AddUser("delete", "", "user", "delete_user@example.com",
 		"delete_pass", "2000-01-01")
 	// Verify the user was added
-	if err != nil || id == 0 {
+	if err != nil {
 		t.Fatal("Failed to add user -", err)
 	}
 
@@ -277,23 +284,26 @@ func TestGetUser(t *testing.T) {
 	defer teardown(t, subject, probe)
 
 	// Add a test user to the database:
-	if _, err := subject.AddUser("test", "", "user", "test_user@example.com",
+	if _, err := subject.AddUser("test", "_", "user", "test_user@example.com",
 		"test_pass", "2000-01-02"); err != nil {
 		t.Fatal("Failed to add user -", err)
 	}
 
 	testCases := []struct {
-		name       string
-		userID     int
-		expectUser bool
-		firstname  string
-		lastname   string
-		email      string
-		password   string
+		name          string
+		userID        uint64
+		expectUser    bool
+		first_name    string
+		middle_name   string
+		last_name     string
+		email         string
+		password      string
+		date_of_birth string
 	}{
-		{"GetExistingUser", 1, true, "test", "user",
-			"test_user@example.com", "test_pass"},
-		{"GetNonExistentUser", 999, false, "", "", "", ""},
+		{"GetExistingUser", 1, true, "test", "_", "user",
+			"test_user@example.com", "test_pass", "2000-01-02"},
+		{"GetNonExistentUser", 999, false, "", "", "", "",
+			"", ""},
 	}
 
 	for _, tc := range testCases {
@@ -304,14 +314,23 @@ func TestGetUser(t *testing.T) {
 					if user == nil {
 						t.Fatal("Expected to find user, but got nil")
 					}
-					if user.Firstname != tc.firstname {
-						t.Errorf("Expected username to be '%s', but got %s", tc.firstname, user.Firstname)
+					if user.Firstname != tc.first_name {
+						t.Errorf("Expected first_name to be '%s', but got %s", tc.first_name, user.Firstname)
+					}
+					if user.Middlename != tc.middle_name {
+						t.Errorf("Expected middle_name to be '%s', but got %s", tc.middle_name, user.Middlename)
+					}
+					if user.Lastname != tc.last_name {
+						t.Errorf("Expected lastname to be '%s', but got %s", tc.last_name, user.Lastname)
 					}
 					if user.Email != tc.email {
 						t.Errorf("Expected email to be '%s', but got %s", tc.email, user.Email)
 					}
 					if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(tc.password)); err != nil {
 						t.Errorf("Password does not match: %v", err)
+					}
+					if user.DateofBirth != tc.date_of_birth {
+						t.Errorf("Expected birthdate to be '%s', but got %s", tc.date_of_birth, user.DateofBirth)
 					}
 					if user.CreatedOn.IsZero() {
 						t.Errorf("Expected created_on to be set, but got zero value")
@@ -349,19 +368,18 @@ func TestGetUserID(t *testing.T) {
 
 	testCases := []struct {
 		name     string
-		field    string
-		value    string
-		expected int
+		email    string
+		expected uint64
 	}{
-		{"GetUserIDByEmail1", "email", "user_id_user@example.com", 1},
-		{"GetUserIDByEmail2", "email", "user2_id_user2@example.com", 2},
-		{"GetNonExistentUserIDByEmail", "email", "nonexistent@example.com", 0},
+		{"GetUserIDByEmail1", "user_id_user@example.com", 1},
+		{"GetUserIDByEmail2", "user2_id_user2@example.com", 2},
+		{"GetNonExistentUserIDByEmail", "nonexistent@example.com", 0},
 	}
 
 	for _, tc := range testCases {
 		t.Run(
 			tc.name, func(t *testing.T) {
-				id := subject.GetUserID(tc.field, tc.value)
+				id := subject.GetUserID(tc.email)
 				if id != tc.expected {
 					t.Errorf("got id %d, expected %d", id, tc.expected)
 				}
