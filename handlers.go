@@ -33,12 +33,12 @@ func getIndex(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
-func setSessionCookie(w http.ResponseWriter, id int) {
+func setSessionCookie(w http.ResponseWriter, id uint64) {
 	log.Println("Issued cookie for id:", id)
 	http.SetCookie(
 		w, &http.Cookie{
 			Name:     "c_user_id",
-			Value:    strconv.Itoa(id),
+			Value:    strconv.FormatUint(id, 10),
 			Path:     "/",
 			Expires:  time.Now().Add(20 * time.Minute),
 			MaxAge:   20 * 60,
@@ -49,10 +49,10 @@ func setSessionCookie(w http.ResponseWriter, id int) {
 }
 
 func postSignup(w http.ResponseWriter, r *http.Request) {
-	firstname := r.FormValue("firstname")
+	first_name := r.FormValue("first_name")
 	// TODO(@seoyoungcho213): Validate user data way better here.
-	middlename := r.FormValue("middlename")
-	lastname := r.FormValue("lastname")
+	middle_name := r.FormValue("middle_name")
+	last_name := r.FormValue("last_name")
 	email := r.FormValue("email")
 	// TODO(@seoyoungcho213): read about mail.ParseAddress' return type and use it to add first+last name formatting too
 	if _, err := mail.ParseAddress("<" + email + ">"); err != nil {
@@ -70,9 +70,9 @@ func postSignup(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	birthdate := r.FormValue("birthdate")
+	date_of_birth := r.FormValue("date_of_birth")
 	// TODO(@FaaizMemonPurdue): Add API call timeouts.
-	id, err := matcha.database.AddUser(firstname, middlename, lastname, email, password, birthdate)
+	id, err := matcha.database.AddUser(first_name, middle_name, last_name, email, password, date_of_birth)
 	if err != nil {
 		log.Println("Error adding user {"+email+"} to database -", err)
 		if _, err := io.WriteString(w, err.Error()); err != nil {
@@ -91,7 +91,7 @@ func postLogout(w http.ResponseWriter, _ *http.Request) {
 
 func postLogin(w http.ResponseWriter, r *http.Request) {
 	// TODO(@FaaizMemonPurdue): Add API call timeouts.
-	id, err := matcha.database.AuthenticateLogin(r.FormValue("username"), r.FormValue("password"))
+	id, err := matcha.database.AuthenticateLogin(r.FormValue("email"), r.FormValue("password"))
 	if err != nil {
 		log.Println("Login failed -", err)
 		if _, err := io.WriteString(w, err.Error()); err != nil {
@@ -105,8 +105,8 @@ func postLogin(w http.ResponseWriter, r *http.Request) {
 
 func postDeleteUser(w http.ResponseWriter, r *http.Request) {
 	// TODO(@FaaizMemonPurdue): Add API call timeouts.
-	username := r.FormValue("username")
-	id, err := matcha.database.AuthenticateLogin(username, r.FormValue("password"))
+	email := r.FormValue("email")
+	id, err := matcha.database.AuthenticateLogin(email, r.FormValue("password"))
 	if err != nil {
 		log.Println("User failed to validate delete request -", err)
 		postLogout(w, r)
@@ -136,7 +136,7 @@ func checkLoginStatus(w http.ResponseWriter, r *http.Request) (user *internal.Us
 		log.Println("Error getting session cookie -", err)
 		return nil
 	}
-	id, err := strconv.Atoi(cookie.Value)
+	id, err := strconv.ParseUint(cookie.Value, 10, 64)
 	if err != nil {
 		log.Println("Failed to convert user id -", err)
 		http.Error(w, "Invalid login session.", http.StatusBadRequest)
