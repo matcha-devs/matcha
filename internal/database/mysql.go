@@ -104,7 +104,7 @@ func (db *MySQLDatabase) AuthenticateLogin(email, password string) (id uint64, e
 func (db *MySQLDatabase) GetUser(id uint64) (user *internal.User) {
 	user = &internal.User{}
 	err := db.underlyingDB.QueryRow("SELECT * FROM users WHERE id = ?", id).Scan(
-		&user.ID, &user.FirstName, &user.MiddleName, &user.LastName, &user.Email, &user.Password, &user.DateofBirth,
+		&user.ID, &user.FirstName, &user.MiddleName, &user.LastName, &user.Email, &user.Password, &user.DateOfBirth,
 		&user.CreatedOn)
 	if errors.Is(err, sql.ErrNoRows) {
 		log.Println("No user with ID:", id, "-", err)
@@ -128,9 +128,9 @@ func (db *MySQLDatabase) getOpenID() (id uint64, err error) {
 	return
 }
 
-func (db *MySQLDatabase) AddUser(first_name, middle_name, last_name, email, password, date_of_birth string) (
+func (db *MySQLDatabase) AddUser(firstName, middleName, lastName, email, password, dateOfBirth string) (
 	id uint64, err error) {
-	if len(first_name) == 0 || len(last_name) == 0 || len(email) == 0 || len(password) == 0 || len(date_of_birth) == 0 {
+	if len(firstName) == 0 || len(lastName) == 0 || len(email) == 0 || len(password) == 0 || len(dateOfBirth) == 0 {
 		return 0, errors.New("empty fields")
 	}
 	query := "INSERT INTO users (first_name, middle_name, last_name, email, password, date_of_birth"
@@ -153,7 +153,7 @@ func (db *MySQLDatabase) AddUser(first_name, middle_name, last_name, email, pass
 		log.Println("Error hashing password -", err)
 		return id, errors.New("internal server error")
 	}
-	result, err := db.underlyingDB.Exec(query, first_name, middle_name, last_name, email, hashedPassword, date_of_birth)
+	result, err := db.underlyingDB.Exec(query, firstName, middleName, lastName, email, hashedPassword, dateOfBirth)
 	if err != nil {
 		log.Println("Error adding user -", err)
 		return 0, errors.New("internal server error")
@@ -170,8 +170,8 @@ func (db *MySQLDatabase) AddUser(first_name, middle_name, last_name, email, pass
 	return
 }
 
-// TODO(@seoyoungcho213): might not use this anymore cuz of cookie
 func (db *MySQLDatabase) GetUserID(email string) (id uint64) {
+	// TODO(@seoyoungcho213): might not use this anymore cuz of cookie
 	if err := db.underlyingDB.QueryRow(
 		"SELECT id FROM users WHERE BINARY email = ?", email,
 	).Scan(&id); err != nil && !errors.Is(err, sql.ErrNoRows) {
