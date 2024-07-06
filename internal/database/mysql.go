@@ -118,13 +118,18 @@ func (db *MySQLDatabase) GetUser(id int) (user *internal.User) {
 	return
 }
 
-func (db *MySQLDatabase) getOpenID(tx *sql.Tx) (int, error) {
+func getOpenID(tx *sql.Tx) (int, error) {
     var id int
     err := tx.QueryRow("SELECT id FROM openid LIMIT 1").Scan(&id)
     if err != nil && !errors.Is(err, sql.ErrNoRows) {
         log.Println("Failed to query for an openid -", err)
         return 0, err
     }
+	// HERE We need to delete the openID if it exists in the OpenID table.
+	if _, err = tx.Exec("DELETE FROM openid WHERE id = ? LIMIT 1", id); err != nil {
+		log.Println("Error deleting the openID -", err)
+		return 0, err
+	}
     return id, nil
 }
 
@@ -134,18 +139,6 @@ func (db *MySQLDatabase) AddUser(username string, email string, password string)
 	if len(username) == 0 || len(email) == 0 || len(password) == 0 {
 		return errors.New("empty fields")
 	}
-
-	// Start a transaction:
-	tx, err := db.underlyingDB.Begin()
-	if err != nil {
-		log.Println("Error starting transaction -", err)
-		return errors.New("internal server error")
-	}
-	defer func() {
-		if err != nil {
-			tx.Rollback()
-		}
-	}()
 	
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
@@ -153,10 +146,19 @@ func (db *MySQLDatabase) AddUser(username string, email string, password string)
 		return errors.New("internal server error")
 	}
 
+	// Start a transaction:
+	tx, err := db.underlyingDB.Begin()
+	if err != nil {
+		log.Println("Error starting transaction -", err)
+		tx.Rollback()
+		return errors.New("internal server error")
+	}
+
 	// Get openID within the transaction
-	openID, err := db.getOpenID(tx)
+	openID, err := getOpenID(tx)
 	if err != nil {
 		log.Println("Error getting open ID -", err)
+		tx.Rollback()
 		return errors.New("internal server error")
 	}
 	
@@ -172,6 +174,7 @@ func (db *MySQLDatabase) AddUser(username string, email string, password string)
 
 	if err != nil {
 		log.Println("Error adding user -", err)
+		tx.Rollback()
 		return errors.New("internal server error")
 	}
 
@@ -179,6 +182,7 @@ func (db *MySQLDatabase) AddUser(username string, email string, password string)
 	err = tx.Commit()
 	if err != nil {
 		log.Println("Error committing transaction -", err)
+		tx.Rollback()
 		return errors.New("internal server error")
 	}
 	// TODO(@seoyoungcho213): Make sure to delete the openID if used here ("delete if exists" would be perfect).
@@ -196,6 +200,9 @@ func (db *MySQLDatabase) GetUserID(varName string, variable string) (id int) {
 }
 
 func (db *MySQLDatabase) DeleteUser(id int) (err error) {
+	if id < 1{
+		return errors.New("invalid id")
+	}
 	if _, err = db.underlyingDB.Exec("INSERT INTO openid (id) VALUES(?)", id); err != nil {
 		log.Println("Error inserting openID", id, " to the table -", err)
 		return
