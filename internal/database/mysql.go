@@ -105,7 +105,8 @@ func (db *MySQLDatabase) GetUser(id uint64) (user *internal.User) {
 	user = &internal.User{}
 	err := db.underlyingDB.QueryRow("SELECT * FROM users WHERE id = ?", id).Scan(
 		&user.ID, &user.FirstName, &user.MiddleName, &user.LastName, &user.Email, &user.Password, &user.DateOfBirth,
-		&user.CreatedOn)
+		&user.CreatedOn,
+	)
 	if errors.Is(err, sql.ErrNoRows) {
 		log.Println("No user with ID:", id, "-", err)
 		return nil
@@ -129,7 +130,8 @@ func (db *MySQLDatabase) getOpenID() (id uint64, err error) {
 }
 
 func (db *MySQLDatabase) AddUser(firstName, middleName, lastName, email, password, dateOfBirth string) (
-	id uint64, err error) {
+	id uint64, err error,
+) {
 	if len(firstName) == 0 || len(lastName) == 0 || len(email) == 0 || len(password) == 0 || len(dateOfBirth) == 0 {
 		return 0, errors.New("empty fields")
 	}

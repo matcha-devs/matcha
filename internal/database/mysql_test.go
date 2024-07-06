@@ -87,14 +87,20 @@ func TestNew(t *testing.T) {
 	defer teardown(t, subject, probe)
 
 	expectedTables := map[string]map[string]struct{}{
-		"users": {"id": {}, "first_name": {}, "middle_name": {}, "last_name": {}, "email": {}, "password": {},
-			"date_of_birth": {}, "created_on": {}},
+		"users": {
+			"id": {}, "first_name": {}, "middle_name": {}, "last_name": {}, "email": {}, "password": {},
+			"date_of_birth": {}, "created_on": {},
+		},
 		"openid": {"id": {}, "created_on": {}},
-		"asset_class_aggregations": {"id": {}, "cash": {}, "stocks": {}, "credit_card": {}, "other_loan": {},
-			"retirement_cash": {}, "retirement_stocks": {}, "real_estate": {}, "other_property": {}},
+		"asset_class_aggregations": {
+			"id": {}, "cash": {}, "stocks": {}, "credit_card": {}, "other_loan": {},
+			"retirement_cash": {}, "retirement_stocks": {}, "real_estate": {}, "other_property": {},
+		},
 		"transactions": {"id": {}, "user_id": {}, "financial_account_id": {}, "amount": {}, "type": {}},
-		"financial_accounts": {"id": {}, "user_id": {}, "institution_id": {}, "asset_class": {}, "name": {},
-			"net_value": {}},
+		"financial_accounts": {
+			"id": {}, "user_id": {}, "institution_id": {}, "asset_class": {}, "name": {},
+			"net_value": {},
+		},
 		"institutions": {"id": {}, "name": {}},
 	}
 
@@ -163,27 +169,47 @@ func TestAddUser(t *testing.T) {
 		expectedID    uint64
 		expectedError bool
 	}{
-		{"AddFirstUser", "test", "", "user", "test_user@example.com",
-			"test_pass", "2004-12-22", 1, false},
-		{"AddSecondUser", "test", "", "user2", "test_user@example2.com",
-			"test_pass2", "2024-12-22", 2, false},
-		{"AddDuplicateName", "test", "", "user", "dupl_name@example.com",
-			"test_pass3", "2024-10-22", 3, false},
-		{"AddDuplicateEmail", "unique", "", "user", "test_user@example2.com",
-			"test_pass4", "2024-10-22", 0, true},
-		{"AddEmptyFirstname", "", "", "user", "empty_first@example.com",
-			"test_pass5", "2024-08-22", 0, true},
+		{
+			"AddFirstUser", "test", "", "user", "test_user@example.com",
+			"test_pass", "2004-12-22", 1, false,
+		},
+		{
+			"AddSecondUser", "test", "", "user2", "test_user@example2.com",
+			"test_pass2", "2024-12-22", 2, false,
+		},
+		{
+			"AddDuplicateName", "test", "", "user", "dupl_name@example.com",
+			"test_pass3", "2024-10-22", 3, false,
+		},
+		{
+			"AddDuplicateEmail", "unique", "", "user", "test_user@example2.com",
+			"test_pass4", "2024-10-22", 0, true,
+		},
+		{
+			"AddEmptyFirstname", "", "", "user", "empty_first@example.com",
+			"test_pass5", "2024-08-22", 0, true,
+		},
 		// TODO : This supposed to be ID:3, but duplicate email increment ID by one. Fix this error.
-		{"AddEmptyMiddlename", "empty", "", "middle", "empty_mid@example.com",
-			"test_pass6", "2024-07-22", 5, false},
-		{"AddEmptyLastname", "empty", "email", "", "empty_last@example.com",
-			"test_pass7", "2024-07-22", 0, true},
-		{"AddEmptyEmail", "empty", "", "email", "", "test_pass7",
-			"2024-07-22", 0, true},
-		{"AddEmptyPassword", "empty", "pass", "user",
-			"empty_pass_user@example.com", "", "2021-07-22", 0, true},
-		{"AddEmptyDateOfBirth", "empty", "", "DOB", "empty_dob@example.com",
-			"test_pass8", "", 0, true},
+		{
+			"AddEmptyMiddleName", "empty", "", "middle", "empty_mid@example.com",
+			"test_pass6", "2024-07-22", 5, false,
+		},
+		{
+			"AddEmptyLastname", "empty", "email", "", "empty_last@example.com",
+			"test_pass7", "2024-07-22", 0, true,
+		},
+		{
+			"AddEmptyEmail", "empty", "", "email", "", "test_pass7",
+			"2024-07-22", 0, true,
+		},
+		{
+			"AddEmptyPassword", "empty", "pass", "user",
+			"empty_pass_user@example.com", "", "2021-07-22", 0, true,
+		},
+		{
+			"AddEmptyDateOfBirth", "empty", "", "DOB", "empty_dob@example.com",
+			"test_pass8", "", 0, true,
+		},
 
 		// TODO: The functionality for this test need to be implemented
 		// {"AddInvalidEmail", "invalid_email_user", "invalid_email.com", "test_pass7", 0, true},
@@ -192,8 +218,10 @@ func TestAddUser(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(
 			tc.name, func(t *testing.T) {
-				id, err := subject.AddUser(tc.firstName, tc.middleName, tc.lastName, tc.email, tc.password,
-					tc.dateOfBirth)
+				id, err := subject.AddUser(
+					tc.firstName, tc.middleName, tc.lastName, tc.email, tc.password,
+					tc.dateOfBirth,
+				)
 				if tc.expectedError {
 					if err == nil {
 						t.Fatalf("Expected error but got none for case: %s", tc.name)
@@ -217,8 +245,10 @@ func TestAuthenticateLogin(t *testing.T) {
 
 	happyEmail := "test_user@example.com"
 	happyPass := "testPass"
-	_, err := subject.AddUser("test", "", "user", "test_user@example.com",
-		happyPass, "2000-02-13")
+	_, err := subject.AddUser(
+		"test", "", "user", "test_user@example.com",
+		happyPass, "2000-02-13",
+	)
 	if err != nil {
 		t.Fatal("Failed to add", happyEmail, "-", err)
 	}
@@ -259,8 +289,10 @@ func TestDeleteUser(t *testing.T) {
 	subject, probe := setup(t)
 	defer teardown(t, subject, probe)
 
-	id, err := subject.AddUser("delete", "", "user", "delete_user@example.com",
-		"delete_pass", "2000-01-01")
+	id, err := subject.AddUser(
+		"delete", "", "user", "delete_user@example.com",
+		"delete_pass", "2000-01-01",
+	)
 	// Verify the user was added
 	if err != nil {
 		t.Fatal("Failed to add user -", err)
@@ -286,8 +318,10 @@ func TestGetUser(t *testing.T) {
 	defer teardown(t, subject, probe)
 
 	// Add a test user to the database:
-	if _, err := subject.AddUser("test", "", "user", "test_user@example.com",
-		"test_pass", "2000-01-02"); err != nil {
+	if _, err := subject.AddUser(
+		"test", "", "user", "test_user@example.com",
+		"test_pass", "2000-01-02",
+	); err != nil {
 		t.Fatal("Failed to add user -", err)
 	}
 
@@ -302,10 +336,14 @@ func TestGetUser(t *testing.T) {
 		password    string
 		dateOfBirth string
 	}{
-		{"GetExistingUser", 1, true, "test", "", "user",
-			"test_user@example.com", "test_pass", "2000-01-02"},
-		{"GetNonExistentUser", 999, false, "", "", "", "",
-			"", ""},
+		{
+			"GetExistingUser", 1, true, "test", "", "user",
+			"test_user@example.com", "test_pass", "2000-01-02",
+		},
+		{
+			"GetNonExistentUser", 999, false, "", "", "", "",
+			"", "",
+		},
 	}
 
 	for _, tc := range testCases {
@@ -355,15 +393,19 @@ func TestGetUserID(t *testing.T) {
 	defer teardown(t, subject, probe)
 
 	t.Log("Adding user: user_id_user")
-	_, err := subject.AddUser("user", "id", "user", "user_id_user@example.com",
-		"user_id_pass", "2000-01-04")
+	_, err := subject.AddUser(
+		"user", "id", "user", "user_id_user@example.com",
+		"user_id_pass", "2000-01-04",
+	)
 	if err != nil {
 		t.Fatal("Failed to add user -", err)
 	}
 
 	t.Log("Adding user: user2_id_user2")
-	_, err = subject.AddUser("user2", "id", "user2", "user2_id_user2@example.com",
-		"user2_id2_pass", "2022-01-04")
+	_, err = subject.AddUser(
+		"user2", "id", "user2", "user2_id_user2@example.com",
+		"user2_id2_pass", "2022-01-04",
+	)
 	if err != nil {
 		t.Fatal("Failed to add user -", err)
 	}
