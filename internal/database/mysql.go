@@ -11,8 +11,9 @@ import (
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/matcha-devs/matcha/internal"
 	"golang.org/x/crypto/bcrypt"
+
+	"github.com/matcha-devs/matcha/internal"
 )
 
 type MySQLDatabase struct {

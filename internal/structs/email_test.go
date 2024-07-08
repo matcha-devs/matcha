@@ -8,15 +8,15 @@ func TestNewEmail(t *testing.T) {
 		expected email
 		err      error
 	}{
-		{input: "user@example.com", expected: email("user@example.com"), err: nil},
-		{input: "user.name@example.com", expected: email("user.name@example.com"), err: nil},
-		{input: "user@example", expected: email("user@example"), err: nil},
-		{input: "user@.com", expected: email("user@.com"), err: nil},
+		{input: "user@example.com", expected: "user@example.com", err: nil},
+		{input: "user.name@example.com", expected: "user.name@example.com", err: nil},
+		{input: "user@example", expected: "user@example", err: nil},
+		{input: "user@.com", expected: "user@.com", err: nil},
 		{input: "user @example.com", expected: "", err: errSpacesInEmail},
 		{input: "user@example.com ", expected: "", err: errSpacesInEmail},
-		{input: "user@subdomain.example.com", expected: email("user@subdomain.example.com"), err: nil},
+		{input: "user@subdomain.example.com", expected: "user@subdomain.example.com", err: nil},
 		{input: "user@local@host", expected: "", err: errInvalidEmail},
-		{input: "user@subdomain.example.com", expected: email("user@subdomain.example.com"), err: nil},
+		{input: "user@subdomain.example.com", expected: "user@subdomain.example.com", err: nil},
 		{input: "", expected: "", err: errInvalidEmail},
 	}
 

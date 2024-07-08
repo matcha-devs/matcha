@@ -8,7 +8,7 @@ import (
 func TestNewPassword(t *testing.T) {
 	tests := []struct {
 		input    string
-		expected string
+		expected password
 		err      error
 	}{
 		{"Ab1!Ab1!Ab1!", "Ab1!Ab1!Ab1!", nil},             // Valid password
@@ -28,7 +28,7 @@ func TestNewPassword(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.input, func(t *testing.T) {
 			result, err := newPassword(test.input)
-			if result != password(test.expected) {
+			if result != test.expected {
 				t.Errorf("expected %q, got %q", test.expected, result)
 			}
 			if !errors.Is(err, test.err) {

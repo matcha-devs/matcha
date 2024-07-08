@@ -6,7 +6,7 @@ import (
 	"unicode"
 )
 
-type email string
+type email = string
 
 var (
 	errSpacesInEmail = errors.New("email must not contain spaces")
@@ -25,5 +25,5 @@ func newEmail(input string) (email, error) {
 	if len(words) != 2 {
 		return "", errInvalidEmail
 	}
-	return email(input), nil
+	return input, nil
 }

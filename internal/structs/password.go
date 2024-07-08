@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-type password string
+type password = string
 
 const minPasswordLen = 12
 
@@ -32,5 +32,5 @@ func newPassword(input string) (password, error) {
 		return "", errSimplePassword
 	}
 
-	return password(input), nil
+	return input, nil
 }
