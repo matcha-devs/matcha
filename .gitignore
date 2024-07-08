@@ -67,6 +67,7 @@ xcuserdata/
 .idea/**/usage.statistics.xml
 .idea/**/dictionaries
 .idea/**/shelf
+qodana.yaml
 
 # AWS User-specific
 .idea/**/aws.xml
