@@ -1,35 +1,91 @@
-<!-- Copyright (c) 2024 Andrea Goh. -->
+<!-- Copyright (c) 2024 Andrea Goh and Seoyoung Cho. -->
 
 {{ template "title" }}Signup{{ template "end_title" }}
-<body>
-<div class="container">
-    <h1>Sign Up</h1>
-    <p>Please fill in this form to create an account.</p>
-    <hr>
-    <form hx-post="/signup" hx-target="#error-message">
-        <label><b>First name</b>
-            <input name="first_name" placeholder="Enter Firstname" required type="text" pattern="[A-Za-z\s]+"></label>
-        <label><b>Middle name</b>
-            <input name="middle_name" placeholder="Enter Middlename" type="text" pattern="[A-Za-z\s]+"></label>
-        <label><b>Last name</b>
-            <input name="last_name" placeholder="Enter Lastname" required type="text" pattern="[A-Za-z\s]+"></label>
-        <label><b>Email</b>
-            <input name="email" placeholder="Enter Email" required type="text"></label>
-        <label><b>Date of Birth</b>
-            <input name="date_of_birth" placeholder="Enter Date of Birth(YYYY-MM-DD)" required type="text"></label>
-        <br>
-        <label><b>Password</b>
-            <input name="psw" placeholder="Enter Password" required type="password"></label>
-        <label><b>Repeat Password</b>
-            <input name="psw-repeat" placeholder="Repeat Password" required type="password">
-            <input checked="checked" name="remember" style="margin-bottom:15px" type="checkbox"> Remember me</label>
-        <p>By creating an account you agree to our <a href="#" style="color:dodgerblue">Terms & Privacy</a>.</p>
-        <a href="/">
-            <button class="btn1" type="button">Cancel</button>
+<body class="bg-gray-50">
+<div class="container mx-auto mt-14 flex h-max flex-col items-center">
+    <form hx-post="/signup" hx-target="#error-message" class="flex flex-col items-center">
+        <a href="/#" class="mb-4 sm:mb-0">
+            <img src="/public/images/favicon.ico" class="h-8" alt="Matcha Logo"/>
         </a>
-        <button class="btn2" type="submit">Sign Up</button>
+        <h1 class="mt-4 pb-5 text-center text-2xl font-bold">Create your account</h1>
+        <!-- Sign up box -->
+        <div class="gap-4 rounded-lg bg-white p-10 text-sm shadow-xl">
+            <div class="-mx-3 mb-6 flex flex-wrap">
+                <div class="w-full px-3 md:w-1/3">
+                    <label class="block pb-2 font-normal text-gray-700" for="first_name">
+                        First name
+                        <input class="w-full rounded-md border border-gray-200 px-5 py-2 shadow-sm
+                            focus:outline-slate-400"
+                               name="first_name" placeholder="John" required type="text">
+                    </label>
+                </div>
+                <div class="w-full px-3 md:w-1/3">
+                    <label class="block pb-2 font-normal text-gray-700" for="middle_name">
+                        Middle name (optional)
+                        <input class="w-full rounded-md border border-gray-200 px-5 py-2 shadow-sm
+                            focus:outline-slate-400"
+                               name="middle_name" placeholder="Richard (or blank)" type="text">
+                    </label>
+                </div>
+                <div class="w-full px-3 text-right md:w-1/3">
+                    <label class="block pb-2 text-left font-normal text-gray-700" for="last_name">
+                        Last name
+                        <input class="w-full rounded-md border border-gray-200 px-5 py-2 shadow-sm
+                            focus:outline-slate-400"
+                               name="last_name" placeholder="Doe" required type="text">
+                    </label>
+                </div>
+            </div>
+            <div class="-mx-3 mb-6 flex flex-wrap">
+                <div class="w-full px-3 md:w-1/2">
+                    <label for="email" class="block pb-2 font-normal text-gray-700">
+                        Email
+                        <input class="w-full rounded-md border border-gray-200 px-5 py-2 shadow-sm
+                            focus:outline-slate-400"
+                               name="email" placeholder="matcha@example.com" required type="text">
+                    </label>
+                </div>
+                <div class="w-full px-3 md:w-1/2">
+                    <label for="date_of_birth" class="block pb-2 font-normal text-gray-700">
+                        Date of Birth
+                        <input class="w-full rounded-md border border-gray-200 px-5 py-2 shadow-sm
+                            focus:outline-slate-400"
+                               name="date_of_birth" placeholder="YYYY-MM-DD" required type="text">
+                    </label>
+                </div>
+            </div>
+            <div class="-mx-3 mb-6 flex flex-wrap">
+                <div class="w-full px-3 md:w-1/2">
+                    <label class="block pb-2 font-normal text-gray-700" for="psw">
+                        Password
+                        <input class="w-full rounded-md border border-gray-200 px-5 py-2 shadow-sm
+                            focus:outline-slate-400"
+                               name="psw" placeholder="*********" required type="password">
+                    </label>
+                </div>
+                <div class="w-full px-3 md:w-1/2">
+                    <label class="block pb-2 font-normal text-gray-700" for="psw-repeat">
+                        Repeat Password
+                        <input class="w-full rounded-md border border-gray-200 px-5 py-2 shadow-sm
+                            focus:outline-slate-400"
+                               name="psw-repeat" placeholder="*********" required type="password">
+                    </label>
+                </div>
+            </div>
+            <div class="flex items-center mb-2.5">
+                <input id="link-checkbox" type="checkbox"
+                       class="mx-1 rounded border-gray-300 bg-gray-100 accent-accent-300 dark:ring-offset-gray-800
+                       dark:bg-accent-700 dark:border-gray-600">
+                <label for="link-checkbox" class="text-sm font-medium text-gray-900 ms-1.5 dark:text-gray-300">I agree
+                    with the <a href="#" class="text-accent-500 dark:text-primary hover:underline">Terms and
+                        Conditions</a>.</label>
+            </div>
+            <output id="error-message" style="color:red"></output>
+            <input type="submit" value="Sign up"
+                   class="w-full cursor-pointer rounded-md py-2 font-sans font-bold antialiased bg-secondary
+                       text-accent-700 hover:bg-accent-100">
+        </div>
     </form>
-    <output id="error-message" style="color:red"></output>
 </div>
 </body>
 {{ template "footer" }}

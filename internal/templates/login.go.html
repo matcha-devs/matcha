@@ -1,22 +1,47 @@
 <!-- Copyright (c) 2024 Andrea Goh. -->
 
 {{ template "title" }}Login{{ template "end_title" }}
-<body>
-<div class="container">
-    <form hx-post="/login" hx-target="#error-message">
-        <h1>Login</h1>
-        <hr>
-        <label><b>Email</b>
-            <input name="email" placeholder="Enter Email" required type="text"></label>
-        <label><b>Password</b>
-            <input name="password" placeholder="Enter Password" required type="password">
-            <input checked="checked" name="remember" style="margin-bottom:15px" type="checkbox"> Remember me<br></label>
-        <a href="/">
-            <button class="btn1" type="button">Cancel</button>
+<body class="bg-gray-50">
+<div class="container mx-auto mt-14 flex h-max flex-col items-center">
+    <form hx-post="/login" hx-target="#error-message" class="flex flex-col items-center">
+        <a href="/#" class="mb-4 sm:mb-0">
+            <img src="/public/images/favicon.ico" class="h-8" alt="Matcha Logo"/>
         </a>
-        <button class="btn2" type="submit">Login</button>
+        <h1 class="mt-4 pb-5 text-center text-2xl font-semibold">Log in</h1>
+        <!-- Login box -->
+        <div class="flex flex-col gap-4 rounded-lg bg-white p-10 text-sm shadow-xl">
+            <div>
+                <label for="email" class="block pb-2 font-normal text-gray-700">
+                    Email
+                    <input class="w-full rounded-md border border-gray-200 px-5 py-2 shadow-sm
+                        focus:outline-slate-400"
+                           name="email" placeholder="matcha@example.com" required type="text">
+                </label>
+            </div>
+            <div>
+                <label class="block pb-2 font-normal text-gray-700" for="password">
+                    Password
+                    <input class="w-full rounded-md border border-gray-200 px-5 py-2 shadow-sm
+                        focus:outline-slate-400"
+                           name="password" placeholder="*********" required type="password">
+                </label>
+            </div>
+            <div class="flex justify-between">
+                <div class="w-1/2">
+                    <a href="/signup" class="mt-4 text-center text-sm font-medium text-primary">Create account</a>
+                </div>
+                <div class="w-1/2 text-right">
+                    <a href="#" class="text-sm font-normal text-gray-600">Forgot password?</a>
+                </div>
+            </div>
+            <div>
+                <input class="w-full cursor-pointer rounded-md py-2 font-sans font-bold antialiased bg-secondary
+                    hover:bg-accent-100 text-accent-700"
+                       type="submit" value="Log in">
+            </div>
+        </div>
     </form>
-    <output id="error-message" style="color:red"></output>
 </div>
+<output id="error-message" style="color:red"></output>
 </body>
 {{ template "footer" }}

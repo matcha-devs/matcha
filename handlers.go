@@ -110,8 +110,9 @@ func postDeleteUser(w http.ResponseWriter, r *http.Request) {
 	email := r.FormValue("email")
 	id, err := matcha.database.AuthenticateLogin(email, r.FormValue("password"))
 	if err != nil {
-		log.Println("User failed to validate delete request -", err)
-		postLogout(w, r)
+		if _, err := io.WriteString(w, err.Error()); err != nil {
+			log.Println("User failed to validate delete request -", err)
+		}
 		return
 	}
 
@@ -153,15 +154,19 @@ func checkLoginStatus(w http.ResponseWriter, r *http.Request) (user *internal.Us
 }
 
 func getPage(w http.ResponseWriter, r *http.Request) {
-	page := strings.TrimLeft(r.URL.Path, "/")
-	var user *internal.User
-	if _, exists := surfacePages[page]; !exists {
-		user = checkLoginStatus(w, r)
-		if user == nil {
+	pageData := struct {
+		PageName string
+		User     *internal.User
+	}{
+		PageName: strings.TrimLeft(r.URL.Path, "/"),
+	}
+	if _, exists := surfacePages[pageData.PageName]; !exists {
+		pageData.User = checkLoginStatus(w, r)
+		if pageData.User == nil {
 			return
 		}
 	}
-	if err := templateServer.ExecuteTemplate(w, page+".go.html", user); err != nil {
-		log.Println("Error executing template", page, "-", err)
+	if err := templateServer.ExecuteTemplate(w, pageData.PageName+".go.html", pageData); err != nil {
+		log.Println("Error executing template", pageData.PageName, "-", err)
 	}
 }
