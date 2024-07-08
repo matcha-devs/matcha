@@ -1,0 +1,13 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="go test matcha" type="GoTestRunConfiguration">
+    <module name="matcha" />
+    <working_directory value="$PROJECT_DIR$" />
+    <parameters value="-v" />
+    <kind value="DIRECTORY" />
+    <package value="github.com/matcha-devs/matcha" />
+    <directory value="$PROJECT_DIR$" />
+    <filePath value="$PROJECT_DIR$" />
+    <framework value="gotest" />
+    <method v="2" />
+  </configuration>
+</component>
