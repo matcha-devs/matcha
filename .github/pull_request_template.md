@@ -13,25 +13,25 @@ use it._
 
 ### Non-trivial Files
 
-- _Detail complex code changes you've made as a list._
-- _Always include any **new** files or modules you've created._
+— _Detail complex code changes you've made as a list._
+—_Always include any **new** files or modules you've created._
 
 ### Testing
 
-- [ ] ➕ Added units to existing tests
-- [ ] 🐣 Started a new group of tests
-- [ ] 🙅 New tests aren't needed
-- [ ] 🙋 Need help to add tests
+— [ ] ➕ Added units to existing tests
+— [ ] 🐣 Started a new group of tests
+— [ ] 🙅 New tests aren't needed
+— [ ] 🙋 Need help to add tests
 
 ### Dependencies
 
-- _List any new dependencies that this PR introduces to the project, and why they are needed._
+— _List any new dependencies that this PR introduces to the project and why they are needed._
 
 ### Documentation Changes
 
-- [ ] 📜 README.md
-- [ ] 💬 Added **necessary** comments to existing code
-- [ ] 🙅 no documentation needed
+— [ ] 📜 README.md
+– [ ] 💬 Added **necessary** comments to existing code
+—[ ] 🙅 no documentation needed
 
 ## Issues and Bugs
 
@@ -44,4 +44,5 @@ _If you have identified potential solutions or improvements for the issues liste
 
 ## Additional Notes
 
+properties
 _Any other information that reviewers should be aware of can be included here._
