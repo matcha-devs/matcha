@@ -1,19 +1,31 @@
 <!-- Copyright (c) 2024 Andrea Goh. -->
 
 {{ template "title" }}Settings{{ template "end_title" }}
+{{ template "navbar" . }}
 <body>
-{{ template "nav_bar" }}
-<div class="container">
-    <form hx-post="/delete-user" hx-target="#error-message">
-        <h1>Delete User</h1>
-        <hr>
-        <label><b>Email</b>
-            <input name="email" placeholder="Enter Email" required type="text"></label>
-        <label><b>Password</b>
-            <input name="password" placeholder="Enter Password" required type="password"></label>
-        <button class="btn1" type="submit">Delete User</button>
-    </form>
-</div>
+<form hx-post="/delete-user" hx-target="#error-message">
+    <div class="container mx-auto text-center">
+        <h1 class="mt-4 pb-5 text-center text-2xl font-semibold">Delete User</h1>
+        <div class="flex items-center justify-center">
+            <div class="w-1/2">
+                <label for="email" class="block pb-2 font-normal text-gray-700">
+                    Email
+                    <input class="w-full rounded-md border border-gray-200 px-5 py-2 shadow-sm
+                        focus:outline-slate-400"
+                           name="email" placeholder="matcha@example.com" required type="text">
+                </label>
+                <label class="block pb-2 font-normal text-gray-700" for="password">
+                    Password
+                    <input class="w-full rounded-md border border-gray-200 px-5 py-2 shadow-sm focus:outline-slate-400"
+                           name="password" placeholder="*********" required type="password">
+                </label>
+                <input class="w-full cursor-pointer rounded-md py-2 font-sans font-bold antialiased bg-red-500
+                hover:bg-red-600
+               text-white" type="submit" value="Delete user">
+            </div>
+        </div>
+    </div>
+</form>
 <output id="error-message" style="color:red"></output>
 </body>
 {{ template "footer" }}

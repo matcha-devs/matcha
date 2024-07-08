@@ -40,6 +40,7 @@ Please make sure to update tests as appropriate.
 * Development environments optimized for **GoLand**
 * Web service developed in **Go**
 * Database implemented with **MySQL**
+* Styled with **Tailwind CSS**
 
 ## Authors
 
