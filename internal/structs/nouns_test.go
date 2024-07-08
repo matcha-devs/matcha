@@ -10,8 +10,8 @@ func TestNewNoun(t *testing.T) {
 		expected noun
 		err      error
 	}{
-		{input: "Alice", expected: noun("Alice"), err: nil},
-		{input: "Bob", expected: noun("Bob"), err: nil},
+		{input: "Alice", expected: "Alice", err: nil},
+		{input: "Bob", expected: "Bob", err: nil},
 		{input: "", expected: "", err: errEmptyNoun},
 		{input: "John123", expected: "", err: errInvalidNoun},
 		{input: "Mary ", expected: "", err: errInvalidNoun},
@@ -37,8 +37,8 @@ func TestNewProperNoun(t *testing.T) {
 		expected noun
 		err      error
 	}{
-		{input: "alice", expected: noun("Alice"), err: nil},
-		{input: "bob", expected: noun("Bob"), err: nil},
+		{input: "alice", expected: "Alice", err: nil},
+		{input: "bob", expected: "Bob", err: nil},
 		{input: "  leading", expected: "", err: errInvalidNoun},
 		{input: "trailing  ", expected: "", err: errInvalidNoun},
 		{input: "double  space", expected: "", err: errInvalidNoun},
@@ -64,8 +64,8 @@ func TestNewImproperNoun(t *testing.T) {
 		expected noun
 		err      error
 	}{
-		{input: "ALICE", expected: noun("alice"), err: nil},
-		{input: "BOB", expected: noun("bob"), err: nil},
+		{input: "ALICE", expected: "alice", err: nil},
+		{input: "BOB", expected: "bob", err: nil},
 		{input: "  leading", expected: "", err: errInvalidNoun},
 		{input: "trailing  ", expected: "", err: errInvalidNoun},
 		{input: "double  space", expected: "", err: errInvalidNoun},

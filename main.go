@@ -24,12 +24,12 @@ func main() {
 	ctrlC := make(chan os.Signal, 1)
 	signal.Notify(ctrlC, syscall.SIGINT, syscall.SIGTERM)
 
-	// Open said dependencies and run application on a new go routine.
+	// Open said dependencies and run the application on a new go routine.
 	go matcha.run()
 
 	// Block the main goroutine until ctrl+c interrupt is raised.
 	<-ctrlC
 
-	// Stop application and close the dependencies before exiting.
+	// Stop the application and close the dependencies before exiting.
 	matcha.close()
 }
