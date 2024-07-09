@@ -18,7 +18,6 @@ CREATE TABLE IF NOT EXISTS openid
     created_on timestamp DEFAULT NOW()
 );
 
--- TODO(@everyone): database design
 CREATE TABLE IF NOT EXISTS asset_class_aggregations
 (
     id                BIGINT(20) UNSIGNED  NOT NULL AUTO_INCREMENT PRIMARY KEY,
