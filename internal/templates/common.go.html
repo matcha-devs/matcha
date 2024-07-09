@@ -16,7 +16,6 @@
 {{ define "navbar" }}
     <nav class="w-full bg-white px-12 shadow shadow-gray-200 md:px-auto">
         <div class="container mx-auto flex h-16 flex-wrap items-center justify-between md:h-14 md:px-4 md:flex-nowrap">
-            <!-- Logo -->
             <div class="md:order-2">
                 {{ if eq .User nil }}
                     <a href="/" class="mb-4 flex items-center sm:mb-0 space-x-3 rtl:space-x-reverse">
@@ -32,7 +31,6 @@
                     </a>
                 {{ end }}
             </div>
-            <!-- Menus -->
             <div class="order-3 w-full font-sans text-gray-500 antialiased md:w-auto md:order-2">
                 <ul class="flex justify-between font-medium">
                     {{ if eq .PageName "dashboard" }}
@@ -46,7 +44,6 @@
                     <li class="text-black md:px-4 md:py-2"><a href="/">Contact</a></li>
                 </ul>
             </div>
-            <!-- Sign up && Log in -->
             {{ if eq .User nil }}
                 <div class="order-2 flex md:order-3 gap-1.5">
                     <a href="/signup"
