@@ -7,6 +7,7 @@ import (
 	"errors"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -86,13 +87,13 @@ func (db *MySQLDatabase) Close() (err error) {
 	return
 }
 
-func (db *MySQLDatabase) AuthenticateLogin(username string, password string) (id int, err error) {
+func (db *MySQLDatabase) AuthenticateLogin(email, password string) (id uint64, err error) {
 	var hash []byte
-	err = db.underlyingDB.QueryRow("SELECT id, password FROM users WHERE BINARY username = ?", username).Scan(
+	err = db.underlyingDB.QueryRow("SELECT id, password FROM users WHERE BINARY email = ?", email).Scan(
 		&id, &hash,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
-		return 0, errors.New("invalid username")
+		return 0, errors.New("invalid email")
 	}
 	if err = bcrypt.CompareHashAndPassword(hash, []byte(password)); err != nil {
 		return 0, errors.New("invalid password")
@@ -100,11 +101,11 @@ func (db *MySQLDatabase) AuthenticateLogin(username string, password string) (id
 	return
 }
 
-func (db *MySQLDatabase) GetUser(id int) (user *internal.User) {
+func (db *MySQLDatabase) GetUser(id uint64) (user *internal.User) {
 	user = &internal.User{}
 	err := db.underlyingDB.QueryRow("SELECT * FROM users WHERE id = ?", id).Scan(
-		&user.ID, &user.Username, &user.Email, &user.Password, &user.CreatedOn,
-	)
+		&user.ID, &user.FirstName, &user.MiddleName, &user.LastName, &user.Email, &user.Password, &user.DateOfBirth,
+		&user.CreatedOn)
 	if errors.Is(err, sql.ErrNoRows) {
 		log.Println("No user with ID:", id, "-", err)
 		return nil
@@ -118,97 +119,76 @@ func (db *MySQLDatabase) GetUser(id int) (user *internal.User) {
 	return
 }
 
-func getOpenID(tx *sql.Tx) (int, error) {
-    var id int
-    err := tx.QueryRow("SELECT id FROM openid LIMIT 1").Scan(&id)
-    if err != nil && !errors.Is(err, sql.ErrNoRows) {
-        log.Println("Failed to query for an openid -", err)
-        return 0, err
-    }
-	// HERE We need to delete the openID if it exists in the OpenID table.
-	if _, err = tx.Exec("DELETE FROM openid WHERE id = ? LIMIT 1", id); err != nil {
-		log.Println("Error deleting the openID -", err)
-		return 0, err
+func (db *MySQLDatabase) getOpenID() (id uint64, err error) {
+	err = db.underlyingDB.QueryRow("SELECT id FROM openid LIMIT 1").Scan(&id)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		log.Println("Failed to query for an openid -", err)
+		return 0, errors.New("invalid openid")
 	}
-    return id, nil
+	return
 }
 
-func (db *MySQLDatabase) AddUser(username string, email string, password string) (err error) {
-
-	// TODO: There needs to be a check if the usernames/emails/passwords empty here.
-	if len(username) == 0 || len(email) == 0 || len(password) == 0 {
-		return errors.New("empty fields")
+func (db *MySQLDatabase) AddUser(firstName, middleName, lastName, email, password, dateOfBirth string) (
+	id uint64, err error) {
+	if len(firstName) == 0 || len(lastName) == 0 || len(email) == 0 || len(password) == 0 || len(dateOfBirth) == 0 {
+		return 0, errors.New("empty fields")
 	}
-	
+	query := "INSERT INTO users (first_name, middle_name, last_name, email, password, date_of_birth"
+	if openID, err := db.getOpenID(); err != nil && !errors.Is(err, sql.ErrNoRows) {
+		log.Println("Error getting open id -", err)
+		return id, errors.New("internal server error")
+	} else if openID == 0 {
+		query += `) VALUES (?, ?, ?, ?, ?, ?)`
+	} else {
+		log.Println("Re-using open id:", openID, "for {"+email+"}")
+		id = openID
+		query += `, id) VALUES (?, ?, ?, ?, ?, ?, ` + strconv.FormatUint(id, 10) + `)`
+		if _, err = db.underlyingDB.Exec("DELETE FROM openid WHERE id = ?", id); err != nil {
+			log.Println("Error deleting open id -", err)
+			return id, errors.New("internal server error")
+		}
+	}
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Println("Error hashing password -", err)
-		return errors.New("internal server error")
+		return id, errors.New("internal server error")
 	}
-
-	// Start a transaction:
-	tx, err := db.underlyingDB.Begin()
-	if err != nil {
-		log.Println("Error starting transaction -", err)
-		tx.Rollback()
-		return errors.New("internal server error")
-	}
-
-	// Get openID within the transaction
-	openID, err := getOpenID(tx)
-	if err != nil {
-		log.Println("Error getting open ID -", err)
-		tx.Rollback()
-		return errors.New("internal server error")
-	}
-	
-	if openID == 0 {
-		log.Println("All existing IDs in use, assigning new ID to {" + username + "}")
-		query := "INSERT INTO users (username, email, password) VALUES (?, ?, ?)"
-		_, err = tx.Exec(query, username, email, hashedPassword)
-	} else {
-		log.Println("Re-using open id:", openID, "for {"+username+"}")
-		query := "INSERT INTO users (username, email, password, id) VALUES (?, ?, ?, ?)"
-		_, err = tx.Exec(query, username, email, hashedPassword, openID)
-	}
-
+	result, err := db.underlyingDB.Exec(query, firstName, middleName, lastName, email, hashedPassword, dateOfBirth)
 	if err != nil {
 		log.Println("Error adding user -", err)
-		tx.Rollback()
-		return errors.New("internal server error")
+		return 0, errors.New("internal server error")
 	}
-
-	// Commit the transaction
-	err = tx.Commit()
-	if err != nil {
-		log.Println("Error committing transaction -", err)
-		tx.Rollback()
-		return errors.New("internal server error")
-	}
-	// TODO(@seoyoungcho213): Make sure to delete the openID if used here ("delete if exists" would be perfect).
-	return nil
-}
-
-func (db *MySQLDatabase) GetUserID(varName string, variable string) (id int) {
-	if err := db.underlyingDB.QueryRow(
-		"SELECT id FROM users WHERE BINARY "+varName+" = ?", variable,
-	).Scan(&id); err != nil && !errors.Is(err, sql.ErrNoRows) {
-		log.Println("Error querying users for", varName+":"+variable, "-", err)
-		return 0
+	if id == 0 {
+		userid, err := result.LastInsertId()
+		if err != nil {
+			log.Println("Error getting user ID -", err)
+			return 0, errors.New("internal server error")
+		}
+		id = uint64(userid)
+		log.Println("All existing IDs in use, assigning new ID:", id, "to {"+email+"}")
 	}
 	return
 }
 
-func (db *MySQLDatabase) DeleteUser(id int) (err error) {
-	if id < 1{
-		return errors.New("invalid id")
+func (db *MySQLDatabase) GetUserID(email string) (id uint64) {
+	// TODO(@seoyoungcho213): might not use this anymore cuz of cookie
+	if err := db.underlyingDB.QueryRow(
+		"SELECT id FROM users WHERE BINARY email = ?", email,
+	).Scan(&id); err != nil && !errors.Is(err, sql.ErrNoRows) {
+		log.Println("Error querying users for email:"+email, "-", err)
+		return 0
 	}
+	return id
+}
+
+func (db *MySQLDatabase) DeleteUser(id uint64) (err error) {
 	if _, err = db.underlyingDB.Exec("INSERT INTO openid (id) VALUES(?)", id); err != nil {
 		log.Println("Error inserting openID", id, " to the table -", err)
-		return
+		return errors.New("internal server error")
 	}
 	if _, err = db.underlyingDB.Exec("DELETE FROM users WHERE BINARY id = ?", id); err != nil {
 		log.Println("Error deleting the user id", id, " -", err)
+		return errors.New("internal server error")
 	}
-	return
+	return err
 }

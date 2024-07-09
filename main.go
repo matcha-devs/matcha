@@ -20,7 +20,7 @@ func init() {
 }
 
 func main() {
-	// Channel to catch "crtl+c" such that dependencies will be closed safely before opening them.
+	// Channel to catch "ctrl+c" such that dependencies will be closed safely before opening them.
 	ctrlC := make(chan os.Signal, 1)
 	signal.Notify(ctrlC, syscall.SIGINT, syscall.SIGTERM)
 
