@@ -168,8 +168,7 @@ func TestAddUser(t *testing.T) {
 		{"AddDuplicateName", "testname", "", "user", "dupl_name@example.com","test_pass3", "2024-10-22", 3, false},
 		{"AddDuplicateEmail", "dupl_email", "", "user", "test_user@example2.com","test_pass4", "2024-10-22", 0, true},
 		{"AddEmptyFirstname", "", "", "user", "empty_first@example.com","test_pass5", "2024-08-22", 0, true},
-		// TODO : This supposed to be ID:3, but duplicate email increment ID by one. Fix this error.
-		{"AddEmptyMiddlename", "empty", "", "middle", "empty_mid@example.com","test_pass6", "2024-07-22", 5, false},
+		{"AddEmptyMiddlename", "empty", "", "middle", "empty_mid@example.com","test_pass6", "2024-07-22", 4, false},
 		{"AddEmptyLastname", "empty", "email", "", "empty_last@example.com","test_pass7", "2024-07-22", 0, true},
 		{"AddEmptyEmail", "empty", "", "email", "", "test_pass7","2024-07-22", 0, true},
 		{"AddEmptyPassword", "empty", "pass", "user","empty_pass_user@example.com", "", "2021-07-22", 0, true},
@@ -179,9 +178,9 @@ func TestAddUser(t *testing.T) {
 		{"MultipleFailures1", "user_fail_1","middle","last", "user_fail@example.com","","2024-10-22", 0, true}, // Should fail
 		{"MultipleFailures2", "user_fail","middle","last", "","password","2024-10-22", 0, true}, // Should fail
 		{"MultipleFailures3", "","middle","last", "user_fail@example.com","password", "2024-10-22", 0, true}, // Should fail
-		{"ValidAfterFailures", "valid_user", "middle","last", "valid_user@example.com","password", "2024-10-22", 3, false}, // Should be ID 3 after failures
-		{"CreateAndReuseOpenID1", "temp_user", "middle","last", "temp_user@example.com","password", "2024-10-22", 4, false}, // Should be ID 4
-		{"ReuseOpenID", "new_user", "middle","last", "new_user@example.com", "password","2024-10-22", 4, false}, // Should reuse ID 4
+		{"ValidAfterFailures", "valid_user", "middle","last", "valid_user@example.com","password", "2024-10-22", 5, false}, // Should be ID 5 after failures
+		{"CreateAndReuseOpenID1", "temp_user", "middle","last", "temp_user@example.com","password", "2024-10-22", 6, false}, // Should be ID 6
+		{"ReuseOpenID", "new_user", "middle","last", "new_user@example.com", "password","2024-10-22", 6, false}, // Should reuse ID 6
 		// TODO: The functionality for this test need to be implemented
 		// {"AddInvalidEmail", "invalid_email_user","middle","last", "invalidemail.com", "test_pass7", "2024-10-22", 0, true}, // TODO: The functionality for this test need to be implemented
 

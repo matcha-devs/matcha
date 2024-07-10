@@ -119,6 +119,18 @@ func (db *MySQLDatabase) GetUser(id uint64) (user *internal.User) {
 	return
 }
 
+// EmailExists checks if an email already exists in the users table.
+func (db *MySQLDatabase) EmailExists(email string) (bool, error) {
+	var exists bool
+	query := "SELECT EXISTS (SELECT 1 FROM users WHERE email = ?)"
+	err := db.underlyingDB.QueryRow(query, email).Scan(&exists)
+	if err != nil {
+		log.Println("Error checking email existence -", err)
+		return false, err
+	}
+	return exists, nil
+}
+
 func (db *MySQLDatabase) getOpenID() (id uint64, err error) {
 	err = db.underlyingDB.QueryRow("SELECT id FROM openid LIMIT 1").Scan(&id)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
@@ -133,6 +145,14 @@ func (db *MySQLDatabase) AddUser(firstName, middleName, lastName, email, passwor
 	if len(firstName) == 0 || len(lastName) == 0 || len(email) == 0 || len(password) == 0 || len(dateOfBirth) == 0 {
 		return 0, errors.New("empty fields")
 	}
+	// Check if email already exists
+	
+	if emailExists, err := db.EmailExists(email); err != nil {
+		return 0, errors.New("internal server error")
+	} else if emailExists {
+		return 0, errors.New("email already exists")
+	}
+
 	query := "INSERT INTO users (first_name, middle_name, last_name, email, password, date_of_birth"
 	if openID, err := db.getOpenID(); err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Println("Error getting open id -", err)
@@ -153,6 +173,7 @@ func (db *MySQLDatabase) AddUser(firstName, middleName, lastName, email, passwor
 		log.Println("Error hashing password -", err)
 		return id, errors.New("internal server error")
 	}
+	
 	result, err := db.underlyingDB.Exec(query, firstName, middleName, lastName, email, hashedPassword, dateOfBirth)
 	if err != nil {
 		log.Println("Error adding user -", err)
