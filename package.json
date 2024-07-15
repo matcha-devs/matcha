@@ -9,13 +9,6 @@
     "tailwindcss": "^3.4.4"
   },
   "optionalDependencies": {
-    "fsevents": "^2.3.2"
-  },
-  "overrides": {
-    "fsevents": {
-      "os": [
-        "darwin"
-      ]
-    }
+    "fsevents": "^2.3.3"
   }
 }

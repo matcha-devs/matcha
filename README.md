@@ -35,6 +35,15 @@ Please make sure to update tests as appropriate.
 4. To import dependencies, **run**: ```go mod tidy```.
 5. To run tests, **run**: ```go test ./...```.
 
+### CSS (Tailwind) contributing
+
+1. Run `npm install`
+2. After modifying tailwind files (e.g. tailwind.config.js), run `npm run build-css`
+
+If the Mac-only dependency of tailwind (fsevents) silently fails (unlikely), you will get an error
+like `fsevents.watch is not a function`
+
+Then run `npm install fsevents --no-save` and proceed based on NPM's error output. 
 ## Dependencies
 
 * Development environments optimized for **GoLand**
