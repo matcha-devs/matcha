@@ -3,10 +3,12 @@
     "build-css": "npx tailwindcss -o public/stylesheets/styles.css --watch --minify"
   },
   "dependencies": {
-    "fsevents": "^2.3.3",
     "live-server": "^1.2.0"
   },
   "devDependencies": {
     "tailwindcss": "^3.4.4"
+  },
+  "optionalDependencies": {
+    "fsevents": "^2.3.3"
   }
 }
