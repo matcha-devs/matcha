@@ -207,6 +207,8 @@ func TestAddUser(t *testing.T) {
 						_, err = probe.Exec("DELETE FROM users WHERE id = ?", id)
 						if err != nil {
 							t.Fatalf("Failed to delete user - %v for case: %s", err, tc.name)
+						} else {
+							t.Log("Deleted user for case: ", tc.name)
 						}
 					}
 				}
