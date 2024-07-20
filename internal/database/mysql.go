@@ -131,55 +131,77 @@ func (db *MySQLDatabase) EmailExists(email string) (bool, error) {
 	return exists, nil
 }
 
-func (db *MySQLDatabase) getOpenID() (id uint64, err error) {
-	err = db.underlyingDB.QueryRow("SELECT id FROM openid LIMIT 1").Scan(&id)
+func (db *MySQLDatabase) getOpenID(tx *sql.Tx) (uint64, error) {
+	var id uint64
+	err := tx.QueryRow("SELECT id FROM openid LIMIT 1").Scan(&id)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Println("Failed to query for an openid -", err)
 		return 0, errors.New("invalid openid")
 	}
-	return
+	return id, nil
 }
 
-func (db *MySQLDatabase) AddUser(firstName, middleName, lastName, email, password, dateOfBirth string) (
-	id uint64, err error) {
+func (db *MySQLDatabase) AddUser(firstName, middleName, lastName, email, password, dateOfBirth string) (id uint64, err error) {
 	if len(firstName) == 0 || len(lastName) == 0 || len(email) == 0 || len(password) == 0 || len(dateOfBirth) == 0 {
 		return 0, errors.New("empty fields")
 	}
-	// Check if email already exists
-	
+	//Check if email already exists
 	if emailExists, err := db.EmailExists(email); err != nil {
 		return 0, errors.New("internal server error")
 	} else if emailExists {
 		return 0, errors.New("email already exists")
-	}
-
-	query := "INSERT INTO users (first_name, middle_name, last_name, email, password, date_of_birth"
-	if openID, err := db.getOpenID(); err != nil && !errors.Is(err, sql.ErrNoRows) {
-		log.Println("Error getting open id -", err)
-		return id, errors.New("internal server error")
-	} else if openID == 0 {
-		query += `) VALUES (?, ?, ?, ?, ?, ?)`
-	} else {
-		log.Println("Re-using open id:", openID, "for {"+email+"}")
-		id = openID
-		query += `, id) VALUES (?, ?, ?, ?, ?, ?, ` + strconv.FormatUint(id, 10) + `)`
-		if _, err = db.underlyingDB.Exec("DELETE FROM openid WHERE id = ?", id); err != nil {
-			log.Println("Error deleting open id -", err)
-			return id, errors.New("internal server error")
-		}
-	}
+	} 
+	
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Println("Error hashing password -", err)
 		return id, errors.New("internal server error")
 	}
-	
-	result, err := db.underlyingDB.Exec(query, firstName, middleName, lastName, email, hashedPassword, dateOfBirth)
+
+	// Start transaction
+	tx, err := db.underlyingDB.Begin()
 	if err != nil {
-		log.Println("Error adding user -", err)
+		log.Println("Error starting transaction -", err)
 		return 0, errors.New("internal server error")
 	}
-	if id == 0 {
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// Get open ID
+	openID, err := db.getOpenID(tx)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		log.Println("Error getting open ID -", err)
+		return 0, errors.New("internal server error")
+	}
+
+	// Build query
+	var query string
+	if openID == 0 {
+		query = "INSERT INTO users (first_name, middle_name, last_name, email, password, date_of_birth) VALUES (?, ?, ?, ?, ?, ?)"
+	} else {
+		log.Println("Re-using open ID:", openID, "for {"+email+"}")
+		query = "INSERT INTO users (first_name, middle_name, last_name, email, password, date_of_birth, id) VALUES (?, ?, ?, ?, ?, ?, " + strconv.FormatUint(openID, 10) + ")"
+		if _, err = tx.Exec("DELETE FROM openid WHERE id = ?", openID); err != nil {
+			log.Println("Error deleting open ID -", err)
+			return 0, errors.New("internal server error")
+		}
+	}
+
+	// Execute query
+	result, err := tx.Exec(query, firstName, middleName, lastName, email, string(hashedPassword), dateOfBirth)
+	if err != nil {
+		log.Println("Error adding user -", err)
+		if openID != 0 {
+			tx.Exec("INSERT INTO openid (id) VALUES (?)", openID)
+		}
+		return 0, errors.New("internal server error")
+	}
+
+	// Get inserted user ID
+	if openID == 0 {
 		userid, err := result.LastInsertId()
 		if err != nil {
 			log.Println("Error getting user ID -", err)
@@ -187,8 +209,17 @@ func (db *MySQLDatabase) AddUser(firstName, middleName, lastName, email, passwor
 		}
 		id = uint64(userid)
 		log.Println("All existing IDs in use, assigning new ID:", id, "to {"+email+"}")
+	} else {
+		id = openID
 	}
-	return
+
+	// Commit transaction
+	if err := tx.Commit(); err != nil {
+		log.Println("Error committing transaction -", err)
+		return 0, errors.New("internal server error")
+	}
+
+	return id, nil
 }
 
 func (db *MySQLDatabase) GetUserID(email string) (id uint64) {
