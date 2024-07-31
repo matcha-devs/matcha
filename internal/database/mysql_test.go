@@ -163,30 +163,27 @@ func TestAddUser(t *testing.T) {
 		expectedID    uint64
 		expectedError bool
 	}{
-		{"AddFirstUser", "test", "", "user", "test_user@example.com",
-			"test_pass", "2004-12-22", 1, false},
-		{"AddSecondUser", "test", "", "user2", "test_user@example2.com",
-			"test_pass2", "2024-12-22", 2, false},
-		{"AddDuplicateName", "test", "", "user", "dupl_name@example.com",
-			"test_pass3", "2024-10-22", 3, false},
-		{"AddDuplicateEmail", "unique", "", "user", "test_user@example2.com",
-			"test_pass4", "2024-10-22", 0, true},
-		{"AddEmptyFirstname", "", "", "user", "empty_first@example.com",
-			"test_pass5", "2024-08-22", 0, true},
-		// TODO : This supposed to be ID:3, but duplicate email increment ID by one. Fix this error.
-		{"AddEmptyMiddlename", "empty", "", "middle", "empty_mid@example.com",
-			"test_pass6", "2024-07-22", 5, false},
-		{"AddEmptyLastname", "empty", "email", "", "empty_last@example.com",
-			"test_pass7", "2024-07-22", 0, true},
-		{"AddEmptyEmail", "empty", "", "email", "", "test_pass7",
-			"2024-07-22", 0, true},
-		{"AddEmptyPassword", "empty", "pass", "user",
-			"empty_pass_user@example.com", "", "2021-07-22", 0, true},
-		{"AddEmptyDateOfBirth", "empty", "", "DOB", "empty_dob@example.com",
-			"test_pass8", "", 0, true},
+		{"AddFirstUser", "testname", "", "user", "test_user@example.com","test_pass", "2004-12-22", 1, false},
+		{"AddSecondUser", "test2", "", "user2", "test_user@example2.com","test_pass2", "2024-12-22", 2, false},
+		{"AddDuplicateName", "testname", "", "user", "dupl_name@example.com","test_pass3", "2024-10-22", 3, false},
+		{"AddDuplicateEmail", "dupl_email", "", "user", "test_user@example2.com","test_pass4", "2024-10-22", 0, true},
+		{"AddEmptyFirstname", "", "", "user", "empty_first@example.com","test_pass5", "2024-08-22", 0, true},
+		{"AddEmptyMiddlename", "empty", "", "middle", "empty_mid@example.com","test_pass6", "2024-07-22", 4, false},
+		{"AddEmptyLastname", "empty", "email", "", "empty_last@example.com","test_pass7", "2024-07-22", 0, true},
+		{"AddEmptyEmail", "empty", "", "email", "", "test_pass7","2024-07-22", 0, true},
+		{"AddEmptyPassword", "empty", "pass", "user","empty_pass_user@example.com", "", "2021-07-22", 0, true},
+		{"AddEmptyDateOfBirth", "empty", "", "DOB", "empty_dob@example.com","test_pass8", "", 0, true},
 
+		{"MultipleFailures1", "user_fail_1","middle","last", "user_fail@example.com","","2024-10-22", 0, true}, // Should fail
+		{"MultipleFailures2", "user_fail","middle","last", "","password","2024-10-22", 0, true}, // Should fail
+		{"MultipleFailures3", "","middle","last", "user_fail@example.com","password", "2024-10-22", 0, true}, // Should fail
+		{"ValidAfterFailures", "valid_user", "middle","last", "valid_user@example.com","password", "2024-10-22", 5, false}, // Should be ID 5 after failures
+		
+		// WIP: These test cases to Re-use open id are not implemented yet!!! This DOES NOT WORK ATM!!!:
+		//{"CreateAndReuseOpenID1", "temp_user", "middle","last", "temp_user@example.com","password", "2024-10-22", 6, false}, // Should be ID 6
+		//{"ReuseOpenID", "new_user", "middle","last", "new_user@example.com", "password","2024-10-22", 6, false}, // Should reuse ID 6
 		// TODO: The functionality for this test need to be implemented
-		// {"AddInvalidEmail", "invalid_email_user", "invalid_email.com", "test_pass7", 0, true},
+		// {"AddInvalidEmail", "invalid_email_user","middle","last", "invalidemail.com", "test_pass7", "2024-10-22", 0, true}, // TODO: The functionality for this test need to be implemented
 	}
 
 	for _, tc := range testCases {
@@ -204,6 +201,15 @@ func TestAddUser(t *testing.T) {
 					}
 					if id != tc.expectedID {
 						t.Fatalf("Expected user id %d but got %d for case: %s", tc.expectedID, id, tc.name)
+					}
+					// Specific case to delete the user to test reusing open ID
+					if tc.name == "CreateAndReuseOpenID1" {
+						_, err = probe.Exec("DELETE FROM users WHERE id = ?", id)
+						if err != nil {
+							t.Fatalf("Failed to delete user - %v for case: %s", err, tc.name)
+						} else {
+							t.Log("Deleted user for case: ", tc.name)
+						}
 					}
 				}
 			},
@@ -229,11 +235,11 @@ func TestAuthenticateLogin(t *testing.T) {
 		password   string
 		expectedID uint64
 		happyPath  bool
-	}{
-		{name: "valid_login", email: happyEmail, password: happyPass, expectedID: 1, happyPath: true},
-		{name: "bad_email", email: "im a mistake", password: happyPass, expectedID: 0, happyPath: false},
-		{name: "bad_pass", email: happyEmail, password: "im a mistake", expectedID: 0, happyPath: false},
-		{name: "bad_email_and_pass", email: "we're both", password: "mistakes", expectedID: 0, happyPath: false},
+	}{		
+		{name:"ValidLogin", email: happyEmail, password: happyPass, expectedID: 1, happyPath: true},
+		{name:"BadUser", email: "im a mistake", password: happyPass, expectedID: 0, happyPath: false},
+		{name:"BadPass", email: happyEmail, password: "im a mistake", expectedID: 0, happyPath: false},
+		{name:"BadUser_and_BadPass", email: "we're both", password: "mistakes", expectedID: 0, happyPath: false},
 	}
 
 	for _, testCase := range testCases {
