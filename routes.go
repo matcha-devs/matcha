@@ -25,6 +25,10 @@ func loggedRouter() http.Handler {
 	mux.Handle("GET /{$}", withClientTimeout(getIndex))
 	mux.Handle("POST /signup", withClientTimeout(postSignup))
 	mux.Handle("POST /login", withClientTimeout(postLogin))
+
+	// implement handleForgotPassword
+	mux.Handle("POST /reset-password", withClientTimeout(postResetPassword))
+
 	mux.Handle("POST /logout", withClientTimeout(postLogout))
 	mux.Handle("POST /delete-user", withClientTimeout(postDeleteUser))
 	mux.Handle("GET /", withClientTimeout(getPage))

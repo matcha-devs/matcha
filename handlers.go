@@ -20,7 +20,7 @@ var (
 	content        embed.FS
 	publicServer   = http.FileServer(http.FS(content))
 	templateServer = template.Must(template.ParseFS(content, "internal/templates/*.go.html"))
-	surfacePages   = map[string]struct{}{"signup": {}, "login": {}}
+	surfacePages   = map[string]struct{}{"signup": {}, "login": {}, "reset-password": {}}
 )
 
 func getPublic(w http.ResponseWriter, r *http.Request) {
@@ -103,6 +103,19 @@ func postLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	setSessionCookie(w, id)
 	w.Header().Set("HX-Redirect", "/dashboard")
+}
+
+func postResetPassword(w http.ResponseWriter, r *http.Request) {
+	email := r.FormValue("email")
+
+	// Validate the email format
+	if _, err := mail.ParseAddress("<" + email + ">"); err != nil {
+		log.Println("Invalid email format -", err)
+		http.Error(w, "Invalid email format", http.StatusBadRequest)
+		return
+	}
+
+	return
 }
 
 func postDeleteUser(w http.ResponseWriter, r *http.Request) {
