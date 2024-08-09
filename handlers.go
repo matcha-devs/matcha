@@ -105,6 +105,8 @@ func postLogin(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("HX-Redirect", "/dashboard")
 }
 
+/* RESET PASSWORD AND HELPERS */
+
 func postResetPassword(w http.ResponseWriter, r *http.Request) {
 	email := r.FormValue("email")
 
@@ -115,8 +117,26 @@ func postResetPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	//// Check if the email exists in the database
+	//user, err := matcha.database.GetUserByEmail(email)
+	//if err != nil {
+	//	log.Println("Error fetching user by email -", err)
+	//	http.Error(w, "User not found", http.StatusNotFound)
+	//	return
+	//}
+	//
+	//// Generate a password reset token
+	//resetToken, err := generateResetToken()
+	//if err != nil {
+	//	log.Println("Error generating reset token -", err)
+	//	http.Error(w, "Internal server error", http.StatusInternalServerError)
+	//	return
+	//}
+
 	return
 }
+
+/* END RESET PASSWORD AND HELPERS */
 
 func postDeleteUser(w http.ResponseWriter, r *http.Request) {
 	// TODO(@FaaizMemonPurdue): Add API call timeouts.

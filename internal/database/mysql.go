@@ -105,7 +105,7 @@ func (db *MySQLDatabase) GetUser(id uint64) (user *internal.User) {
 	user = &internal.User{}
 	err := db.underlyingDB.QueryRow("SELECT * FROM users WHERE id = ?", id).Scan(
 		&user.ID, &user.FirstName, &user.MiddleName, &user.LastName, &user.Email, &user.Password, &user.DateOfBirth,
-		&user.CreatedOn)
+		&user.CreatedOn, &user.ResetToken, &user.TokenExpiresAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		log.Println("No user with ID:", id, "-", err)
 		return nil

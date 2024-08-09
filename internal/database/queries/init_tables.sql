@@ -9,7 +9,10 @@ CREATE TABLE IF NOT EXISTS users
     email         VARCHAR(255)            NOT NULL UNIQUE,
     password      VARCHAR(255)            NOT NULL,
     date_of_birth VARCHAR(255)            NOT NULL,
-    created_on    timestamp DEFAULT NOW() NOT NULL
+    created_on    timestamp DEFAULT NOW() NOT NULL,
+    /* RESET PASSWORD TOKEN FIELDS */
+    reset_token VARCHAR(255),
+    token_expires_at TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS openid

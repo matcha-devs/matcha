@@ -15,6 +15,9 @@ type User struct {
 	Password    string
 	DateOfBirth string
 	CreatedOn   time.Time
+	/* RESET TOKEN FIELDS */
+	ResetToken     string
+	TokenExpiresAt time.Time
 }
 
 func (user User) IsValid() (valid bool) {
