@@ -19,4 +19,7 @@ type database interface {
 	AddUser(firstName, middleName, lastName, email, password, dateOfBirth string) (id uint64, err error)
 	GetUserID(email string) (id uint64)
 	DeleteUser(id uint64) (err error)
+	/* RESET PASSWORD FUNCTIONS */
+	GetUserByEmail(email string) (user *internal.User)
+	StoreResetToken(id uint64, resetToken string) (err error)
 }

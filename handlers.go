@@ -1,18 +1,20 @@
 package main
 
 import (
+	"crypto/rand"
 	"embed"
 	"errors"
+	"fmt"
+	"github.com/matcha-devs/matcha/internal"
 	"html/template"
 	"io"
 	"log"
 	"net/http"
 	"net/mail"
+	"net/smtp"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/matcha-devs/matcha/internal"
 )
 
 var (
@@ -117,23 +119,60 @@ func postResetPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//// Check if the email exists in the database
-	//user, err := matcha.database.GetUserByEmail(email)
-	//if err != nil {
-	//	log.Println("Error fetching user by email -", err)
-	//	http.Error(w, "User not found", http.StatusNotFound)
-	//	return
-	//}
-	//
-	//// Generate a password reset token
-	//resetToken, err := generateResetToken()
-	//if err != nil {
-	//	log.Println("Error generating reset token -", err)
-	//	http.Error(w, "Internal server error", http.StatusInternalServerError)
-	//	return
-	//}
+	// Check if the email exists in the database
+	user, err := matcha.database.GetUserByEmail(email)
+	if err != nil {
+		log.Println("Error fetching user by email -", err)
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
+	}
+
+	// Generate a password reset token
+	resetToken, err := generateResetToken()
+	if err != nil {
+		log.Println("Error generating reset token -", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	// Store the reset token in the database with an expiration time
+	err = matcha.database.StoreResetToken(user.ID, resetToken)
+	if err != nil {
+		log.Println("Error storing reset token -", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	// Send the reset token to the user's email
+	err = sendResetEmail(email, resetToken)
+	if err != nil {
+		log.Println("Error sending reset email -", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
 
 	return
+}
+
+// HELPER generateResetToken()
+func generateResetToken() (string, error) {
+	b := make([]byte, 32)
+	_, err := rand.Read(b)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%x", b), nil
+}
+
+// HELPER sendResetEmail()
+func sendResetEmail(email, token string) error {
+	auth := smtp.PlainAuth("", "your-email@example.com", "your-password", "smtp.example.com")
+	to := []string{email}
+	msg := []byte("Subject: Password Reset\r\n" +
+		"\r\n" +
+		"Click the following link to reset your password: " +
+		"http://yourdomain.com/reset?token=" + token + "\r\n")
+	return smtp.SendMail("smtp.example.com:587", auth, "your-email@example.com", to, msg)
 }
 
 /* END RESET PASSWORD AND HELPERS */

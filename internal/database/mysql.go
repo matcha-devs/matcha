@@ -5,14 +5,14 @@ package database
 import (
 	"database/sql"
 	"errors"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/matcha-devs/matcha/internal"
+	"golang.org/x/crypto/bcrypt"
 	"log"
 	"os"
 	"strconv"
 	"strings"
-
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/matcha-devs/matcha/internal"
-	"golang.org/x/crypto/bcrypt"
+	"time"
 )
 
 type MySQLDatabase struct {
@@ -117,6 +117,27 @@ func (db *MySQLDatabase) GetUser(id uint64) (user *internal.User) {
 		return nil
 	}
 	return
+}
+
+/* RESET TOKEN DB FUNCTION */
+func (db *MySQLDatabase) StoreResetToken(userID uint64, resetToken string) error {
+	// Set token expiration to 1 hour from now
+	expirationTime := time.Now().Add(1 * time.Hour)
+
+	// Update the user's reset token and expiration time in the database
+	_, err := db.underlyingDB.Exec(`
+		UPDATE users
+		SET reset_token = ?, token_expires_at = ?
+		WHERE id = ?
+	`, resetToken, expirationTime, userID)
+
+	if err != nil {
+		log.Println("Error storing reset token for user ID:", userID, "-", err)
+		return errors.New("internal server error")
+	}
+
+	log.Println("Stored reset token for user ID:", userID)
+	return nil
 }
 
 func (db *MySQLDatabase) getOpenID() (id uint64, err error) {
